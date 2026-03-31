@@ -54,7 +54,7 @@ function RouteComponent() {
         return;
       }
 
-      if (verified?.subject?.properties?.userID === 'INVALID') {
+      if (verified?.subject?.properties?.userID !== '1') {
         setError(new Error('User info is not registered'));
         return;
       }

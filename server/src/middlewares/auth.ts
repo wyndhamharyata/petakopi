@@ -15,6 +15,8 @@ export const authMiddleware = createMiddleware(async (c, next) => {
     return c.redirect('/authorize');
   }
 
+  c.set('user', verified.subject)
+
   if (verified.tokens?.access && accessToken !== verified.tokens?.access) {
     setCookie(c, 'access_token', verified.tokens?.access ?? '');
     setCookie(c, 'refresh_token', verified.tokens?.refresh ?? '');
