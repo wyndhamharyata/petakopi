@@ -10,6 +10,7 @@ import {
 import { Rating } from './-contentTab/-common/-rating.tsx';
 import { getTokens } from '@cookies/tokens.ts';
 import { memo, useCallback } from 'react';
+import { renderPreview } from './-previewRender/previewRender.ts';
 
 export interface CoffeeDetailProps {
   coffee: Coffee;
@@ -38,11 +39,23 @@ export const CoffeeDetail = memo(function CoffeeDetail({
 
   const { data: review } = useSWR(
     coffee.status == 'reviewed' ? ['review', coffee.id] : null,
-    rpcFetch(client.api.coffees.review[':id'].$get)({
-      param: {
-        id: coffee.id,
-      },
-    }),
+    async () => {
+      const res = await rpcFetch(client.api.coffees.review[':id'].$get)({
+        param: {
+          id: coffee.id,
+        },
+      });
+
+      const result = await res();
+
+      if (res.error) {
+        return
+      }
+
+      const html = await renderPreview(res.prototype)
+
+      return res;
+    },
     {
       revalidateOnFocus: false,
       revalidateOnReconnect: false,

@@ -74,12 +74,28 @@ export async function review(id: string) {
   const bucketDB = await getMarknotesDB();
   const queryString = `%${coffee.name.trim().toLowerCase()}%`;
 
-  const post = await bucketDB
-    .selectFrom('posts')
-    .selectAll()
-    .where('posts.type', '=', 'coffee')
-    .where(sql`lower(posts.title)`, 'like', sql`${queryString}`)
-    .executeTakeFirst();
+  const post = await (await fetch(`https://mwyndham.dev/api/articles-by-title.json?title=${coffee.name}`)).json() as {
+    id: string;
+    data: {
+      title: string;
+      description: string;
+      pubDate: string;
+      updatedDate: string;
+      heroImage: {
+        src: string;
+        width: number;
+        height: number;
+        format: string;
+      };
+    };
+    body: string;
+    filePath: string;
+    assetImports: string[];
+    digest: string;
+    deferredRender: boolean;
+    collection: string;
+  };
+
 
   return { post };
 }
