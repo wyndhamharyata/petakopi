@@ -44,6 +44,9 @@ export const CoffeeListItem = memo(function CoffeeListItem({ coffee }: CoffeeLis
           className="overflow-ellipsis text-xs font-light line-clamp-1 max-w-56">{`${coffee.open_hours} | ${coffee.address.split(',')[0]}`}</p>
         <div className="flex items-center gap-3">
           <Rating ratingValue={coffee.rating} />
+          {coffee.status === 'closed' && (
+            <span className="badge badge-error badge-soft badge-xs">Closed permanently</span>
+          )}
           {!!coffee.commentCount && (
             <span className="inline-flex items-center gap-1 text-xs">
               <RiChat3Line size={14} />

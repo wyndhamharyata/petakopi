@@ -39,7 +39,8 @@ export const CoffeeDetail = memo(function CoffeeDetail({
   );
 
   const { data: review } = useSWR(
-    coffee.status == 'reviewed' ? ['review', coffee.id] : null,
+    // Not `status`: a closed shop can still have a review, and only a review sets a rating.
+    coffee.rating > 0 ? ['review', coffee.id] : null,
     rpcFetch(client.api.coffees.review[':id'].$get)({
       param: {
         id: coffee.id,
@@ -97,6 +98,9 @@ export const CoffeeDetail = memo(function CoffeeDetail({
         <div className="flex flex-row items-center overflow-ellipsis px-3 py-2 font-light line-clamp-2 hover:bg-base-200">
           <RiTimerFlashLine className={`mr-4`} size={20} />
           <p className={`flex-1/2`}>{`${coffee.open_hours}`}</p>
+          {coffee.status === 'closed' && (
+            <span className="badge badge-error badge-soft badge-sm">Closed permanently</span>
+          )}
         </div>
         <div className="flex flex-row items-center overflow-ellipsis px-3 font-light min-h-8 hover:bg-base-200">
           <RiUserLocationLine className={`mr-4`} size={20} />

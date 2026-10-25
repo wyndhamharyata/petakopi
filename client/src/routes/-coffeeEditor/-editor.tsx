@@ -139,7 +139,8 @@ export function Editor({ id = undefined, submitQuery }: EditorProps) {
             review={coffee?.review ?? null}
           />
         ) : (
-          <AddShopForm {...shopProps} />
+          // Remount once the shop loads: inputs read their default values only on mount.
+          <AddShopForm key={coffee?.id ?? 'new'} {...shopProps} />
         )}
       </form>
     </div>

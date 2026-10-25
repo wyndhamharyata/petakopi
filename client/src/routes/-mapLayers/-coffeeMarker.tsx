@@ -32,7 +32,7 @@ export function CoffeeMarker({
       onClick={() => onClick(coffee)}
     >
       <div
-        className="cursor-pointer"
+        className={`cursor-pointer ${coffee.status === 'closed' ? 'opacity-40' : ''}`}
         onMouseEnter={() => onHover(coffee.id)}
         onMouseLeave={() => onHover(undefined)}
       >
