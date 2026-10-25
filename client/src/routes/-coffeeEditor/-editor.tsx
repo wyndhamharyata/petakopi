@@ -12,6 +12,7 @@ import { client, rpcFetch } from '@fetcher/fetcher.ts';
 import useSWR from 'swr';
 import type { Image } from '@rpcTypes/image.ts';
 import { RiDeleteBin3Line } from 'react-icons/ri';
+import { Rating } from '../-contentTab/-common/-rating.tsx';
 
 interface TypedResponse<T> extends Response {
   json(): Promise<T>;
@@ -40,20 +41,12 @@ export function Editor({ id = undefined, submitQuery }: EditorProps) {
     })
   );
 
-  const [rating, setRating] = useState<number>();
   const [images, setImages] = useState<string[]>([]);
   const [removedImages, setRemovedImages] = useState<string[]>([]);
   const [savedId, setSavedId] = useState('');
   const [state, setState] = useState<'new' | 'loading' | 'success' | 'failure'>(
     shouldFetch && isLoading ? 'loading' : 'new'
   );
-
-  // Sync rating state with loaded coffee data
-  useEffect(() => {
-    if (data && data.coffee && data.coffee.rating !== undefined) {
-      setRating(data.coffee.rating);
-    }
-  }, [data]);
 
   const handleSubmit = useCallback(
     async (e: FormEvent) => {
@@ -67,7 +60,7 @@ export function Editor({ id = undefined, submitQuery }: EditorProps) {
       const values = Object.fromEntries(formData.entries());
       const parsed = safeParse(ModifyCoffeeSchema, {
         ...values,
-        rating: rating ?? 0,
+        closed: formData.get('closed') === 'on',
       });
 
       if (!parsed.success) return setState('failure');
@@ -106,7 +99,7 @@ export function Editor({ id = undefined, submitQuery }: EditorProps) {
       setSavedId(data.id);
       setState('success');
     },
-    [rating, submitQuery, removedImages, formRef]
+    [submitQuery, removedImages, formRef]
   );
 
   useEffect(() => {
@@ -125,10 +118,8 @@ export function Editor({ id = undefined, submitQuery }: EditorProps) {
   );
 
   const shopProps = {
-    rating,
     coffee,
     images,
-    setRating,
     setImages,
     onSubmit: handleSubmit,
     onImageRemoved,
@@ -142,7 +133,11 @@ export function Editor({ id = undefined, submitQuery }: EditorProps) {
         className="absolute inset-0 flex h-full flex-col bg-linear-to-bl from-secondary/10 via-accent/10 to-base-100/10"
       >
         {state === 'success' ? (
-          <SuccessMessage coffeeId={savedId} />
+          <SuccessMessage
+            coffeeId={savedId}
+            editing={shouldFetch}
+            review={coffee?.review ?? null}
+          />
         ) : (
           <AddShopForm {...shopProps} />
         )}
@@ -151,11 +146,14 @@ export function Editor({ id = undefined, submitQuery }: EditorProps) {
   );
 }
 
+interface Review {
+  slug: string;
+  title: string;
+}
+
 interface AddShopProps {
-  rating: number | undefined;
-  setRating: (v: number) => void;
   images: string[];
-  coffee: Coffee | undefined;
+  coffee: (Coffee & { review: Review | null }) | undefined;
   loading: boolean;
   setImages: (v: string[]) => void;
   onImageRemoved: (v: string) => void;
@@ -163,8 +161,6 @@ interface AddShopProps {
 }
 
 function AddShopForm({
-  rating,
-  setRating,
   images,
   setImages,
   onSubmit,
@@ -172,14 +168,6 @@ function AddShopForm({
   loading,
   coffee,
 }: AddShopProps) {
-  const ratingStars = useMemo(() => {
-    return [...Array(10)].map((_, i) => {
-      const v = 0.5 + i * 0.5;
-      const half = (v * 2) % 2 !== 0;
-      return { v, half };
-    });
-  }, []);
-
   const [hovered, setHovered] = useState<number | undefined>();
   const [existingImages, setExistingImages] = useState<Image[]>([]);
 
@@ -208,13 +196,6 @@ function AddShopForm({
   const latLongValue = useMemo(() => {
     return coffee?.lat ? `${coffee.lat}, ${coffee.lng}` : '';
   }, [coffee?.lat, coffee?.lng]);
-
-  const handleRatingClick = useCallback(
-    (value: number) => {
-      setRating(value);
-    },
-    [setRating]
-  );
 
   const handleAddImage = useCallback(
     (e: React.MouseEvent) => {
@@ -258,22 +239,45 @@ function AddShopForm({
           defaultValue={coffee?.open_hours ?? ''}
         />
 
-        <label className="mt-2 label">Rating</label>
-        <div className="rating rating-half">
-          {ratingStars.map(({ v, half }) => (
-            <input
-              key={v}
-              type="radio"
-              name="rating"
-              onClick={() => handleRatingClick(v)}
-              className={`mask ${
-                half ? 'mask-half-1' : 'mask-half-2'
-              } mask-star-2 bg-accent`}
-              aria-label={`${v} star`}
-              checked={rating === v}
-            />
-          ))}
-        </div>
+        {coffee && (
+          <>
+            {/* The review on mwyndham.dev owns the rating; this form owns the shop facts. */}
+            <label className="mt-2 label">Review</label>
+            <div className="flex flex-col gap-2 border p-3 rounded-box border-base-300 bg-base-100">
+              {coffee.review ? (
+                <>
+                  <div className="flex items-center justify-between gap-2">
+                    <Rating ratingValue={coffee.rating} />
+                    <span className="text-xs text-base-content/60">
+                      set in the review
+                    </span>
+                  </div>
+                  <p className="text-xs font-bold line-clamp-2">
+                    {coffee.review.title}
+                  </p>
+                  <a
+                    className="btn btn-secondary btn-outline btn-sm"
+                    target="_blank"
+                    href={`https://mwyndham.dev/admin/articles/${coffee.review.slug}/edit`}
+                  >
+                    Edit Review
+                  </a>
+                </>
+              ) : (
+                <>
+                  <p className="text-xs">No review yet</p>
+                  <a
+                    className="btn btn-secondary btn-outline btn-sm"
+                    target="_blank"
+                    href={`https://mwyndham.dev/admin/articles/new?coffeeId=${coffee.id}`}
+                  >
+                    Write Review
+                  </a>
+                </>
+              )}
+            </div>
+          </>
+        )}
 
         <label className="mt-2 label">Address</label>
         <textarea
@@ -282,6 +286,16 @@ function AddShopForm({
           placeholder="George St. 17"
           defaultValue={coffee?.address ?? ''}
         />
+
+        <label className="mt-3 flex w-fit items-center gap-2 text-xs">
+          <input
+            type="checkbox"
+            name="closed"
+            className="toggle toggle-sm"
+            defaultChecked={coffee?.status === 'closed'}
+          />
+          Closed permanently
+        </label>
       </div>
       <div className="mx-2 divider md:divider-horizontal my-1"></div>
       <div className="flex flex-col gap-2 w-xs md:pt-4">
@@ -338,19 +352,35 @@ function AddShopForm({
   );
 }
 
-function SuccessMessage({ coffeeId }: { coffeeId: string }) {
+function SuccessMessage({
+  coffeeId,
+  editing,
+  review,
+}: {
+  coffeeId: string;
+  editing: boolean;
+  review: Review | null;
+}) {
   return (
     <div className="m-auto flex flex-col gap-4 p-6 shadow-2xl card bg-base-100">
-      <div className="">Successfully Added new Coffee Place!</div>
+      <div className="">
+        {editing
+          ? 'Successfully Updated Coffee Place!'
+          : 'Successfully Added new Coffee Place!'}
+      </div>
       <a href="/" className="btn btn-primary">
         Go to Home
       </a>
       <a
         target="_blank"
-        href={`https://mwyndham.dev/admin/articles/new?coffeeId=${coffeeId}`}
+        href={
+          review
+            ? `https://mwyndham.dev/admin/articles/${review.slug}/edit`
+            : `https://mwyndham.dev/admin/articles/new?coffeeId=${coffeeId}`
+        }
         className="btn btn-secondary btn-outline"
       >
-        Create Review Article
+        {review ? 'Edit Review' : 'Write Review'}
       </a>
     </div>
   );

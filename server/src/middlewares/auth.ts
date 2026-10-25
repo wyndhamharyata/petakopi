@@ -15,7 +15,13 @@ export const authMiddleware = createMiddleware(async (c, next) => {
     return c.redirect('/authorize');
   }
 
-  c.set('user', verified.subject)
+  // A verified token proves who the user is, not that they may edit the map.
+  const { oauthID, email } = verified.subject.properties;
+  if (oauthID !== '34619560' || email !== 'mwyndham.business@gmail.com') {
+    return c.json({ error: 'Only the map owner can change shops' }, 403);
+  }
+
+  c.set('user', verified.subject);
 
   if (verified.tokens?.access && accessToken !== verified.tokens?.access) {
     setCookie(c, 'access_token', verified.tokens?.access ?? '');

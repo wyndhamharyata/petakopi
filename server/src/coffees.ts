@@ -7,6 +7,7 @@ import {
   createCoffeeShop,
   editCoffeeShop,
   latestReviews,
+  refreshReviews,
   review,
   search,
 } from './handlers/coffee';
@@ -24,6 +25,11 @@ export const coffeesApp = new Hono<{ Bindings: Env }>()
     const id = c.req.param('id');
 
     return c.json(await deleteImage(id));
+  })
+
+  // Reread mwyndham.dev's review index now; marknotes calls this after a deploy
+  .post('/reviews/refresh', async (c) => {
+    return c.json(await refreshReviews());
   })
 
   // Search and Return Review for A Coffee Shop

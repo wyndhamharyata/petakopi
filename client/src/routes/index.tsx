@@ -6,14 +6,29 @@ import { CoffeeDetail } from './-coffeeDetail.tsx';
 import { ContentTab } from './-contentTab.tsx';
 import { getTokens } from '@cookies/tokens.ts';
 import { RiAddLine } from 'react-icons/ri';
+import { useEffect } from 'react';
+import { client, rpcFetch } from '@fetcher/fetcher.ts';
 
 export const Route = createFileRoute('/')({
   component: Index,
+  // ?shop=<id> opens that shop, for links from mwyndham.dev.
+  validateSearch: (search: Record<string, unknown>): { shop?: string } => ({
+    shop: typeof search.shop === 'string' ? search.shop : undefined,
+  }),
 });
 
 function Index() {
   const selectedCoffee = useAppStore((state) => state.selectedCoffee);
   const collapse = useAppStore((state) => state.collapsed);
+  const setSelected = useAppStore((state) => state.setSelectedCoffee);
+  const { shop } = Route.useSearch();
+
+  useEffect(() => {
+    if (!shop) return;
+    rpcFetch(client.api.coffees[':id'].$get)({ param: { id: shop } })().then(
+      ({ coffee }) => coffee && setSelected(coffee)
+    );
+  }, [shop, setSelected]);
 
   const { authenticated } = getTokens();
 

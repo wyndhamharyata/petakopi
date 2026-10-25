@@ -1,9 +1,9 @@
 import { type OpenHour } from './openHour';
 import type { Selectable } from 'kysely';
 import {
+  boolean,
   custom,
   minLength,
-  number,
   object,
   pipe,
   string,
@@ -93,8 +93,9 @@ export const ModifyCoffeeSchema = object({
   shopName: pipe(string(), minLength(10)),
   latLong: latLngFromStringSchema,
   openHours: openHourSchema,
-  rating: number(),
   address: pipe(string(), minLength(20)),
+  // The rating comes from the review on mwyndham.dev; only "closed" is set here.
+  closed: boolean(),
 });
 
 export const ModifyCoffeeReqSchema = object({
