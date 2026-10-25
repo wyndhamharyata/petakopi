@@ -1,4 +1,4 @@
-import { getDB, getMarknotesDB } from '../db';
+import { getDB } from '../db';
 import { sql } from 'kysely';
 import { Coffee, ModifyCoffeeReqSchema } from '@rpcTypes/coffee';
 import { uuidv7 } from 'uuidv7';
@@ -59,29 +59,27 @@ export async function search(queryParam: string | undefined) {
 }
 
 export async function review(id: string) {
-  const db = await getDB();
+  // marknotes prerenders both for each article whose frontmatter sets `coffeeId`.
+  const [meta, embed] = await Promise.all([
+    fetch(`https://mwyndham.dev/api/coffee-reviews/${encodeURIComponent(id)}.json`),
+    fetch(`https://mwyndham.dev/embed/coffee/${encodeURIComponent(id)}`),
+  ]);
+  if (!meta.ok || !embed.ok) return { post: null };
 
-  const coffee = await db
-    .selectFrom('coffees')
-    .where('coffees.id', '=', id)
-    .selectAll()
-    .executeTakeFirst();
-
-  if (!coffee) {
-    return { error: 'coffee shop not found' };
-  }
-
-  const bucketDB = await getMarknotesDB();
-  const queryString = `%${coffee.name.trim().toLowerCase()}%`;
-
-  const post = await bucketDB
-    .selectFrom('posts')
-    .selectAll()
-    .where('posts.type', '=', 'coffee')
-    .where(sql`lower(posts.title)`, 'like', sql`${queryString}`)
-    .executeTakeFirst();
-
-  return { post };
+  const post = (await meta.json()) as {
+    slug: string;
+    title: string;
+    description: string;
+    url: string;
+    heroImage?: string;
+  };
+  // Astro writes site-relative asset URLs; the card renders on kopimap.
+  const html = (await embed.text())
+    .split('="/')
+    .join('="https://mwyndham.dev/')
+    .split(', /_astro/')
+    .join(', https://mwyndham.dev/_astro/');
+  return { post: { ...post, html } };
 }
 
 export async function editCoffeeShop(

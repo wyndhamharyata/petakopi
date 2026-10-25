@@ -54,7 +54,7 @@ export const CoffeeDetail = memo(function CoffeeDetail({
     clearSelected();
   }, [clearSelected]);
 
-  const withReview = review && !('error' in review);
+  const withReview = !!review?.post;
 
   return (
     <div className="flex w-full drop-shadow-2xl h-[55vh] card bg-base-100 lg:max-h-[94vh] lg:h-fit">
@@ -105,7 +105,7 @@ export const CoffeeDetail = memo(function CoffeeDetail({
             <div
               className="mx-auto w-full overflow-x-clip overflow-y-scroll prose-pre:bg-slate-900 prose-strong:font-extrabold prose-a:font-extrabold prose-pre:text-white caret-rose-800 prose-strong:brightness-50 prose-em:brightness-50 prose-a:brightness-90 prose prose-slate prose-em:text-secondary prose-strong:text-primary prose-a:text-accent prose-sm focus:outline-hidden dark:prose-a:brightness-100 dark:prose-strong:brightness-100 dark:prose-invert"
               dangerouslySetInnerHTML={{
-                __html: review?.post?.encoded_content ?? '',
+                __html: review?.post?.html ?? '',
               }}
             />
           </div>
@@ -115,7 +115,7 @@ export const CoffeeDetail = memo(function CoffeeDetail({
             <a
               className={`btn btn-primary mx-3 mt-3 flex-grow`}
               target="_blank"
-              href={`https://mwyndham.dev/articles/${review?.post?.slug}.html`}
+              href={review?.post?.url}
             >
               Read Review and Comment
             </a>

@@ -43,6 +43,7 @@ export function Editor({ id = undefined, submitQuery }: EditorProps) {
   const [rating, setRating] = useState<number>();
   const [images, setImages] = useState<string[]>([]);
   const [removedImages, setRemovedImages] = useState<string[]>([]);
+  const [savedId, setSavedId] = useState('');
   const [state, setState] = useState<'new' | 'loading' | 'success' | 'failure'>(
     shouldFetch && isLoading ? 'loading' : 'new'
   );
@@ -102,6 +103,7 @@ export function Editor({ id = undefined, submitQuery }: EditorProps) {
         if (!imgRes.ok) console.warn('Image upload failed');
       }
 
+      setSavedId(data.id);
       setState('success');
     },
     [rating, submitQuery, removedImages, formRef]
@@ -140,7 +142,7 @@ export function Editor({ id = undefined, submitQuery }: EditorProps) {
         className="absolute inset-0 flex h-full flex-col bg-linear-to-bl from-secondary/10 via-accent/10 to-base-100/10"
       >
         {state === 'success' ? (
-          <SuccessMessage />
+          <SuccessMessage coffeeId={savedId} />
         ) : (
           <AddShopForm {...shopProps} />
         )}
@@ -336,7 +338,7 @@ function AddShopForm({
   );
 }
 
-function SuccessMessage() {
+function SuccessMessage({ coffeeId }: { coffeeId: string }) {
   return (
     <div className="m-auto flex flex-col gap-4 p-6 shadow-2xl card bg-base-100">
       <div className="">Successfully Added new Coffee Place!</div>
@@ -345,7 +347,7 @@ function SuccessMessage() {
       </a>
       <a
         target="_blank"
-        href="https://mwyndham.dev/dashboard/articles/new"
+        href={`https://mwyndham.dev/admin/articles/new?coffeeId=${coffeeId}`}
         className="btn btn-secondary btn-outline"
       >
         Create Review Article

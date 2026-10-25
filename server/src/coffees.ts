@@ -29,9 +29,7 @@ export const coffeesApp = new Hono<{ Bindings: Env }>()
   // Search and Return Review for A Coffee Shop
   .get('/review/:id', async (c) => {
     const id = c.req.param('id');
-    const res = await review(id);
-    if (res.error) return c.json({ error: res.error }, 404);
-    return c.json(res);
+    return c.json(await review(id));
   })
 
   // Search For Coffee Shop by Matching Name and Address
