@@ -21,7 +21,7 @@ export function CoffeeMarker({
   const popupOffset = isSelected ? [-128, -140] : [-128, -130];
   const pinSize = isSelected ? '50px' : '40px';
   const pinClass = isSelected
-    ? 'fill-primary/70 stroke-accent dark:stroke-accent dark:fill-base-100 text-[50px]'
+    ? 'fill-primary stroke-primary-content dark:stroke-accent dark:fill-base-100 text-[50px]'
     : 'fill-base-100 stroke-accent dark:stroke-base-content text-[40px]';
 
   return (
