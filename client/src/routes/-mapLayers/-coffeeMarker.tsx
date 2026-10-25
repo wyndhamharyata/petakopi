@@ -32,12 +32,12 @@ export function CoffeeMarker({
       onClick={() => onClick(coffee)}
     >
       <div
-        className={`cursor-pointer ${coffee.status === 'closed' ? 'opacity-40' : ''}`}
+        className="cursor-pointer"
         onMouseEnter={() => onHover(coffee.id)}
         onMouseLeave={() => onHover(undefined)}
       >
         <RiMapPin2Fill
-          className={`${pinClass} text-[${pinSize}]`}
+          className={`${pinClass} text-[${pinSize}] ${coffee.status === 'closed' ? 'opacity-40' : ''}`}
           strokeWidth={1.7}
         />
         <div
