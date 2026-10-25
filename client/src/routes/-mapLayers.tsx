@@ -1,4 +1,3 @@
-import { type LatLngTuple } from 'leaflet';
 import { RMap } from 'maplibre-react-components';
 import useSWR from 'swr';
 import { client, rpcFetch } from '@fetcher/fetcher.ts';
@@ -6,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { CoffeeMarkers } from './-mapLayers/-coffeeMarkers.tsx';
 import { useAppStore } from '@store/store.ts';
 
-export const DEFAULT_CENTER: LatLngTuple = [-7.5603894, 110.771847];
+export const DEFAULT_CENTER: [number, number] = [-7.5603894, 110.771847];
 const TILE_URL_LIGHT =
   'https://resource.mwyndham.dev/sono/alidade_smooth_light.json';
 const TILE_URL_DARK =
@@ -30,7 +29,7 @@ function useDarkMode() {
 }
 
 export function MapLayers() {
-  const [location, setLocation] = useState<LatLngTuple>(DEFAULT_CENTER);
+  const [location, setLocation] = useState<[number, number]>(DEFAULT_CENTER);
   const [hovered, setHovered] = useState<string | undefined>();
 
   const collapse = useAppStore((state) => state.collapsed);

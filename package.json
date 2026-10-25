@@ -10,25 +10,19 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.830.0",
     "@hono/valibot-validator": "^0.5.2",
     "@libsql/kysely-libsql": "^0.4.1",
     "@openauthjs/openauth": "^0.4.3",
-    "better-sqlite3": "^12.0.0",
     "kysely": "^0.28.2",
-    "kysely-sql-js": "^0.0.2",
-    "leaflet": "^1.9.4",
-    "sql.js": "^1.13.0",
     "sst": "3.17.8",
     "uuidv7": "^1.0.2",
     "valibot": "^1.1.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "4.20250617.0",
-    "@tsconfig/node22": "^22.0.2",
-    "@types/better-sqlite3": "^7.6.13",
-    "@types/leaflet": "^1.9.19",
-    "@types/sql.js": "^1.4.9"
+    "@tsconfig/node24": "^24.0.5",
+    "@types/node": "^24",
+    "typescript": "~5.9.3"
   },
   "resolutions": {
     "hono": "^4.8.3"

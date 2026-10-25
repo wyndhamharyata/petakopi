@@ -26,7 +26,8 @@
     "noUncheckedSideEffectImports": true,
     "types": [
       "../sst-env.d.ts",
-      "@cloudflare/workers-types"
+      "@cloudflare/workers-types",
+      "node"
     ],
     "paths": {
       "@store/*": [

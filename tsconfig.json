@@ -1,5 +1,5 @@
 {
-  "extends": "@tsconfig/node22/tsconfig.json",
+  "extends": "@tsconfig/node24/tsconfig.json",
   "compilerOptions": {
     "module": "NodeNext",
     "moduleResolution": "Bundler",
@@ -8,7 +8,8 @@
     "jsxImportSource": "hono/jsx",
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.worker.tsbuildinfo",
     "types": [
-      "@cloudflare/workers-types"
+      "@cloudflare/workers-types",
+      "node"
     ],
     "paths": {
       "@rpcTypes/*": [

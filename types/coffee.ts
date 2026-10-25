@@ -9,7 +9,6 @@ import {
   string,
   transform,
 } from 'valibot';
-import type { LatLngTuple } from 'leaflet';
 
 export interface CoffeeTable {
   id: string;
@@ -43,7 +42,7 @@ const latLngFromStringSchema = pipe(
 
     return validateLatLng(lat, lng);
   }, 'Must be a comma-separated latitude and longitude with valid ranges'),
-  transform<string, LatLngTuple>((input) => {
+  transform<string, [number, number]>((input) => {
     const parts = (input as string).trim().split(',');
 
     const lat = parseFloat(parts[0].trim());
@@ -53,7 +52,7 @@ const latLngFromStringSchema = pipe(
   })
 );
 
-const latLngTupleSchema = custom<LatLngTuple>((value) => {
+const latLngTupleSchema = custom<[number, number]>((value) => {
   if (!Array.isArray(value) || value.length !== 2) return false;
 
   const [lat, lng] = value;
@@ -62,7 +61,7 @@ const latLngTupleSchema = custom<LatLngTuple>((value) => {
     typeof lng === 'number' &&
     validateLatLng(lat, lng)
   );
-}, 'Must be a valid LatLngTuple with latitude between -90 and 90, longitude between -180 and 180');
+}, 'Must be a valid [number, number] with latitude between -90 and 90, longitude between -180 and 180');
 
 const openHourSchema = pipe(
   string(),

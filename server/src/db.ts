@@ -3,7 +3,6 @@ import { Resource } from 'sst';
 import { LibsqlDialect } from '@libsql/kysely-libsql';
 import { type CoffeeTable } from '@rpcTypes/coffee';
 import { type ImageTable } from '@rpcTypes/image';
-import Database from 'better-sqlite3';
 
 let db: Promise<Kysely<Database>> | null = null;
 export function getDB(): Promise<Kysely<Database>> {
