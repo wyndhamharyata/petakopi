@@ -2,6 +2,7 @@ import type { Coffee } from '@rpcTypes/coffee.ts';
 import { RMarker } from 'maplibre-react-components';
 import { CoffeeListItem } from '../-contentTab/-common/-cofeeListItem.tsx';
 import { RiMapPin2Fill } from 'react-icons/ri';
+import { useAppStore } from '@store/store.ts';
 
 interface CoffeeMarkerProps {
   coffee: Coffee;
@@ -11,9 +12,13 @@ interface CoffeeMarkerProps {
 
 // The selected or hovered shop, drawn as HTML on top of the map's pin layer.
 export function CoffeeMarker({ coffee, isSelected, showCard = false }: CoffeeMarkerProps) {
+  const setSelected = useAppStore((state) => state.setSelectedCoffee);
+  // Same look in both themes, larger than any layer pin, so the selection never reads as "reviewed".
   const pinClass = isSelected
-    ? 'fill-primary stroke-base-content dark:stroke-accent dark:fill-base-100 text-[50px]'
-    : 'fill-base-100 stroke-accent dark:stroke-base-content text-[40px]';
+    ? 'fill-primary stroke-base-content text-[56px] drop-shadow-lg'
+    : coffee.status === 'reviewed'
+      ? 'fill-primary stroke-base-content text-[40px]'
+      : 'fill-base-100 stroke-accent text-[40px]';
 
   return (
     <RMarker
@@ -21,7 +26,8 @@ export function CoffeeMarker({ coffee, isSelected, showCard = false }: CoffeeMar
       latitude={coffee.lat}
       initialAnchor="bottom"
       // Hover only: letting the pointer through keeps the pin layer's hover from flickering.
-      className={showCard ? 'pointer-events-none' : ''}
+      className={showCard ? 'pointer-events-none' : 'cursor-pointer'}
+      onClick={() => setSelected(coffee)}
     >
       <div className="relative">
         <RiMapPin2Fill
