@@ -118,7 +118,7 @@ export const CoffeeDetail = memo(function CoffeeDetail({
         )}
         {withReview && !!review?.comments?.count && (
           <>
-            <div className="mx-3 mt-2 hidden shrink-0 flex-col gap-2 lg:flex">
+            <div className="mx-3 mt-3 hidden shrink-0 flex-col gap-3 lg:flex">
               <p className="flex items-center gap-2 pt-1 text-sm font-bold">
                 <RiChat3Line size={16} />
                 Comments ({review.comments.count})
@@ -126,7 +126,7 @@ export const CoffeeDetail = memo(function CoffeeDetail({
               {review.comments.latest.map((comment) => (
                 <div
                   key={comment.id}
-                  className={`flex gap-2 ${comment.parentId ? 'ml-6' : ''}`}
+                  className={`flex gap-3 rounded-box bg-base-200 p-3 ${comment.parentId ? 'ml-6 border-l-2 border-base-300' : ''}`}
                 >
                   {/* Same seed and settings as marknotes, so the alias has the same face. */}
                   <div className="avatar shrink-0">
@@ -138,7 +138,7 @@ export const CoffeeDetail = memo(function CoffeeDetail({
                     </div>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs">
+                    <p className="mb-1 text-xs">
                       <span className="font-semibold">{comment.alias}</span>{' '}
                       <span className="text-base-content/50">
                         {new Date(comment.createdAt).toLocaleDateString('en-US', {
@@ -148,7 +148,7 @@ export const CoffeeDetail = memo(function CoffeeDetail({
                         })}
                       </span>
                     </p>
-                    <p className="text-xs text-base-content/80 line-clamp-2">
+                    <p className="text-xs leading-relaxed text-base-content/80 line-clamp-3">
                       {comment.message}
                     </p>
                   </div>
