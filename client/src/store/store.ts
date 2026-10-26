@@ -21,18 +21,10 @@ type SelectedCoffeeSlice = {
   removeSelectedCoffee: () => void;
 };
 
-export const createSelectedCoffeeSlice: StateCreator<SelectedCoffeeSlice> = (
-  set,
-  get
-) => ({
+export const createSelectedCoffeeSlice: StateCreator<SelectedCoffeeSlice> = (set) => ({
   selectedCoffee: null,
-  setSelectedCoffee: (coffee: Coffee) => {
-    const current = get().selectedCoffee;
-    // Only update if the coffee is different
-    if (!current || current.id !== coffee.id) {
-      set({ selectedCoffee: coffee });
-    }
-  },
+  // A fresh object every time, so picking the selected shop again still flies the map back to it.
+  setSelectedCoffee: (coffee: Coffee) => set({ selectedCoffee: { ...coffee } }),
   removeSelectedCoffee: () => {
     set({ selectedCoffee: null });
   },

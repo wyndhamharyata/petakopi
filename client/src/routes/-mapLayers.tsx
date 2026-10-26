@@ -29,20 +29,9 @@ function useDarkMode() {
 }
 
 export function MapLayers() {
-  const [location, setLocation] = useState<[number, number]>(DEFAULT_CENTER);
   const [hovered, setHovered] = useState<string | undefined>();
 
   const collapse = useAppStore((state) => state.collapsed);
-
-  useEffect(() => {
-    if (!navigator.geolocation) {
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition((position) => {
-      setLocation([position.coords.latitude, position.coords.longitude]);
-    });
-  }, []);
 
   const { data } = useSWR('coffees', rpcFetch(client.api.coffees.$get)({}), {
     revalidateOnFocus: false,
@@ -58,10 +47,10 @@ export function MapLayers() {
         id="map-layer"
         className="!h-full w-full bg-base-100"
         mapStyle={isDark ? TILE_URL_DARK : TILE_URL_LIGHT}
-        initialCenter={[location[1], location[0]]}
+        initialCenter={[DEFAULT_CENTER[1], DEFAULT_CENTER[0]]}
         initialZoom={13}
       >
-        <CoffeeMarkers data={data} hovered={hovered} setHovered={setHovered} />
+        <CoffeeMarkers data={data} hovered={hovered} setHovered={setHovered} isDark={isDark} />
       </RMap>
     </div>
   );

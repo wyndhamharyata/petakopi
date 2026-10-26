@@ -28,7 +28,8 @@ export interface CoffeeTable {
   open_hours: OpenHour;
 }
 
-export type Coffee = Selectable<CoffeeTable>;
+// `thumbnail_url` is joined in by the list endpoints, not stored on the row.
+export type Coffee = Selectable<CoffeeTable> & { thumbnail_url?: string | null };
 
 const validateLatLng = (lat: number, lng: number): boolean => {
   const isLatValid = !isNaN(lat) && lat >= -90 && lat <= 90;

@@ -1,5 +1,6 @@
 import { getDB } from '../db';
-import { sql } from 'kysely';
+import { type ExpressionBuilder, sql } from 'kysely';
+import type { Database } from '../db';
 import { Resource } from 'sst';
 import { type Coffee, ModifyCoffeeReqSchema } from '@rpcTypes/coffee';
 import { uuidv7 } from 'uuidv7';
@@ -14,6 +15,17 @@ interface Review {
   pubDate: string;
   url: string;
 }
+
+// First photo by position: lists and pins show it without fetching every shop's photos.
+const thumbnail = (eb: ExpressionBuilder<Database, 'coffees'>) =>
+  eb
+    .selectFrom('images')
+    .select('images.url')
+    .whereRef('images.coffee_id', '=', 'coffees.id')
+    .orderBy('images.position')
+    .orderBy('images.id')
+    .limit(1)
+    .as('thumbnail_url');
 
 // mwyndham.dev's published reviews decide which shops are reviewed, and their rating.
 // `minAge` lets a refresh skip the fetch when the copy is only seconds old.
@@ -52,7 +64,7 @@ export async function refreshReviews() {
 export async function coffeeById(id: string) {
   const db = await getDB();
   const [coffee, reviews] = await Promise.all([
-    db.selectFrom('coffees').where('coffees.id', '=', id).selectAll().executeTakeFirst(),
+    db.selectFrom('coffees').where('coffees.id', '=', id).selectAll().select(thumbnail).executeTakeFirst(),
     reviewIndex(),
   ]);
 
@@ -62,7 +74,7 @@ export async function coffeeById(id: string) {
 export async function coffees() {
   const db = await getDB();
   const [rows, reviews] = await Promise.all([
-    db.selectFrom('coffees').selectAll().execute(),
+    db.selectFrom('coffees').selectAll().select(thumbnail).execute(),
     reviewIndex(),
   ]);
   return rows.map((coffee) => withReview(coffee, reviews));
@@ -71,7 +83,7 @@ export async function coffees() {
 export async function latestReviews() {
   const db = await getDB();
   const [rows, reviews, comments] = await Promise.all([
-    db.selectFrom('coffees').selectAll().execute(),
+    db.selectFrom('coffees').selectAll().select(thumbnail).execute(),
     reviewIndex(),
     fetch('https://mwyndham.dev/api/coffee-reviews/comments.json')
       .then((r) => (r.ok ? r.json() : {}) as Promise<Record<string, { count: number }>>)
@@ -100,6 +112,7 @@ export async function search(queryParam: string | undefined) {
     db
       .selectFrom('coffees')
       .selectAll()
+      .select(thumbnail)
       // @formatter:off
       .where((q) =>
         q.or([

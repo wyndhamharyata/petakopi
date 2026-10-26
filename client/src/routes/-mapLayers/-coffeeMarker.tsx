@@ -6,20 +6,11 @@ import { RiMapPin2Fill } from 'react-icons/ri';
 interface CoffeeMarkerProps {
   coffee: Coffee;
   isSelected: boolean;
-  isHovered: boolean;
-  onClick: (coffee: Coffee) => void;
-  onHover: (id: string | undefined) => void;
+  showCard?: boolean;
 }
 
-export function CoffeeMarker({
-  coffee,
-  isSelected,
-  isHovered,
-  onClick,
-  onHover,
-}: CoffeeMarkerProps) {
-  const popupOffset = isSelected ? [-128, -140] : [-128, -130];
-  const pinSize = isSelected ? '50px' : '40px';
+// The selected or hovered shop, drawn as HTML on top of the map's pin layer.
+export function CoffeeMarker({ coffee, isSelected, showCard = false }: CoffeeMarkerProps) {
   const pinClass = isSelected
     ? 'fill-primary stroke-base-content dark:stroke-accent dark:fill-base-100 text-[50px]'
     : 'fill-base-100 stroke-accent dark:stroke-base-content text-[40px]';
@@ -29,27 +20,19 @@ export function CoffeeMarker({
       longitude={coffee.lng}
       latitude={coffee.lat}
       initialAnchor="bottom"
-      onClick={() => onClick(coffee)}
+      // Hover only: letting the pointer through keeps the pin layer's hover from flickering.
+      className={showCard ? 'pointer-events-none' : ''}
     >
-      <div
-        className="cursor-pointer"
-        onMouseEnter={() => onHover(coffee.id)}
-        onMouseLeave={() => onHover(undefined)}
-      >
+      <div className="relative">
         <RiMapPin2Fill
-          className={`${pinClass} text-[${pinSize}] ${coffee.status === 'closed' ? 'opacity-40' : ''}`}
+          className={`${pinClass} ${coffee.status === 'closed' ? 'opacity-40' : ''}`}
           strokeWidth={1.7}
         />
-        <div
-          className={`${
-            !isHovered ? 'hidden' : ''
-          } absolute p-2 w-72 card bg-base-100 border-2 border-base-300 font-atkinson shadow-xl`}
-          style={{
-            transform: `translate(${popupOffset[0]}px, ${popupOffset[1]}px)`,
-          }}
-        >
-          <CoffeeListItem coffee={coffee} />
-        </div>
+        {showCard && (
+          <ul className="absolute bottom-full left-1/2 mb-1 w-72 -translate-x-1/2 p-2 card bg-base-100 border-2 border-base-300 font-atkinson shadow-xl">
+            <CoffeeListItem coffee={coffee} />
+          </ul>
+        )}
       </div>
     </RMarker>
   );
