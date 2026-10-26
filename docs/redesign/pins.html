@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en" data-theme="marknotes-light">
+<head>
+<meta charset="utf-8" />
+<title>Kopimap selected pin options</title>
+<link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  [data-theme='marknotes-light'] {
+    color-scheme: light;
+    --color-base-100: oklch(98% 0 0); --color-base-200: oklch(97% 0 0); --color-base-300: oklch(92% 0 0);
+    --color-base-content: oklch(20% 0 0);
+    --color-primary: oklch(45% 0.15 150); --color-primary-content: oklch(98% 0 0);
+    --color-accent: oklch(50% 0.134 242.749);
+    --map-land: #eceae6; --map-road: #ffffff; --map-water: #cfe0ea; --map-park: #dfe8d6;
+  }
+  [data-theme='marknotes-dark'] {
+    color-scheme: dark;
+    --color-base-100: oklch(25.33% 0.015 252.42); --color-base-200: oklch(23.26% 0.014 253.1); --color-base-300: oklch(21.15% 0.012 254.09);
+    --color-base-content: oklch(90% 0 0);
+    --color-primary: oklch(66.27% 0.2 22.22); --color-primary-content: oklch(13.25% 0.04 22.22);
+    --color-accent: oklch(55% 0.15 245);
+    --map-land: #1f242b; --map-road: #2c333c; --map-water: #18222c; --map-park: #1f2a24;
+  }
+  body { font-family: 'Atkinson Hyperlegible Next', sans-serif; }
+  .map {
+    background-color: var(--map-land);
+    background-image:
+      radial-gradient(ellipse 90px 50px at 80% 25%, var(--map-park) 98%, transparent 100%),
+      linear-gradient(100deg, transparent 60%, var(--map-water) 60%, var(--map-water) 64%, transparent 64%),
+      linear-gradient(0deg, transparent 30%, var(--map-road) 30%, var(--map-road) 33%, transparent 33%),
+      linear-gradient(90deg, transparent 25%, var(--map-road) 25%, var(--map-road) 28%, transparent 28%);
+  }
+  @keyframes halo { 0% { transform: translate(-50%, -50%) scale(.4); opacity: .55 } 100% { transform: translate(-50%, -50%) scale(1.6); opacity: 0 } }
+  .halo { animation: halo 1.8s ease-out infinite; }
+</style>
+</head>
+<body class="bg-base-200 p-8 text-base-content">
+<h1 class="text-xl font-bold">Selected pin options</h1>
+<p class="mb-6 text-[13px] text-base-content/60">Each option shows light and dark, with a reviewed and a known pin close by, like in your screenshots. The dot under the "Lift" option marks the shop's exact spot.</p>
+<div id="grid" class="grid grid-cols-[repeat(auto-fill,minmax(420px,1fr))] gap-6"></div>
+<script>
+const PIN = 'M18.364 17.364L12 23.7279L5.63604 17.364C2.12132 13.8492 2.12132 8.15076 5.63604 4.63604C9.15076 1.12132 14.8492 1.12132 18.364 4.63604C21.8787 8.15076 21.8787 13.8492 18.364 17.364ZM12 13C13.1046 13 14 12.1046 14 11C14 9.89543 13.1046 9 12 9C10.8954 9 10 9.89543 10 11C10 12.1046 10.8954 13 12 13Z';
+const HEAD = 'M18.364 17.364L12 23.7279L5.63604 17.364C2.12132 13.8492 2.12132 8.15076 5.63604 4.63604C9.15076 1.12132 14.8492 1.12132 18.364 4.63604C21.8787 8.15076 21.8787 13.8492 18.364 17.364Z';
+const at = (x, y, w, inner, cls = '', style = '') => `<div class="absolute ${cls}" style="left:${x}%;top:${y}%;width:${w}px;transform:translate(-50%,-100%);${style}">${inner}</div>`;
+const svgPin = (fill, stroke, sw, path = PIN) => `<svg viewBox="-1.5 -1.5 27 27" class="block w-full"><path d="${path}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/></svg>`;
+const neighbours = at(60, 58, 34, svgPin('var(--color-base-100)', 'var(--color-accent)', 1.7)) + at(32, 70, 34, svgPin('var(--color-base-100)', 'var(--color-primary)', 2.6));
+const X = 47, Y = 56; // selected shop's exact spot
+const photo = 'https://resource-kopimap.mwyndham.dev/couvee-1.png';
+
+const options = [
+  ['Current', 'Primary fill, thick base-content outline, 56px. Heavy, and the black/grey outline fights the theme.',
+    () => at(X, Y, 56, svgPin('var(--color-primary)', 'var(--color-base-content)', 1.4), 'drop-shadow-lg')],
+  ['A · Clean ring', 'Primary fill with a white (base-100) ring instead of the dark outline, 44px, soft shadow. Same family as the other pins, just filled.',
+    () => at(X, Y, 44, svgPin('var(--color-primary)', 'var(--color-base-100)', 1.6), '', 'filter:drop-shadow(0 3px 4px rgb(0 0 0/.35))')],
+  ['B · Clean ring + halo', 'A, plus a slow pulsing ring on the ground at the shop\'s spot. Easy to find at a glance, stays calm.',
+    () => `<div class="halo absolute size-14 rounded-full bg-primary/40" style="left:${X}%;top:${Y}%"></div>` + at(X, Y, 44, svgPin('var(--color-primary)', 'var(--color-base-100)', 1.6), '', 'filter:drop-shadow(0 3px 4px rgb(0 0 0/.35))')],
+  ['C · Lift', 'A, raised above a small ground dot that marks the exact spot. Neighbours stay visible under it, and it reads as "picked up".',
+    () => `<div class="absolute h-2 w-4 rounded-[50%] bg-black/35" style="left:${X}%;top:${Y}%;transform:translate(-50%,-50%)"></div><div class="absolute size-2 rounded-full border-2 border-base-100 bg-primary" style="left:${X}%;top:${Y}%;transform:translate(-50%,-50%)"></div>` + at(X, Y - 3, 44, svgPin('var(--color-primary)', 'var(--color-base-100)', 1.6), '', 'filter:drop-shadow(0 8px 6px rgb(0 0 0/.3))')],
+  ['D · Photo pin', 'The shop\'s cover photo in the pin head, with a primary ring. Very distinct; shops without a photo show the plain A pin.',
+    () => at(X, Y, 52, `<svg viewBox="-1.5 -1.5 27 27" class="block w-full"><defs><clipPath id="c"><circle cx="12" cy="11" r="6.3"/></clipPath></defs><path d="${HEAD}" fill="var(--color-primary)" stroke="var(--color-base-100)" stroke-width="1.4"/><image href="${photo}" x="5.7" y="4.7" width="12.6" height="12.6" preserveAspectRatio="xMidYMid slice" clip-path="url(#c)"/></svg>`, '', 'filter:drop-shadow(0 3px 4px rgb(0 0 0/.35))')],
+  ['E · Ring + name', 'A, with the shop name in a small chip beside it. Tells you which pin is which without looking at the panel.',
+    () => at(X, Y, 44, svgPin('var(--color-primary)', 'var(--color-base-100)', 1.6), '', 'filter:drop-shadow(0 3px 4px rgb(0 0 0/.35))') + `<div class="absolute whitespace-nowrap rounded-full border border-base-300 bg-base-100 px-2.5 py-0.5 text-[13px] font-semibold shadow" style="left:${X}%;top:${Y}%;transform:translate(18px,-46px)">Couvee Solo</div>`],
+];
+
+const tile = (theme, draw) => `<div data-theme="marknotes-${theme}" class="map relative h-48 flex-1 overflow-hidden rounded-box border border-base-300">${neighbours}${draw()}</div>`;
+document.getElementById('grid').innerHTML = options.map(([name, note, draw]) => `
+  <figure class="flex flex-col gap-2 rounded-box border border-base-300 bg-base-100 p-3">
+    <div class="flex gap-2">${tile('light', draw)}${tile('dark', draw)}</div>
+    <figcaption><p class="text-[15px] font-semibold">${name}</p><p class="text-[13px] text-base-content/60">${note}</p></figcaption>
+  </figure>`).join('');
+</script>
+</body>
+</html>

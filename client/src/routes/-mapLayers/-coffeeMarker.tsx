@@ -13,9 +13,9 @@ interface CoffeeMarkerProps {
 // The selected or hovered shop, drawn as HTML on top of the map's pin layer.
 export function CoffeeMarker({ coffee, isSelected, showCard = false }: CoffeeMarkerProps) {
   const setSelected = useAppStore((state) => state.setSelectedCoffee);
-  // Same look in both themes, larger than any layer pin, so the selection never reads as "reviewed".
+  // The only filled pin, ringed in the base colour with a primary glow, so it never reads as "reviewed".
   const pinClass = isSelected
-    ? 'fill-primary stroke-base-content text-[56px] drop-shadow-lg'
+    ? 'relative fill-primary stroke-base-100 text-[50px] drop-shadow-lg drop-shadow-primary/60'
     : coffee.status === 'reviewed'
       ? 'fill-base-100 stroke-primary text-[40px] [&_path]:[stroke-width:2.6]'
       : 'fill-base-100 stroke-accent text-[40px]';
@@ -30,6 +30,10 @@ export function CoffeeMarker({ coffee, isSelected, showCard = false }: CoffeeMar
       onClick={() => setSelected(coffee)}
     >
       <div className="relative">
+        {isSelected && (
+          // Pulsing ring on the ground at the shop's exact spot.
+          <span className="absolute bottom-0 left-1/2 size-8 -translate-x-1/2 translate-y-1/2 rounded-full bg-primary/40 animate-ping [animation-duration:1.8s] motion-reduce:animate-none" />
+        )}
         <RiMapPin2Fill
           className={`${pinClass} ${coffee.status === 'closed' ? 'opacity-40' : ''}`}
           strokeWidth={1.7}
