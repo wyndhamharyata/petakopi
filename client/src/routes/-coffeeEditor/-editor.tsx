@@ -83,6 +83,15 @@ export function Editor({ id = undefined, submitQuery }: EditorProps) {
         }
       }
 
+      // Before uploads, which append after the saved order.
+      const order = formData.get('imageOrder');
+      if (order) {
+        const orderRes = await client.api.coffees.images.order.$post({
+          json: { coffeeId: data.id, ids: String(order).split(',') },
+        });
+        if (!orderRes.ok) console.warn('Image reorder failed');
+      }
+
       const imageEntries = [...formData.entries()].filter(([k]) =>
         k.startsWith('input-image')
       );
@@ -170,7 +179,6 @@ function AddShopForm({
   loading,
   coffee,
 }: AddShopProps) {
-  const [hovered, setHovered] = useState<number | undefined>();
   const [existingImages, setExistingImages] = useState<Image[]>([]);
 
   const { data: imageExisting } = useSWR(
@@ -207,169 +215,261 @@ function AddShopForm({
     [images, setImages]
   );
 
+  const thumbnail = existingImages[0];
+
   return (
     <fieldset
-      className="m-auto flex flex-col gap-2 overflow-y-auto border px-6 pb-6 drop-shadow-2xl rounded-box border-base-300 bg-base-200 fieldset max-h-[84%] lg:max-h-[50%] md:flex-row"
+      className="m-auto flex max-h-[92%] w-[calc(100%-1rem)] max-w-4xl flex-col overflow-y-auto border rounded-box border-base-300 bg-base-200 shadow-2xl"
       disabled={loading}
     >
-      <legend className="fieldset-legend">
-        {coffee ? 'Edit Shop' : 'Add Shop'}
-      </legend>
-
-      <div className="flex flex-col gap-1 w-xs">
-        <label className="label">Name</label>
-        <input
-          name="shopName"
-          className="w-full input"
-          placeholder="Starbuck Coffee"
-          defaultValue={coffee?.name ?? ''}
-        />
-
-        <label className="mt-2 label">Lat Long</label>
-        <input
-          name="latLong"
-          className="w-full input"
-          placeholder="-7.55, 110.76"
-          defaultValue={latLongValue}
-        />
-
-        <label className="mt-2 label">Open Hours</label>
-        <input
-          name="openHours"
-          className="w-full input"
-          placeholder="08:00-17:00"
-          defaultValue={coffee?.open_hours ?? ''}
-        />
-
-        {coffee && (
-          <>
-            {/* A review on mwyndham.dev owns the rating; without one, this form sets it. */}
-            <label className="mt-2 label">Review</label>
-            <div className="flex flex-col gap-2 border p-3 rounded-box border-base-300 bg-base-100">
-              {coffee.review ? (
-                <>
-                  <div className="flex items-center justify-between gap-2">
-                    <Rating ratingValue={coffee.rating} />
-                    <span className="text-xs text-base-content/60">
-                      set in the review
-                    </span>
-                  </div>
-                  <p className="text-xs font-bold line-clamp-2">
-                    {coffee.review.title}
-                  </p>
-                  <a
-                    className="btn btn-secondary btn-outline btn-sm"
-                    target="_blank"
-                    href={`https://mwyndham.dev/admin/articles/${coffee.review.slug}/edit`}
-                  >
-                    Edit Review
-                  </a>
-                </>
-              ) : (
-                <>
-                  <p className="text-xs">No review yet</p>
-                  <div className="rating rating-half">
-                    <input type="radio" name="rating" value={0} className="rating-hidden" defaultChecked={!coffee.rating} aria-label="Not rated" />
-                    {[...Array(10)].map((_, i) => {
-                      const v = (i + 1) / 2;
-                      return (
-                        <input
-                          key={v}
-                          type="radio"
-                          name="rating"
-                          value={v}
-                          className={`mask ${i % 2 === 0 ? 'mask-half-1' : 'mask-half-2'} mask-star-2 bg-accent`}
-                          aria-label={`${v} star`}
-                          defaultChecked={coffee.rating === v}
-                        />
-                      );
-                    })}
-                  </div>
-                  <a
-                    className="btn btn-secondary btn-outline btn-sm"
-                    target="_blank"
-                    href={`https://mwyndham.dev/admin/articles/new?coffeeId=${coffee.id}`}
-                  >
-                    Write Review
-                  </a>
-                </>
-              )}
-            </div>
-          </>
-        )}
-
-        <label className="mt-2 label">Address</label>
-        <textarea
-          name="address"
-          className="w-full textarea"
-          placeholder="George St. 17"
-          defaultValue={coffee?.address ?? ''}
-        />
-
-        <label className="mt-3 flex w-fit items-center gap-2 text-xs">
-          <input
-            type="checkbox"
-            name="closed"
-            className="toggle toggle-sm"
-            defaultChecked={coffee?.status === 'closed'}
+      <div
+        className={`relative h-44 shrink-0 overflow-hidden rounded-t-box ${thumbnail ? '' : 'bg-neutral'}`}
+      >
+        {thumbnail && (
+          <img
+            src={thumbnail.url}
+            alt={thumbnail.alt}
+            className="absolute inset-0 size-full object-cover"
           />
-          Closed permanently
-        </label>
-      </div>
-      <div className="mx-2 divider md:divider-horizontal my-1"></div>
-      <div className="flex flex-col gap-2 w-xs md:pt-4">
-        {existingImages.length > 0 && (
-          <div
-            className={`flex flex-row gap-2 overflow-x-scroll px-2 pb-2 mx-2 md:pt-2`}
-          >
-            {existingImages?.map((image, index) => (
-              <div
-                key={`horizontal-images-${image.id}`}
-                className="h-[80px] w-[80px] shrink-0 relative"
-                onMouseEnter={() => setHovered(index)}
-                onMouseLeave={() => setHovered(undefined)}
-              >
-                <button
-                  className={`${
-                    index === hovered ? 'block' : 'hidden'
-                  } top-0 left-0 right-0 bottom-0 bg-base-content/60 dark:bg-black/80 text-base-100 dark:text-base-content absolute rounded-box flex`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    onImageRemoved(image.id);
-                    setExistingImages([
-                      ...existingImages.filter((i) => i.id != image.id),
-                    ]);
-                  }}
-                >
-                  <RiDeleteBin3Line className="m-auto w-8 h-8" />
-                </button>
-                <img
-                  src={image.url}
-                  alt={image.alt}
-                  className="h-[80px] w-[80px] object-cover rounded-box"
-                />
-              </div>
-            ))}
-          </div>
         )}
-        <div className="flex flex-col gap-2 overflow-x-clip overflow-y-scroll p-2">
-          {images.map((name) => (
-            <input type="file" key={name} name={name} className="file-input" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
+        {coffee && (
+          <span className="badge badge-sm absolute right-4 top-4 border-white/60 bg-black/40 text-white capitalize">
+            {coffee.status}
+          </span>
+        )}
+        <div className="absolute inset-x-0 bottom-0 px-6 pb-4 text-white">
+          <p className="text-xs uppercase tracking-widest text-white/70">
+            {coffee ? 'Edit Shop' : 'Add Shop'}
+          </p>
+          <h2 className="text-2xl font-extrabold">{coffee?.name ?? 'New coffee shop'}</h2>
+          {coffee && (
+            <p className="text-xs text-white/70">
+              Added {formatDate(coffee.created_at)} · last edited {formatDate(coffee.updated_at)}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <section className="flex flex-col gap-3 border-b border-base-300 p-6">
+        <div className="flex items-baseline justify-between gap-2">
+          <h3 className="text-sm font-bold">Photos</h3>
+          {existingImages.length > 1 && (
+            <span className="text-xs text-base-content/50">
+              Click a photo to make it the thumbnail
+            </span>
+          )}
+        </div>
+        <input
+          type="hidden"
+          name="imageOrder"
+          value={existingImages.map((i) => i.id).join(',')}
+        />
+        <div className="flex gap-2 overflow-x-auto p-1">
+          {existingImages.map((image, index) => (
+            <div key={image.id} className="group relative size-20 shrink-0">
+              <button
+                type="button"
+                aria-label={index === 0 ? 'Thumbnail' : 'Make thumbnail'}
+                className={`size-full overflow-hidden rounded-box ${
+                  index === 0
+                    ? 'ring-2 ring-primary ring-offset-2 ring-offset-base-200'
+                    : 'opacity-80 hover:opacity-100'
+                }`}
+                onClick={() =>
+                  setExistingImages([image, ...existingImages.filter((i) => i.id !== image.id)])
+                }
+              >
+                <img src={image.url} alt={image.alt} className="size-full object-cover" />
+              </button>
+              {index === 0 && (
+                <span className="badge badge-primary badge-xs absolute -bottom-1 left-1/2 -translate-x-1/2">
+                  1st
+                </span>
+              )}
+              <button
+                type="button"
+                aria-label="Remove photo"
+                className="absolute -right-1 -top-1 hidden size-6 items-center justify-center rounded-full bg-base-content text-base-100 group-hover:flex"
+                onClick={() => {
+                  onImageRemoved(image.id);
+                  setExistingImages(existingImages.filter((i) => i.id !== image.id));
+                }}
+              >
+                <RiDeleteBin3Line className="size-3.5" />
+              </button>
+            </div>
           ))}
-          <button className="btn btn-ghost btn-accent" onClick={handleAddImage}>
-            + Add Image
+          <button
+            type="button"
+            className="flex size-20 shrink-0 flex-col items-center justify-center gap-1 rounded-box border-2 border-dashed border-base-300 text-base-content/60 hover:border-accent hover:text-accent"
+            onClick={handleAddImage}
+          >
+            <span className="text-xl leading-none">+</span>
+            <span className="text-[10px]">Add photo</span>
           </button>
         </div>
+        {images.map((name) => (
+          <input type="file" key={name} name={name} className="file-input file-input-sm w-full" />
+        ))}
+      </section>
 
-        <div className="mt-auto mb-0 divider" />
-        <button className="btn btn-primary" onClick={onSubmit}>
-          Submit
+      <div className={`grid gap-6 p-6 ${coffee ? 'md:grid-cols-[1fr_17rem]' : ''}`}>
+        <div className="flex min-w-0 flex-col gap-6">
+          <section className="flex flex-col gap-2">
+            <h3 className="text-sm font-bold">Shop</h3>
+            <label className="label text-xs">Name</label>
+            <input
+              name="shopName"
+              className="w-full input"
+              placeholder="Starbuck Coffee"
+              defaultValue={coffee?.name ?? ''}
+            />
+            <label className="label mt-1 text-xs">Address</label>
+            <textarea
+              name="address"
+              rows={2}
+              className="w-full textarea"
+              placeholder="George St. 17"
+              defaultValue={coffee?.address ?? ''}
+            />
+          </section>
+
+          <section className="flex flex-col gap-2">
+            <h3 className="text-sm font-bold">Location &amp; hours</h3>
+            <div className="grid gap-3 sm:grid-cols-[1fr_10rem]">
+              <div className="flex min-w-0 flex-col gap-2">
+                <label className="label text-xs">Lat, Long</label>
+                <input
+                  name="latLong"
+                  className="w-full input"
+                  placeholder="-7.55, 110.76"
+                  defaultValue={latLongValue}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="label text-xs">Open hours</label>
+                <input
+                  name="openHours"
+                  className="w-full input"
+                  placeholder="08:00-17:00"
+                  defaultValue={coffee?.open_hours ?? ''}
+                />
+              </div>
+            </div>
+          </section>
+
+          <label className="flex cursor-pointer items-center justify-between gap-4 border rounded-box border-base-300 bg-base-100 px-4 py-3">
+            <span>
+              <span className="block text-sm font-bold">Closed permanently</span>
+              <span className="block text-xs text-base-content/60">
+                Fades the pin and shows a badge. The review stays.
+              </span>
+            </span>
+            <input
+              type="checkbox"
+              name="closed"
+              className="toggle"
+              defaultChecked={coffee?.status === 'closed'}
+            />
+          </label>
+        </div>
+
+        {coffee && (
+          // A review on mwyndham.dev owns the rating; without one, this form sets it.
+          <aside className="flex flex-col gap-3 self-start border rounded-box border-base-300 bg-base-100 p-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-bold">Review</h3>
+              <span className="text-[10px] uppercase tracking-wider text-base-content/50">
+                mwyndham.dev
+              </span>
+            </div>
+            {coffee.review ? (
+              <>
+                <div className="flex items-center justify-between gap-2">
+                  <Rating ratingValue={coffee.rating} />
+                  <span className="text-xs text-base-content/60">set in the review</span>
+                </div>
+                <p className="text-xs font-bold line-clamp-2">{coffee.review.title}</p>
+                <a
+                  className="btn btn-secondary btn-outline btn-sm"
+                  target="_blank"
+                  href={`https://mwyndham.dev/admin/articles/${coffee.review.slug}/edit`}
+                >
+                  Edit Review ↗
+                </a>
+              </>
+            ) : (
+              <>
+                <p className="text-xs text-base-content/60">
+                  No review yet. You can still give a quick rating.
+                </p>
+                <div className="rating rating-half">
+                  <input
+                    type="radio"
+                    name="rating"
+                    value={0}
+                    className="rating-hidden opacity-0"
+                    defaultChecked={!coffee.rating}
+                    aria-label="Not rated"
+                  />
+                  {[...Array(10)].map((_, i) => {
+                    const v = (i + 1) / 2;
+                    return (
+                      <input
+                        key={v}
+                        type="radio"
+                        name="rating"
+                        value={v}
+                        className={`mask ${i % 2 === 0 ? 'mask-half-1' : 'mask-half-2'} mask-star-2 bg-accent`}
+                        aria-label={`${v} star`}
+                        defaultChecked={coffee.rating === v}
+                      />
+                    );
+                  })}
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-xs self-start px-0 text-base-content/60"
+                  onClick={(e) => {
+                    const radios = e.currentTarget.form?.elements.namedItem('rating');
+                    if (radios instanceof RadioNodeList) radios.value = '0';
+                  }}
+                >
+                  Clear rating
+                </button>
+                <div className="divider my-0" />
+                <a
+                  className="btn btn-secondary btn-outline btn-sm"
+                  target="_blank"
+                  href={`https://mwyndham.dev/admin/articles/new?coffeeId=${coffee.id}`}
+                >
+                  Write Review ↗
+                </a>
+                <p className="text-[11px] text-base-content/50">
+                  Once a review is published, its rating replaces this one.
+                </p>
+              </>
+            )}
+          </aside>
+        )}
+      </div>
+
+      <div className="mt-auto flex items-center justify-end gap-2 border-t border-base-300 px-6 py-4">
+        {loading && <span className="loading loading-spinner loading-sm mr-auto" />}
+        <a href="/" className="btn btn-ghost">
+          Cancel
+        </a>
+        <button className="btn btn-primary min-w-32" onClick={onSubmit}>
+          Save
         </button>
-        {loading && <progress className="progress"></progress>}
       </div>
     </fieldset>
   );
 }
+
+const formatDate = (d: string | number | Date) =>
+  new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
 function SuccessMessage({
   coffeeId,

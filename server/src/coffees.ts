@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import type { Env } from './env';
-import { createImage, deleteImage, image } from './handlers/images';
+import { createImage, deleteImage, image, reorderImages } from './handlers/images';
 import {
   coffeeById,
   coffees,
@@ -14,7 +14,7 @@ import {
 import { authMiddleware } from './middlewares/auth';
 import { vValidator } from '@hono/valibot-validator';
 import { ModifyCoffeeReqSchema } from '@rpcTypes/coffee';
-import { ImageUploadSchema } from '@rpcTypes/image';
+import { ImageOrderSchema, ImageUploadSchema } from '@rpcTypes/image';
 
 export const coffeesApp = new Hono<{ Bindings: Env }>()
   // Return Images of a Coffee Shop
@@ -92,4 +92,10 @@ export const coffeesApp = new Hono<{ Bindings: Env }>()
       const data = c.req.valid('form');
       return c.json(await createImage(data));
     }
+  )
+  .post(
+    'images/order',
+    authMiddleware,
+    vValidator('json', ImageOrderSchema),
+    async (c) => c.json(await reorderImages(c.req.valid('json')))
   );

@@ -1,7 +1,8 @@
 import { type Context } from 'hono';
 import { getDB } from '../db';
 import { type InferOutput } from 'valibot';
-import { ImageUploadSchema } from '@rpcTypes/image';
+import { ImageOrderSchema, ImageUploadSchema } from '@rpcTypes/image';
+import { sql } from 'kysely';
 import { Resource } from 'sst';
 import { uuidv7 } from 'uuidv7';
 
@@ -24,9 +25,24 @@ export async function image(c: Context) {
     .selectFrom('images')
     .selectAll()
     .where('images.coffee_id', '=', id)
+    .orderBy('images.position')
+    .orderBy('images.id')
     .execute();
 
   return c.json(image);
+}
+
+export async function reorderImages(order: InferOutput<typeof ImageOrderSchema>) {
+  const db = await getDB();
+  for (const [position, id] of order.ids.entries()) {
+    await db
+      .updateTable('images')
+      .set({ position })
+      .where('images.id', '=', id)
+      .where('images.coffee_id', '=', order.coffeeId)
+      .execute();
+  }
+  return { success: true };
 }
 
 export async function createImage(
@@ -44,6 +60,8 @@ export async function createImage(
       alt: 'image alt',
       id: imageId,
       coffee_id: image.id,
+      // Append after existing photos so an upload never replaces the thumbnail.
+      position: sql<number>`(select coalesce(max(position), -1) + 1 from images where coffee_id = ${image.id})`,
     })
     .executeTakeFirst();
 
