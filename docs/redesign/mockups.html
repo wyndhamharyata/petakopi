@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en" data-theme="marknotes-light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kopimap redesign mockups</title>
+<link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* Same palettes as client/src/index.css; only --border and radii change. */
+  [data-theme='marknotes-light'] {
+    color-scheme: light;
+    --color-base-100: oklch(98% 0 0); --color-base-200: oklch(97% 0 0); --color-base-300: oklch(92% 0 0);
+    --color-base-content: oklch(20% 0 0);
+    --color-primary: oklch(45% 0.15 150); --color-primary-content: oklch(98% 0 0);
+    --color-accent: oklch(50% 0.134 242.749); --color-accent-content: oklch(98% 0.014 180.72);
+    --color-warning: oklch(72% 0.17 75); --color-warning-content: oklch(27% 0.072 132.109);
+    --color-error: oklch(52% 0.223 3.958); --color-error-content: oklch(94% 0.03 12.58);
+    --map-land: #eceae6; --map-road: #ffffff; --map-water: #cfe0ea; --map-park: #dfe8d6;
+  }
+  [data-theme='marknotes-dark'] {
+    color-scheme: dark;
+    --color-base-100: oklch(25.33% 0.015 252.42); --color-base-200: oklch(23.26% 0.014 253.1); --color-base-300: oklch(21.15% 0.012 254.09);
+    --color-base-content: oklch(90% 0 0);
+    --color-primary: oklch(66.27% 0.2 22.22); --color-primary-content: oklch(13.25% 0.04 22.22);
+    --color-accent: oklch(55% 0.15 245); --color-accent-content: oklch(98% 0.02 245);
+    --color-warning: oklch(70% 0.14 75); --color-warning-content: oklch(20% 0.02 75);
+    --color-error: oklch(52% 0.18 20); --color-error-content: oklch(98% 0.02 20);
+    --map-land: #1f242b; --map-road: #2c333c; --map-water: #18222c; --map-park: #1f2a24;
+  }
+  [data-theme] {
+    --radius-selector: 2rem; --radius-field: 0.5rem; --radius-box: 0.75rem;
+    --size-selector: 0.3125rem; --size-field: 0.25rem; --border: 1px; --depth: 0; --noise: 0;
+  }
+  body { font-family: 'Atkinson Hyperlegible Next', sans-serif; }
+  .map {
+    background-color: var(--map-land);
+    background-image:
+      radial-gradient(ellipse 120px 70px at 78% 22%, var(--map-park) 98%, transparent 100%),
+      linear-gradient(100deg, transparent 47%, var(--map-water) 47%, var(--map-water) 50%, transparent 50%),
+      linear-gradient(0deg, transparent 31%, var(--map-road) 31%, var(--map-road) 33%, transparent 33%),
+      linear-gradient(90deg, transparent 22%, var(--map-road) 22%, var(--map-road) 23.5%, transparent 23.5%),
+      linear-gradient(90deg, transparent 68%, var(--map-road) 68%, var(--map-road) 69%, transparent 69%),
+      linear-gradient(0deg, transparent 72%, var(--map-road) 72%, var(--map-road) 73%, transparent 73%),
+      linear-gradient(35deg, transparent 55%, var(--map-road) 55%, var(--map-road) 56%, transparent 56%);
+  }
+  .frame { box-shadow: 0 0 0 1px var(--color-base-300), 0 20px 40px -20px rgb(0 0 0 / .35); }
+  .fade-out { mask-image: linear-gradient(to bottom, black 55%, transparent); }
+</style>
+</head>
+<body class="bg-base-200 text-base-content">
+<header class="sticky top-0 z-50 flex items-center gap-4 border-b border-base-300 bg-base-100 px-6 py-3">
+  <h1 class="text-xl font-bold">Kopimap redesign mockups</h1>
+  <span class="text-[13px] text-base-content/60">Static, real shop data. See docs/redesign.md.</span>
+  <label class="ml-auto flex cursor-pointer items-center gap-2 text-[13px]">Light
+    <input type="checkbox" class="toggle toggle-sm" onchange="document.documentElement.dataset.theme = this.checked ? 'marknotes-dark' : 'marknotes-light'" />
+    Dark</label>
+</header>
+
+<main class="flex flex-col gap-16 p-8">
+  <section>
+    <h2 class="mb-1 text-[13px] font-bold uppercase tracking-wide text-base-content/60">Mobile</h2>
+    <p class="mb-4 text-[13px] text-base-content/60">One bottom sheet: Peek / Half / Full. Same content as the desktop panel.</p>
+    <div class="flex flex-wrap items-start gap-8" id="mobile"></div>
+  </section>
+  <section>
+    <h2 class="mb-1 text-[13px] font-bold uppercase tracking-wide text-base-content/60">Desktop</h2>
+    <p class="mb-4 text-[13px] text-base-content/60">One left panel switching Browse → Shop → Edit. No right-hand card.</p>
+    <div class="flex flex-col gap-8" id="desktop"></div>
+  </section>
+  <section>
+    <h2 class="mb-4 text-[13px] font-bold uppercase tracking-wide text-base-content/60">Rules at a glance</h2>
+    <div id="rules"></div>
+  </section>
+</main>
+
+<script>
+const PIN = 'M18.364 17.364L12 23.7279L5.63604 17.364C2.12132 13.8492 2.12132 8.15076 5.63604 4.63604C9.15076 1.12132 14.8492 1.12132 18.364 4.63604C21.8787 8.15076 21.8787 13.8492 18.364 17.364ZM12 13C13.1046 13 14 12.1046 14 11C14 9.89543 13.1046 9 12 9C10.8954 9 10 9.89543 10 11C10 12.1046 10.8954 13 12 13Z';
+const pin = (x, y, kind = 'known', extra = '') => {
+  const s = { known: ['var(--color-base-100)', 'var(--color-accent)', 1.7, 34], reviewed: ['var(--color-base-100)', 'var(--color-primary)', 2.6, 34], selected: ['var(--color-primary)', 'var(--color-base-content)', 1.4, 52] }[kind];
+  return `<svg class="absolute ${kind === 'selected' ? 'drop-shadow-lg' : ''} ${extra}" style="left:${x}%;top:${y}%;width:${s[3]}px;transform:translate(-50%,-100%)" viewBox="-1 -1 26 26"><path d="${PIN}" fill="${s[0]}" stroke="${s[1]}" stroke-width="${s[2]}"/></svg>`;
+};
+const cluster = (x, y, n, reviewed) => `<div class="absolute grid size-9 place-items-center rounded-full bg-base-100 text-[13px] font-semibold" style="left:${x}%;top:${y}%;transform:translate(-50%,-50%);box-shadow:0 0 0 3px var(--color-${reviewed ? 'primary' : 'accent'})">${n}</div>`;
+const mapPins = (sel) => [pin(30, 28), pin(36, 40, 'reviewed'), pin(58, 18), pin(64, 34), cluster(20, 52, 12, true), cluster(80, 46, 7), pin(46, 52, 'known'), sel ? pin(sel[0], sel[1], 'selected') : pin(52, 30, 'reviewed')].join('');
+
+const I = {
+  search: '<svg class="size-4 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>',
+  back: '<svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>',
+  clock: '<svg class="size-5 shrink-0 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  place: '<svg class="size-5 shrink-0 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12Z"/><circle cx="12" cy="10" r="2.5"/></svg>',
+  walk: '<svg class="size-5 shrink-0 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="13" cy="4" r="2"/><path d="m9 21 2-6 3 3v3M7 12l3-4 4 1 2 4"/></svg>',
+  copy: '<svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>',
+  chat: '<svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z"/></svg>',
+  plus: '<svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  up: '<svg class="size-4 rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>',
+  star: (f = 1) => `<svg class="size-4" viewBox="0 0 24 24"><defs><linearGradient id="h${f}"><stop offset="${f * 100}%" stop-color="var(--color-warning)"/><stop offset="${f * 100}%" stop-color="color-mix(in oklch, var(--color-base-content) 20%, transparent)"/></linearGradient></defs><path fill="url(#h${f})" d="m12 2 3 6.5 7 .8-5.2 4.8 1.4 7-6.2-3.6-6.2 3.6 1.4-7L2 9.3l7-.8Z"/></svg>`,
+};
+const stars = (r) => `<span class="inline-flex">${[1, 2, 3, 4, 5].map((i) => I.star(r >= i ? 1 : r >= i - 0.5 ? 0.5 : 0)).join('')}</span>`;
+const chip = (kind, text) => `<span class="badge badge-sm badge-soft ${{ reviewed: 'badge-primary', known: 'badge-accent', closed: 'badge-error' }[kind]} rounded-full">${text}</span>`;
+
+const shops = {
+  couvee: { name: 'Couvee Solo', kind: 'reviewed', rating: 4, hours: '08:00 – 23:59', addr: 'Jl. Prof. DR. Supomo No.68, Punggawan, Kec. Banjarsari, Kota Surakarta', dist: '1.4 km from you', img: 'https://resource-kopimap.mwyndham.dev/couvee-1.png', photos: 4, comments: 2,
+    nearby: [["D'GRAMM Coffee Surakarta", '150 m', 'known'], ['Nakama Coffee & Eatery', '260 m', 'known'], ['Southern Coffee House', '270 m', 'known']] },
+  antara: { name: 'Antara kopi', kind: 'known', hours: '10:00 – 23:00', addr: null, dist: '850 m from you', img: null, photos: 0,
+    nearby: [['LIGHTSPACE Coffee & Eatery', '180 m', 'known'], ['Loske Coffee Service Karangasem', '480 m', 'reviewed', 3.5], ['Manaka Coffee And Eatery', '500 m', 'known']] },
+};
+const thumbs = { 'Loske Coffee Service Karangasem': 'https://prod-kopimap.mwyndham.dev/images/Screenshot%202025-06-29%20at%2015.06.11.png', 'LIGHTSPACE Coffee & Eatery': 'https://prod-kopimap.mwyndham.dev/images/01a175fc-dd38-7feb-a8ad-4c839dea10a5-087_LIGHTSPACE_COFFEE_EATERY_thumb.jpg', 'Manaka Coffee And Eatery': 'https://prod-kopimap.mwyndham.dev/images/01a175ff-e801-74f9-9f74-5c863266569f-107_Manaka_Coffee_And_Eatery_thumb.jpg', 'Couvee Solo': 'https://resource-kopimap.mwyndham.dev/couvee-1.png', 'Sorak Sorai Coffee Solo': 'https://prod-kopimap.mwyndham.dev/images/Screenshot%202025-07-03%20at%2007.13.27.png' };
+
+const thumb = (name) => thumbs[name]
+  ? `<img src="${thumbs[name]}" class="size-12 shrink-0 rounded-box object-cover" alt="" />`
+  : `<div class="map relative size-12 shrink-0 overflow-hidden rounded-box">${pin(50, 75, 'known', 'scale-50 origin-bottom')}</div>`;
+const row = (name, meta, selected = false) => `<li class="flex min-h-16 cursor-pointer items-center gap-3 rounded-box px-2 py-2 hover:bg-base-200 ${selected ? 'outline-2 outline-primary' : ''}">${thumb(name)}<div class="min-w-0 flex-1"><p class="truncate text-[15px] font-semibold">${name}</p><p class="truncate text-[13px] text-base-content/60">${meta}</p></div></li>`;
+const sectionTitle = (t, right = '') => `<div class="flex items-baseline justify-between"><h3 class="text-[13px] font-bold uppercase tracking-wide text-base-content/60">${t}</h3>${right}</div>`;
+const searchField = `<label class="input w-full">${I.search}<input placeholder="Search coffee shops" /><kbd class="kbd kbd-sm max-lg:hidden">⌘K</kbd></label>`;
+
+const browse = () => `
+  <div class="flex flex-col gap-3 p-4">${searchField}
+    <div role="tablist" class="tabs tabs-border"><a class="tab tab-active">Latest reviews</a><a class="tab">All places</a></div>
+  </div>
+  <ul class="flex flex-col px-2">
+    ${row('Loske Coffee Service Karangasem', `<span class="text-primary">★ 3.5</span> · 2.1 km · Laweyan`)}
+    ${row('Sorak Sorai Coffee Solo', `<span class="text-primary">★ 3.0</span> · 3.0 km · Banjarsari`)}
+    ${row('Couvee Solo', `<span class="text-primary">★ 4.0</span> · 1.4 km · Banjarsari · <span class="inline-flex items-center gap-1 align-middle">${I.chat}2</span>`)}
+  </ul>
+  <div class="mt-auto border-t border-base-300 px-4 py-3 text-center text-[13px] text-base-content/60">149 shops · 12 reviewed · <a class="link link-accent">Sign in</a></div>`;
+
+const header = (s, signedIn) => s.img
+  ? `<div class="relative h-44 shrink-0"><img src="${s.img}" class="size-full rounded-box object-cover" alt="" /><span class="badge badge-sm absolute bottom-2 right-2 border-0 bg-black/55 text-white">1 / ${s.photos}</span></div>`
+  : `<div class="map relative h-44 shrink-0 overflow-hidden rounded-box border border-base-300">${pin(50, 62, 'selected')}${signedIn ? `<button class="btn btn-sm absolute bottom-2 right-2">${I.plus} Add photo</button>` : '<span class="absolute bottom-2 left-2 text-[13px] text-base-content/60">No photos yet</span>'}</div>`;
+
+const fact = (icon, text, extra = '') => `<div class="flex min-h-11 items-center gap-3 text-[15px]">${icon}<span class="flex-1">${text}</span>${extra}</div>`;
+const missing = (icon, label, signedIn) => signedIn
+  ? `<button class="flex min-h-11 w-full items-center gap-3 rounded-field border border-dashed border-base-300 px-3 text-[15px] text-accent hover:border-accent">${icon}<span>${label}</span><span class="ml-auto">${I.plus}</span></button>`
+  : fact(icon, `<span class="text-base-content/60">${label.replace('Add ', '').replace(/^./, (c) => c.toUpperCase())} unknown</span>`);
+
+const shop = (s, { signedIn = false, mobile = false } = {}) => `
+  <div class="flex items-center gap-2 px-2 pt-2"><button class="btn btn-ghost btn-sm btn-square">${I.back}</button><span class="text-[13px] text-base-content/60">${mobile ? '' : 'All places'}</span></div>
+  <div class="flex flex-col gap-6 overflow-y-auto px-4 pb-4">
+    <div class="flex flex-col gap-3">${header(s, signedIn)}
+      <div><h2 class="text-xl font-bold leading-tight">${s.name}</h2>
+        <div class="mt-1.5 flex items-center gap-2">${s.kind === 'reviewed' ? chip('reviewed', 'Reviewed') + stars(s.rating) + `<span class="text-[13px] text-base-content/60">${s.rating.toFixed(1)}</span>` : chip('known', 'Not reviewed yet')}</div>
+      </div>
+    </div>
+    <div class="flex flex-col">
+      ${s.hours ? fact(I.clock, s.hours) : missing(I.clock, 'Add hours', signedIn)}
+      ${s.addr ? fact(I.place, `<span class="text-[13px] leading-snug">${s.addr}</span>`, `<button class="btn btn-ghost btn-xs btn-square" title="Copy address">${I.copy}</button>`) : missing(I.place, 'Add address', signedIn)}
+      ${fact(I.walk, `<span class="text-[13px] text-base-content/60">${s.dist}</span>`)}
+    </div>
+    <div class="flex gap-2">
+      <a class="btn ${s.kind === 'reviewed' ? 'btn-outline' : 'btn-primary'} flex-1">Directions</a>
+      ${s.addr ? '<button class="btn btn-outline">Copy address</button>' : ''}
+      <button class="btn btn-outline">Share</button>
+    </div>
+    ${s.kind === 'reviewed' ? `
+    <div class="flex flex-col gap-3">${sectionTitle('Review', '<span class="text-[13px] text-base-content/60">22 Jun 2025</span>')}
+      <p class="text-[15px] font-semibold">Couvee - Nice Place to Have Work Done</p>
+      <div class="fade-out max-h-28 overflow-hidden text-[15px] leading-relaxed text-base-content/80">Just this weekend, as I worked on the blog that you’re reading right now, I visited Couvee for the nth time this year. Why? Well, because for whatever reason, either the vibe, the coffee, or the position of the table and chair always triggers my mood to be very productive…</div>
+      <a class="btn btn-primary">Read full review ↗</a>
+      <details class="group"><summary class="flex min-h-11 cursor-pointer list-none items-center gap-2 text-[15px] font-semibold">${I.chat} Comments (2)<span class="ml-auto text-[13px] font-normal text-base-content/60">latest: Leafy Outer</span><span class="transition-transform group-open:rotate-180">${I.up}</span></summary></details>
+    </div>` : ''}
+    <div class="flex flex-col gap-1">${sectionTitle('Nearby')}
+      <ul class="-mx-2">${s.nearby.map(([n, d, k, r]) => row(n, `${k === 'reviewed' ? `<span class="text-primary">★ ${r.toFixed(1)}</span>` : '<span class="text-accent">Not reviewed</span>'} · ${d}`)).join('')}</ul>
+    </div>
+  </div>
+  ${signedIn ? `<div class="mt-auto flex gap-2 border-t border-base-300 p-3"><button class="btn btn-ghost flex-1">Edit</button><a class="btn btn-ghost flex-1">${s.kind === 'reviewed' ? 'Edit review ↗' : 'Write review ↗'}</a></div>` : ''}`;
+
+const edit = (s) => `
+  <div class="flex items-center gap-2 border-b border-base-300 px-2 py-2"><button class="btn btn-ghost btn-sm btn-square">${I.back}</button><span class="text-[15px] font-semibold">Edit ${s.name}</span></div>
+  <div class="flex flex-col gap-6 overflow-y-auto p-4">
+    <div class="flex flex-col gap-2">${sectionTitle('Photos', '<span class="text-[13px] text-base-content/60">Drag to reorder · first is cover</span>')}
+      <div class="flex gap-2 p-0.5">
+        <div class="relative size-20 shrink-0 rounded-box outline-2 outline-offset-2 outline-primary"><img src="https://prod-kopimap.mwyndham.dev/images/01a175fc-dd38-7feb-a8ad-4c839dea10a5-087_LIGHTSPACE_COFFEE_EATERY_thumb.jpg" class="size-full rounded-box object-cover" alt="" /><span class="badge badge-primary badge-xs absolute -bottom-2 left-1/2 -translate-x-1/2">Cover</span></div>
+        <button class="flex size-20 shrink-0 flex-col items-center justify-center gap-1 rounded-box border border-dashed border-base-300 text-[13px] text-base-content/60 hover:border-accent hover:text-accent">${I.plus}Add</button>
+      </div>
+    </div>
+    <fieldset class="fieldset gap-1"><legend class="fieldset-legend text-[13px]">Name</legend><input class="input w-full" value="${s.name}" /></fieldset>
+    <fieldset class="fieldset gap-1"><legend class="fieldset-legend text-[13px]">Address <span class="font-normal text-base-content/60">optional</span></legend><textarea class="textarea w-full input-accent outline-2 outline-accent" rows="2" placeholder="Street, area, city"></textarea></fieldset>
+    <fieldset class="fieldset gap-1"><legend class="fieldset-legend text-[13px]">Hours</legend>
+      <div class="flex items-center gap-2"><input type="time" class="input flex-1" value="10:00" /><span>–</span><input type="time" class="input flex-1" value="23:00" /></div>
+      <label class="label mt-1 text-[13px]"><input type="checkbox" class="checkbox checkbox-xs" /> Unknown</label></fieldset>
+    <fieldset class="fieldset gap-1"><legend class="fieldset-legend text-[13px]">Location</legend><input class="input w-full font-mono text-[13px]" value="-7.553697, 110.776349" /><p class="text-[13px] text-base-content/60">Or drag the pin on the map.</p></fieldset>
+    <fieldset class="fieldset gap-1"><legend class="fieldset-legend text-[13px]">My rating <span class="font-normal text-base-content/60">until a review sets it</span></legend><div class="flex items-center gap-3">${stars(0).replace('size-4', 'size-6')}<button class="btn btn-ghost btn-xs">Clear</button></div></fieldset>
+    <label class="flex min-h-11 cursor-pointer items-center justify-between rounded-field border border-base-300 px-3"><span class="text-[15px]">Closed permanently</span><input type="checkbox" class="toggle toggle-sm toggle-error" /></label>
+  </div>
+  <div class="mt-auto flex gap-2 border-t border-base-300 p-3"><button class="btn btn-ghost flex-1">Cancel</button><button class="btn btn-primary flex-1">Save</button></div>`;
+
+const phone = (title, note, height, body, sel, extra = '') => `
+  <figure class="flex w-[375px] flex-col gap-2"><figcaption><p class="text-[15px] font-semibold">${title}</p><p class="text-[13px] text-base-content/60">${note}</p></figcaption>
+  <div class="frame map relative h-[780px] overflow-hidden rounded-[2rem]">${mapPins(sel)}${extra}
+    <div class="absolute inset-x-0 bottom-0 flex flex-col rounded-t-[1.25rem] border-t border-base-300 bg-base-100 shadow-[0_-8px_24px_-12px_rgb(0_0_0/.3)]" style="height:${height}">
+      <div class="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-base-content/20"></div>
+      <div class="flex min-h-0 flex-1 flex-col">${body}</div>
+    </div>
+  </div></figure>`;
+
+const desktop = (title, note, body, sel, extra = '') => `
+  <figure class="flex flex-col gap-2"><figcaption><p class="text-[15px] font-semibold">${title}</p><p class="text-[13px] text-base-content/60">${note}</p></figcaption>
+  <div class="frame map relative h-[800px] w-[1280px] max-w-full overflow-hidden rounded-box">${mapPins(sel)}${extra}
+    <aside class="absolute bottom-4 left-4 top-4 flex w-[400px] flex-col overflow-hidden rounded-box border border-base-300 bg-base-100 shadow-xl">${body}</aside>
+  </div></figure>`;
+
+const dragHint = (x, y) => `<div class="absolute rounded-field border border-base-300 bg-base-100 px-2 py-1 text-[13px] shadow" style="left:${x}%;top:${y}%;transform:translate(-50%,8px)">Drag to move</div>`;
+
+document.getElementById('mobile').innerHTML = [
+  phone('Browse · Half', 'Search lives in the sheet; map top stays clear.', '50%', browse()),
+  phone('Reviewed shop · Full', 'Review and comments now show on mobile.', '92%', shop(shops.couvee, { mobile: true }), [60, 12]),
+  phone('Sparse shop · Half, signed in', 'Unknown facts become "Add" buttons. Mini map instead of the placeholder photo.', '62%', shop(shops.antara, { signedIn: true, mobile: true }), [52, 18]),
+  phone('Sparse shop · Half, visitor', 'Same shop: "Address unknown", plus distance and nearby shops.', '62%', shop(shops.antara, { mobile: true }), [52, 18]),
+  phone('Edit · Full', 'Same sheet becomes the form. Address field focused (2px outline).', '92%', edit(shops.antara)),
+].join('');
+
+document.getElementById('desktop').innerHTML = [
+  desktop('Shop · reviewed', 'The selected pin lands right of the panel.', shop(shops.couvee, { signedIn: true }), [62, 45]),
+  desktop('Shop · sparse, visitor', '', shop(shops.antara), [62, 45]),
+  desktop('Edit in place', 'Pin is draggable while editing; the location field follows it.', edit(shops.antara), [62, 45], dragHint(62, 45)),
+].join('');
+
+document.getElementById('rules').innerHTML = `
+  <div class="grid max-w-4xl gap-6 md:grid-cols-2">
+    <div class="rounded-box border border-base-300 bg-base-100 p-4"><p class="mb-3 text-[13px] font-bold uppercase tracking-wide text-base-content/60">Colour meaning</p>
+      <div class="flex flex-col gap-2 text-[15px]">
+        <div class="flex items-center gap-3">${chip('reviewed', 'Reviewed')} primary: reviewed, or the one main action</div>
+        <div class="flex items-center gap-3">${chip('known', 'Not reviewed yet')} accent: known shops, links</div>
+        <div class="flex items-center gap-3">${chip('closed', 'Closed permanently')} error: closed, delete</div>
+        <div class="flex items-center gap-3">${stars(3.5)} warning: stars only</div>
+      </div></div>
+    <div class="rounded-box border border-base-300 bg-base-100 p-4"><p class="mb-3 text-[13px] font-bold uppercase tracking-wide text-base-content/60">Borders</p>
+      <div class="flex flex-col gap-3 text-[15px]">
+        <div class="flex items-center gap-3"><span class="h-10 w-16 rounded-field border border-base-300"></span>1px: everything</div>
+        <div class="flex items-center gap-3"><span class="h-10 w-16 rounded-field outline-2 outline-primary"></span>2px: selected or focused only</div>
+        <div class="flex items-center gap-3"><span class="h-10 w-16 rounded-field border border-dashed border-base-300"></span>1px dashed: something you can add</div>
+      </div></div>
+  </div>`;
+</script>
+</body>
+</html>
