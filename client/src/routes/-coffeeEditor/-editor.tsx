@@ -5,7 +5,8 @@ import type { Image } from '@rpcTypes/image.ts';
 import { client, rpcFetch } from '@fetcher/fetcher.ts';
 import { useAppStore } from '@store/store.ts';
 import useSWR, { mutate } from 'swr';
-import { RiAddLine, RiArrowLeftSLine, RiCloseLine } from 'react-icons/ri';
+import { RiAddLine, RiCloseLine } from 'react-icons/ri';
+import { PanelHeader } from '../-panelHeader.tsx';
 
 type EditableCoffee = Coffee & { review?: { slug: string; title: string } | null };
 
@@ -124,20 +125,11 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
       onChange={() => setDirty(true)}
       className="flex min-h-0 flex-1 flex-col"
     >
-      <div className="flex items-center gap-3 border-b border-base-300 px-4 pt-3 pb-3">
-        <button
-          type="button"
-          className="btn btn-outline btn-circle btn-sm"
-          onClick={cancel}
-          title="Cancel (Esc)"
-          aria-label="Cancel"
-        >
-          <RiArrowLeftSLine size={20} />
-        </button>
-        <span className="truncate text-[15px] font-semibold">
-          {coffee ? `Edit ${coffee.name}` : 'Add a shop'}
-        </span>
-      </div>
+      <PanelHeader
+        title={coffee ? `Edit ${coffee.name}` : 'Add a shop'}
+        onBack={cancel}
+        backLabel="Cancel"
+      />
 
       {/* min-w-0: a fieldset defaults to min-content width, so the photo strip widened the form. */}
       <fieldset disabled={saving} className="flex min-h-0 min-w-0 flex-1 flex-col gap-6 overflow-y-auto p-4">

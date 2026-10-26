@@ -6,7 +6,6 @@ import { minidenticon } from 'minidenticons';
 import {
   RiAddLine,
   RiArrowDownSLine,
-  RiArrowLeftSLine,
   RiChat3Line,
   RiExternalLinkLine,
   RiFileCopyLine,
@@ -17,6 +16,7 @@ import {
 import { Rating } from './-contentTab/-common/-rating.tsx';
 import { CoffeeListItem } from './-contentTab/-common/-cofeeListItem.tsx';
 import { MiniMap } from './-miniMap.tsx';
+import { PanelHeader } from './-panelHeader.tsx';
 import { getTokens } from '@cookies/tokens.ts';
 import { type ReactNode, memo, useEffect, useMemo, useState } from 'react';
 import {
@@ -33,30 +33,44 @@ const NEARBY_COUNT = 4;
 const canShare = typeof navigator.share === 'function';
 
 const formatDate = (d: string) =>
-  new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  new Date(d).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 
-export const CoffeeDetail = memo(function CoffeeDetail({ coffee }: { coffee: Coffee }) {
+export const CoffeeDetail = memo(function CoffeeDetail({
+  coffee,
+}: {
+  coffee: Coffee;
+}) {
   const clearSelected = useAppStore((state) => state.removeSelectedCoffee);
   const startEdit = useAppStore((state) => state.startEdit);
   const userLocation = useAppStore((state) => state.userLocation);
-  const sheet = useAppStore((state) => state.sheet);
   const { authenticated } = getTokens();
 
   const { data: images } = useSWR(
     `imageData:${coffee.id}`,
-    rpcFetch(client.api.coffees.images[':id'].$get)({ param: { id: coffee.id } }),
+    rpcFetch(client.api.coffees.images[':id'].$get)({
+      param: { id: coffee.id },
+    }),
     { dedupingInterval: 300000 }
   );
 
   const { data: review } = useSWR(
     // Not `status`: a closed shop can still have a review, and only a review sets a rating.
     coffee.rating > 0 ? ['review', coffee.id] : null,
-    rpcFetch(client.api.coffees.review[':id'].$get)({ param: { id: coffee.id } }),
+    rpcFetch(client.api.coffees.review[':id'].$get)({
+      param: { id: coffee.id },
+    }),
     { dedupingInterval: 300000 }
   );
   const post = review?.post;
 
-  const { data: all } = useSWR('coffees', rpcFetch(client.api.coffees.$get)({}));
+  const { data: all } = useSWR(
+    'coffees',
+    rpcFetch(client.api.coffees.$get)({})
+  );
   const nearby = useMemo(
     () =>
       (all ?? [])
@@ -70,7 +84,9 @@ export const CoffeeDetail = memo(function CoffeeDetail({ coffee }: { coffee: Cof
 
   const [copied, setCopied] = useState<'address' | 'link' | null>(null);
   const copy = (what: 'address' | 'link') => {
-    navigator.clipboard.writeText(what === 'address' ? coffee.address : shopUrl(coffee));
+    navigator.clipboard.writeText(
+      what === 'address' ? coffee.address : shopUrl(coffee)
+    );
     setCopied(what);
     setTimeout(() => setCopied(null), 1500);
   };
@@ -113,100 +129,86 @@ export const CoffeeDetail = memo(function CoffeeDetail({ coffee }: { coffee: Cof
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-center gap-3 px-4 pt-3 pb-1">
-        <button
-          type="button"
-          className="btn btn-outline btn-circle btn-sm"
-          onClick={clearSelected}
-          title="Back (Esc)"
-          aria-label="Back"
-        >
-          <RiArrowLeftSLine size={20} />
-        </button>
-        {/* At peek height only this row shows, so it carries the name. */}
-        <span
-          className={`truncate text-[15px] font-semibold lg:hidden ${sheet === 'peek' ? '' : 'invisible'}`}
-        >
-          {coffee.name}
-        </span>
-      </div>
+      <PanelHeader title={coffee.name} onBack={clearSelected} backLabel="Back">
+        {coffee.status === 'reviewed' || post ? (
+          <span className="badge badge-sm badge-soft badge-primary rounded-full">
+            Reviewed
+          </span>
+        ) : (
+          <span className="badge badge-sm badge-soft badge-accent rounded-full">
+            Not reviewed yet
+          </span>
+        )}
+        {coffee.status === 'closed' && (
+          <span className="badge badge-sm badge-soft badge-error rounded-full">
+            Closed permanently
+          </span>
+        )}
+        {coffee.rating > 0 && (
+          <>
+            <Rating ratingValue={coffee.rating} />
+            <span className="text-[13px] text-base-content/60">
+              {coffee.rating.toFixed(1)}
+            </span>
+          </>
+        )}
+      </PanelHeader>
 
-      <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-4 pb-4">
-        <div className="flex flex-col gap-3">
-          <div className="relative h-44 shrink-0 overflow-hidden rounded-box border border-base-300">
-            {images && images.length > 0 ? (
-              <>
-                <div
-                  className="flex size-full snap-x snap-mandatory overflow-x-auto"
-                  onScroll={(e) =>
-                    setPhoto(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))
-                  }
-                >
-                  {images.map((i) => (
-                    <img
-                      key={i.id}
-                      className="size-full shrink-0 snap-center object-cover"
-                      src={i.url}
-                      alt={i.alt}
-                    />
-                  ))}
-                </div>
-                {images.length > 1 && (
-                  <span className="badge badge-sm absolute bottom-2 right-2 border-0 bg-black/55 text-white">
-                    {photo + 1} / {images.length}
-                  </span>
-                )}
-              </>
-            ) : (
-              <>
-                <MiniMap lat={coffee.lat} lng={coffee.lng} />
-                {images &&
-                  (authenticated ? (
-                    <button
-                      type="button"
-                      className="btn btn-sm absolute bottom-2 right-2"
-                      onClick={startEdit}
-                    >
-                      <RiAddLine size={16} /> Add photo
-                    </button>
-                  ) : (
-                    <span className="badge badge-sm absolute bottom-2 left-2 border-0 bg-base-100/85">
-                      No photos yet
-                    </span>
-                  ))}
-              </>
-            )}
-          </div>
-          <div>
-            <h2 className="text-xl font-bold leading-tight">{coffee.name}</h2>
-            <div className="mt-1.5 flex flex-wrap items-center gap-2">
-              {coffee.status === 'reviewed' || post ? (
-                <span className="badge badge-sm badge-soft badge-primary rounded-full">Reviewed</span>
-              ) : (
-                <span className="badge badge-sm badge-soft badge-accent rounded-full">
-                  Not reviewed yet
+      <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-4">
+        <div className="relative h-44 shrink-0 overflow-hidden rounded-box border border-base-300">
+          {images && images.length > 0 ? (
+            <>
+              <div
+                className="flex size-full snap-x snap-mandatory overflow-x-auto"
+                onScroll={(e) =>
+                  setPhoto(
+                    Math.round(
+                      e.currentTarget.scrollLeft / e.currentTarget.clientWidth
+                    )
+                  )
+                }
+              >
+                {images.map((i) => (
+                  <img
+                    key={i.id}
+                    className="size-full shrink-0 snap-center object-cover"
+                    src={i.url}
+                    alt={i.alt}
+                  />
+                ))}
+              </div>
+              {images.length > 1 && (
+                <span className="badge badge-sm absolute bottom-2 right-2 border-0 bg-black/55 text-white">
+                  {photo + 1} / {images.length}
                 </span>
               )}
-              {coffee.status === 'closed' && (
-                <span className="badge badge-sm badge-soft badge-error rounded-full">
-                  Closed permanently
-                </span>
-              )}
-              {coffee.rating > 0 && (
-                <>
-                  <Rating ratingValue={coffee.rating} />
-                  <span className="text-[13px] text-base-content/60">
-                    {coffee.rating.toFixed(1)}
+            </>
+          ) : (
+            <>
+              <MiniMap lat={coffee.lat} lng={coffee.lng} />
+              {images &&
+                (authenticated ? (
+                  <button
+                    type="button"
+                    className="btn btn-sm absolute bottom-2 right-2"
+                    onClick={startEdit}
+                  >
+                    <RiAddLine size={16} /> Add photo
+                  </button>
+                ) : (
+                  <span className="badge badge-sm absolute bottom-2 left-2 border-0 bg-base-100/85">
+                    No photos yet
                   </span>
-                </>
-              )}
-            </div>
-          </div>
+                ))}
+            </>
+          )}
         </div>
 
         <div className="flex flex-col gap-1">
           {coffee.open_hours ? (
-            <Fact icon={<RiTimeLine size={20} />}>{formatHours(coffee.open_hours)}</Fact>
+            <Fact icon={<RiTimeLine size={20} />}>
+              {formatHours(coffee.open_hours)}
+            </Fact>
           ) : (
             missing(<RiTimeLine size={20} />, 'hours')
           )}
@@ -249,7 +251,11 @@ export const CoffeeDetail = memo(function CoffeeDetail({ coffee }: { coffee: Cof
             Directions
           </a>
           {coffee.address && (
-            <button type="button" className="btn btn-outline" onClick={() => copy('address')}>
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={() => copy('address')}
+            >
               {copied === 'address' ? 'Copied' : 'Copy address'}
             </button>
           )}
@@ -267,7 +273,11 @@ export const CoffeeDetail = memo(function CoffeeDetail({ coffee }: { coffee: Cof
               Share
             </button>
           ) : (
-            <button type="button" className="btn btn-outline" onClick={() => copy('link')}>
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={() => copy('link')}
+            >
               {copied === 'link' ? 'Link copied' : 'Copy link'}
             </button>
           )}
@@ -276,9 +286,7 @@ export const CoffeeDetail = memo(function CoffeeDetail({ coffee }: { coffee: Cof
         {post && (
           <div className="flex flex-col gap-3">
             <SectionTitle
-              right={
-                post.pubDate ? formatDate(post.pubDate) : undefined
-              }
+              right={post.pubDate ? formatDate(post.pubDate) : undefined}
             >
               Review
             </SectionTitle>
@@ -325,7 +333,9 @@ export const CoffeeDetail = memo(function CoffeeDetail({ coffee }: { coffee: Cof
                       <div className="min-w-0">
                         <p className="mb-1 text-[13px]">
                           <span className="font-semibold">{comment.alias}</span>{' '}
-                          <span className="text-base-content/60">{formatDate(comment.createdAt)}</span>
+                          <span className="text-base-content/60">
+                            {formatDate(comment.createdAt)}
+                          </span>
                         </p>
                         <p className="text-[13px] leading-relaxed text-base-content/80 line-clamp-3">
                           {comment.message}
@@ -333,9 +343,16 @@ export const CoffeeDetail = memo(function CoffeeDetail({ coffee }: { coffee: Cof
                       </div>
                     </div>
                   ))}
-                  <a className="link link-accent text-[13px]" target="_blank" href={`${post.url}#comments`}>
+                  <a
+                    className="link link-accent text-[13px]"
+                    target="_blank"
+                    href={`${post.url}#comments`}
+                  >
                     Join the discussion
-                    <RiExternalLinkLine size={14} className="ml-1 inline align-[-2px]" />
+                    <RiExternalLinkLine
+                      size={14}
+                      className="ml-1 inline align-[-2px]"
+                    />
                   </a>
                 </div>
               </details>
@@ -357,7 +374,11 @@ export const CoffeeDetail = memo(function CoffeeDetail({ coffee }: { coffee: Cof
 
       {authenticated && (
         <div className="flex gap-2 border-t border-base-300 p-3">
-          <button type="button" className="btn btn-ghost flex-1" onClick={startEdit}>
+          <button
+            type="button"
+            className="btn btn-ghost flex-1"
+            onClick={startEdit}
+          >
             Edit
           </button>
           <a
@@ -378,7 +399,15 @@ export const CoffeeDetail = memo(function CoffeeDetail({ coffee }: { coffee: Cof
   );
 });
 
-function Fact({ icon, children, extra }: { icon: ReactNode; children: ReactNode; extra?: ReactNode }) {
+function Fact({
+  icon,
+  children,
+  extra,
+}: {
+  icon: ReactNode;
+  children: ReactNode;
+  extra?: ReactNode;
+}) {
   return (
     <div className="flex min-h-11 items-center gap-3 text-[15px]">
       <span className="shrink-0 opacity-70">{icon}</span>
@@ -388,11 +417,21 @@ function Fact({ icon, children, extra }: { icon: ReactNode; children: ReactNode;
   );
 }
 
-function SectionTitle({ children, right }: { children: ReactNode; right?: string }) {
+function SectionTitle({
+  children,
+  right,
+}: {
+  children: ReactNode;
+  right?: string;
+}) {
   return (
     <div className="flex items-baseline justify-between">
-      <h3 className="text-[13px] font-bold uppercase tracking-wide text-base-content/60">{children}</h3>
-      {right && <span className="text-[13px] text-base-content/60">{right}</span>}
+      <h3 className="text-[13px] font-bold uppercase tracking-wide text-base-content/60">
+        {children}
+      </h3>
+      {right && (
+        <span className="text-[13px] text-base-content/60">{right}</span>
+      )}
     </div>
   );
 }
