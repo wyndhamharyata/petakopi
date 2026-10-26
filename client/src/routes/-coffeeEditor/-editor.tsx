@@ -146,9 +146,9 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
       {/* min-w-0: a fieldset defaults to min-content width, so the photo strip widened the form. */}
       <fieldset
         disabled={saving}
-        className="flex min-h-0 min-w-0 flex-1 flex-col gap-6 overflow-y-auto p-4"
+        className="flex min-h-0 min-w-0 flex-1 flex-col gap-5 overflow-y-auto p-4"
       >
-        <div className="flex gap-3 overflow-x-auto p-1 pb-3">
+        <div className="flex gap-3 overflow-x-auto p-1 pb-2">
           {images.map((image, index) => (
             <div key={image.id} className="relative size-20 shrink-0">
               <button
@@ -274,7 +274,7 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
               disabled={hoursUnknown}
             />
           </div>
-          <label className="label mt-1 text-[13px]">
+          <label className="label text-[13px]">
             <input
               type="checkbox"
               className="checkbox checkbox-xs"
@@ -387,8 +387,9 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <fieldset className="fieldset min-w-0 gap-1 p-0">
-      <legend className="fieldset-legend text-[13px]">{label}</legend>
+    // Plain fieldset: daisyUI's adds padding to the legend, which made label gaps uneven.
+    <fieldset className="flex min-w-0 flex-col gap-2">
+      <legend className="mb-2 text-[13px] font-semibold">{label}</legend>
       {children}
     </fieldset>
   );
