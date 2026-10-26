@@ -285,12 +285,7 @@ export const CoffeeDetail = memo(function CoffeeDetail({
 
         {post && (
           <div className="flex flex-col gap-3">
-            <SectionTitle
-              right={post.pubDate ? formatDate(post.pubDate) : undefined}
-            >
-              Review
-            </SectionTitle>
-            <p className="text-[15px] font-semibold">{post.title}</p>
+            <h3 className="text-[15px] font-bold">{post.title}</h3>
             <div
               className="max-h-36 overflow-hidden mask-b-from-40% prose prose-sm max-w-none dark:prose-invert prose-a:text-accent prose-strong:text-base-content"
               dangerouslySetInnerHTML={{ __html: post.html }}
@@ -310,12 +305,9 @@ export const CoffeeDetail = memo(function CoffeeDetail({
                 <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-[15px] font-semibold [&::-webkit-details-marker]:hidden">
                   <RiChat3Line size={16} />
                   Comments ({review.comments.count})
-                  <span className="ml-auto truncate text-[13px] font-normal text-base-content/60">
-                    latest: {review.comments.latest[0]?.alias}
-                  </span>
                   <RiArrowDownSLine
                     size={16}
-                    className="shrink-0 rotate-180 transition-transform duration-300 group-open:rotate-0"
+                    className="ml-auto shrink-0 rotate-180 transition-transform duration-300 group-open:rotate-0"
                   />
                 </summary>
                 <div className="flex flex-col gap-3 pt-2">
@@ -362,7 +354,7 @@ export const CoffeeDetail = memo(function CoffeeDetail({
 
         {nearby.length > 0 && (
           <div className="flex flex-col gap-1">
-            <SectionTitle>Nearby</SectionTitle>
+            <h3 className="text-[15px] font-bold">Nearby</h3>
             <ul className="-mx-2">
               {nearby.map((c) => (
                 <CoffeeListItem key={c.id} coffee={c} from={at(coffee)} />
@@ -413,25 +405,6 @@ function Fact({
       <span className="shrink-0 opacity-70">{icon}</span>
       <span className="flex-1">{children}</span>
       {extra}
-    </div>
-  );
-}
-
-function SectionTitle({
-  children,
-  right,
-}: {
-  children: ReactNode;
-  right?: string;
-}) {
-  return (
-    <div className="flex items-baseline justify-between">
-      <h3 className="text-[13px] font-bold uppercase tracking-wide text-base-content/60">
-        {children}
-      </h3>
-      {right && (
-        <span className="text-[13px] text-base-content/60">{right}</span>
-      )}
     </div>
   );
 }

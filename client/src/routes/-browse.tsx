@@ -99,11 +99,6 @@ export function Browse() {
             >
               All places
             </button>
-            {tab === 'allPlaces' && (
-              <span className="ml-auto self-center text-[13px] text-base-content/60">
-                {userLocation ? 'Nearest first' : 'A–Z'}
-              </span>
-            )}
           </div>
         )}
       </div>

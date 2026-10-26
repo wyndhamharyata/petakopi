@@ -67,7 +67,7 @@ export function Shortcuts() {
   return (
     <dialog ref={dialog} className="modal font-atkinson">
       <div className="modal-box max-w-sm rounded-box border border-base-300 p-5">
-        <h3 className="mb-3 text-[13px] font-bold uppercase tracking-wide text-base-content/60">
+        <h3 className="mb-3 text-[15px] font-bold">
           Keyboard shortcuts
         </h3>
         <dl className="grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-2 text-[15px]">

@@ -43,7 +43,7 @@ Buttons: one `btn-primary` per view. Everything else is `btn-ghost` or a 1px `bt
 | Role | Size | Weight |
 |---|---|---|
 | Shop name | 20px (`text-xl`) | 700 |
-| Section heading | 13px uppercase, tracking-wide | 700, `base-content/60` |
+| Section heading | 15px | 700. No uppercase eyebrows, and no helper text under fields: labels and empty states say what's needed |
 | Body, facts, list name | 15px (`text-[15px]`) | 400, name 600 |
 | Meta (address, distance, dates) | 13px (`text-[13px]`) | 400, `base-content/60` |
 
