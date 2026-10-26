@@ -124,22 +124,23 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
       onChange={() => setDirty(true)}
       className="flex min-h-0 flex-1 flex-col"
     >
-      <div className="flex items-center gap-1 border-b border-base-300 px-2 py-2">
+      <div className="flex items-center gap-3 border-b border-base-300 px-4 pt-3 pb-3">
         <button
           type="button"
-          className="btn btn-ghost btn-sm btn-square"
+          className="btn btn-outline btn-circle btn-sm"
           onClick={cancel}
           title="Cancel (Esc)"
           aria-label="Cancel"
         >
-          <RiArrowLeftSLine size={22} />
+          <RiArrowLeftSLine size={20} />
         </button>
         <span className="truncate text-[15px] font-semibold">
           {coffee ? `Edit ${coffee.name}` : 'Add a shop'}
         </span>
       </div>
 
-      <fieldset disabled={saving} className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-4">
+      {/* min-w-0: a fieldset defaults to min-content width, so the photo strip widened the form. */}
+      <fieldset disabled={saving} className="flex min-h-0 min-w-0 flex-1 flex-col gap-6 overflow-y-auto p-4">
         <div className="flex flex-col gap-2">
           <div className="flex items-baseline justify-between gap-2">
             <h3 className="text-[13px] font-bold uppercase tracking-wide text-base-content/60">
@@ -329,7 +330,7 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
         )}
         {ratingOwnedByReview && (
           <p className="text-[13px] text-base-content/60">
-            Rating is set by your review, “{coffee?.review?.title}”.
+            Rating is set by your review, “{coffee?.review?.title}”
           </p>
         )}
 
@@ -375,7 +376,7 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <fieldset className="fieldset gap-1 p-0">
+    <fieldset className="fieldset min-w-0 gap-1 p-0">
       <legend className="fieldset-legend text-[13px]">
         {label}
         {hint && <span className="font-normal text-base-content/60">{hint}</span>}

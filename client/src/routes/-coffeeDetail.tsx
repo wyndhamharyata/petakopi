@@ -8,6 +8,7 @@ import {
   RiArrowDownSLine,
   RiArrowLeftSLine,
   RiChat3Line,
+  RiExternalLinkLine,
   RiFileCopyLine,
   RiTimeLine,
   RiMapPinLine,
@@ -29,6 +30,7 @@ import {
 } from './-util.ts';
 
 const NEARBY_COUNT = 4;
+const canShare = typeof navigator.share === 'function';
 
 const formatDate = (d: string) =>
   new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -111,15 +113,15 @@ export const CoffeeDetail = memo(function CoffeeDetail({ coffee }: { coffee: Cof
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-center gap-1 px-2 pt-2">
+      <div className="flex items-center gap-3 px-4 pt-3 pb-1">
         <button
           type="button"
-          className="btn btn-ghost btn-sm btn-square"
+          className="btn btn-outline btn-circle btn-sm"
           onClick={clearSelected}
           title="Back (Esc)"
           aria-label="Back"
         >
-          <RiArrowLeftSLine size={22} />
+          <RiArrowLeftSLine size={20} />
         </button>
         {/* At peek height only this row shows, so it carries the name. */}
         <span
@@ -251,9 +253,24 @@ export const CoffeeDetail = memo(function CoffeeDetail({ coffee }: { coffee: Cof
               {copied === 'address' ? 'Copied' : 'Copy address'}
             </button>
           )}
-          <button type="button" className="btn btn-outline" onClick={() => copy('link')}>
-            {copied === 'link' ? 'Link copied' : 'Share'}
-          </button>
+          {/* The system share sheet where there is one; elsewhere say plainly that it copies. */}
+          {canShare ? (
+            <button
+              type="button"
+              className="btn btn-outline"
+              onClick={() =>
+                navigator
+                  .share({ title: coffee.name, url: shopUrl(coffee) })
+                  .catch(() => undefined)
+              }
+            >
+              Share
+            </button>
+          ) : (
+            <button type="button" className="btn btn-outline" onClick={() => copy('link')}>
+              {copied === 'link' ? 'Link copied' : 'Copy link'}
+            </button>
+          )}
         </div>
 
         {post && (
@@ -276,7 +293,8 @@ export const CoffeeDetail = memo(function CoffeeDetail({ coffee }: { coffee: Cof
               href={post.url}
               title="Read full review (R)"
             >
-              Read full review ↗
+              Read full review
+              <RiExternalLinkLine size={16} />
             </a>
             {!!review.comments?.count && (
               // Collapsed by default so the review keeps the space.
@@ -316,7 +334,8 @@ export const CoffeeDetail = memo(function CoffeeDetail({ coffee }: { coffee: Cof
                     </div>
                   ))}
                   <a className="link link-accent text-[13px]" target="_blank" href={`${post.url}#comments`}>
-                    Join the discussion ↗
+                    Join the discussion
+                    <RiExternalLinkLine size={14} className="ml-1 inline align-[-2px]" />
                   </a>
                 </div>
               </details>
@@ -350,7 +369,8 @@ export const CoffeeDetail = memo(function CoffeeDetail({ coffee }: { coffee: Cof
                 : `https://mwyndham.dev/admin/articles/new?coffeeId=${coffee.id}`
             }
           >
-            {post ? 'Edit review ↗' : 'Write review ↗'}
+            {post ? 'Edit review' : 'Write review'}
+            <RiExternalLinkLine size={16} />
           </a>
         </div>
       )}
