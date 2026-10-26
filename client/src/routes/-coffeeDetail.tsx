@@ -4,6 +4,7 @@ import useSWR from 'swr';
 import { client, rpcFetch } from '../fetcher/fetcher.ts';
 import { minidenticon } from 'minidenticons';
 import {
+  RiArrowDownSLine,
   RiChat3Line,
   RiCloseLine,
   RiTimerFlashLine,
@@ -99,7 +100,9 @@ export const CoffeeDetail = memo(function CoffeeDetail({
           <RiTimerFlashLine className={`mr-4`} size={20} />
           <p className={`flex-1/2`}>{`${coffee.open_hours}`}</p>
           {coffee.status === 'closed' && (
-            <span className="badge badge-error badge-soft badge-sm">Closed permanently</span>
+            <span className="badge badge-error badge-soft badge-sm">
+              Closed permanently
+            </span>
           )}
         </div>
         <div className="flex flex-row items-center overflow-ellipsis px-3 font-light min-h-8 hover:bg-base-200">
@@ -118,48 +121,59 @@ export const CoffeeDetail = memo(function CoffeeDetail({
         )}
         {withReview && !!review?.comments?.count && (
           <>
-            <div className="mx-3 mt-3 hidden shrink-0 flex-col gap-3 lg:flex">
-              <p className="flex items-center gap-2 pt-1 text-sm font-bold">
+            {/* Collapsed by default so the review keeps the space. */}
+            <details className="group mx-3 mt-3 hidden shrink-0 lg:block">
+              <summary className="flex cursor-pointer list-none items-center gap-2 pt-1 text-sm font-bold [&::-webkit-details-marker]:hidden">
                 <RiChat3Line size={16} />
                 Comments ({review.comments.count})
-              </p>
-              {review.comments.latest.map((comment) => (
-                <div
-                  key={comment.id}
-                  className={`flex gap-3 rounded-box bg-base-200 p-3 ${comment.parentId ? 'ml-6 border-l-2 border-base-300' : ''}`}
-                >
-                  {/* Same seed and settings as marknotes, so the alias has the same face. */}
-                  <div className="avatar shrink-0">
-                    <div className="w-7 mask mask-squircle bg-base-300 ring-1 ring-base-content/40">
-                      <img
-                        src={`data:image/svg+xml;utf8,${encodeURIComponent(minidenticon(comment.alias, 95, 45))}`}
-                        alt={comment.alias}
-                      />
+                <RiArrowDownSLine
+                  size={16}
+                  className="ml-auto transition-transform group-open:rotate-180"
+                />
+              </summary>
+              <div className="mt-3 flex flex-col gap-3">
+                {review.comments.latest.map((comment) => (
+                  <div
+                    key={comment.id}
+                    className={`flex gap-3 rounded-box bg-base-200 p-3 ${comment.parentId ? 'ml-6 border-l-2 border-base-300' : ''}`}
+                  >
+                    {/* Same seed and settings as marknotes, so the alias has the same face. */}
+                    <div className="avatar shrink-0">
+                      <div className="w-7 mask mask-squircle bg-base-300 ring-1 ring-base-content/40">
+                        <img
+                          src={`data:image/svg+xml;utf8,${encodeURIComponent(minidenticon(comment.alias, 95, 45))}`}
+                          alt={comment.alias}
+                        />
+                      </div>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="mb-1 text-xs">
+                        <span className="font-semibold">{comment.alias}</span>{' '}
+                        <span className="text-base-content/50">
+                          {new Date(comment.createdAt).toLocaleDateString(
+                            'en-US',
+                            {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                            }
+                          )}
+                        </span>
+                      </p>
+                      <p className="text-xs leading-relaxed text-base-content/80 line-clamp-3">
+                        {comment.message}
+                      </p>
                     </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="mb-1 text-xs">
-                      <span className="font-semibold">{comment.alias}</span>{' '}
-                      <span className="text-base-content/50">
-                        {new Date(comment.createdAt).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                        })}
-                      </span>
-                    </p>
-                    <p className="text-xs leading-relaxed text-base-content/80 line-clamp-3">
-                      {comment.message}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </details>
             <div className="mx-3 mt-1 flex items-center gap-2 text-xs lg:hidden">
               <RiChat3Line size={16} className="shrink-0" />
               <span className="font-semibold">{review.comments.count}</span>
               <span className="line-clamp-1 text-base-content/80">
-                {review.comments.latest[0]?.alias}: {review.comments.latest[0]?.message}
+                {review.comments.latest[0]?.alias}:{' '}
+                {review.comments.latest[0]?.message}
               </span>
             </div>
           </>
