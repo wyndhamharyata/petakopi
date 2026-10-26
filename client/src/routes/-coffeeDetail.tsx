@@ -122,13 +122,13 @@ export const CoffeeDetail = memo(function CoffeeDetail({
         {withReview && !!review?.comments?.count && (
           <>
             {/* Collapsed by default so the review keeps the space. */}
-            <details className="group mx-3 mt-3 hidden shrink-0 lg:block">
+            <details className="group mx-3 mt-3 hidden shrink-0 lg:block [interpolate-size:allow-keywords] [&::details-content]:h-0 [&::details-content]:overflow-hidden [&::details-content]:opacity-0 [&::details-content]:transition-all [&::details-content]:duration-300 [&::details-content]:[transition-behavior:allow-discrete] open:[&::details-content]:h-auto open:[&::details-content]:opacity-100">
               <summary className="flex cursor-pointer list-none items-center gap-2 pt-1 text-sm font-bold [&::-webkit-details-marker]:hidden">
                 <RiChat3Line size={16} />
                 Comments ({review.comments.count})
                 <RiArrowDownSLine
                   size={16}
-                  className="ml-auto transition-transform group-open:rotate-180"
+                  className="ml-auto rotate-180 transition-transform duration-300 group-open:rotate-0"
                 />
               </summary>
               <div className="mt-3 flex flex-col gap-3">
