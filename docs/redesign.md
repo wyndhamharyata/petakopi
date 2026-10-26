@@ -112,6 +112,25 @@ From top to bottom:
 ### Sign in
 - Only restyled to the rules above. No flow change.
 
+## Keyboard shortcuts
+One `keydown` listener on `window`. Single-letter keys are ignored while focus is in an input, textarea or contenteditable, and when Ctrl, Alt or ⌘ is held (so browser shortcuts still work). The map keeps its own built-in keys: arrows pan, +/- zoom.
+
+| Key | Where | Does |
+|---|---|---|
+| `Esc` | Anywhere | Back one step: Edit → Shop → Browse. In the search field it clears the query first. In Edit with unsaved changes it asks "Discard changes?" |
+| `⌘K` / `Ctrl+K`, `/` | Anywhere | Focus the search field (opens the mobile sheet to Half). |
+| `↑` `↓` `Enter` | List or search results focused | Move the highlight (the 2px selected outline) and open that shop. The map is not focused at the time, so its arrow keys don't fire. |
+| `J` / `K` | Shop open | Next / previous shop in the list it was opened from. Does nothing at the ends. |
+| `D` | Shop open | Directions in Google Maps (new tab). |
+| `C` | Shop open, has address | Copy the address. A short "Copied" toast confirms it. |
+| `R` | Shop open, reviewed | Open the full review on mwyndham.dev. |
+| `L` | Anywhere | Fly to your location (asks for permission the first time). |
+| `1` / `2` | Browse | Latest reviews / All places. |
+| `?` | Anywhere | Overlay listing these shortcuts. |
+
+- Buttons show their key in the tooltip, for example "Directions (D)". The `⌘K` hint in the search field stays, and is hidden on touch devices.
+- Shortcuts only matter on desktop, so phones need nothing extra.
+
 ## Map
 - Pins and clusters stay as they are. Their colours follow the colour-meaning table, so they already match.
 - The hover card (desktop) uses the same list row component, with a 1px border instead of 2px.
