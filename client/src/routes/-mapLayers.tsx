@@ -3,15 +3,14 @@ import useSWR from 'swr';
 import { client, rpcFetch } from '@fetcher/fetcher.ts';
 import { useEffect, useState } from 'react';
 import { CoffeeMarkers } from './-mapLayers/-coffeeMarkers.tsx';
-import { useAppStore } from '@store/store.ts';
 
 export const DEFAULT_CENTER: [number, number] = [-7.5603894, 110.771847];
-const TILE_URL_LIGHT =
+export const TILE_URL_LIGHT =
   'https://resource.mwyndham.dev/sono/alidade_smooth_light.json';
-const TILE_URL_DARK =
+export const TILE_URL_DARK =
   'https://resource.mwyndham.dev/sono/alidade_smooth_dark.json';
 
-function useDarkMode() {
+export function useDarkMode() {
   const [isDarkMode, setIsDarkMode] = useState(
     window.matchMedia &&
       window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -31,8 +30,6 @@ function useDarkMode() {
 export function MapLayers() {
   const [hovered, setHovered] = useState<string | undefined>();
 
-  const collapse = useAppStore((state) => state.collapsed);
-
   const { data } = useSWR('coffees', rpcFetch(client.api.coffees.$get)({}), {
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
@@ -42,7 +39,7 @@ export function MapLayers() {
   const isDark = useDarkMode();
 
   return (
-    <div className={`${collapse ? 'h-[92vh]' : 'h-[45vh]'} lg:h-full w-full`}>
+    <div className="h-full w-full">
       <RMap
         id="map-layer"
         className="!h-full w-full bg-base-100"

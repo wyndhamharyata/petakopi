@@ -1,6 +1,6 @@
 # Kopimap redesign
 
-Status: draft, waiting for review. Mockups: [`docs/redesign/mockups.html`](redesign/mockups.html). Open it in a browser and use the theme toggle at the top.
+Status: built (all five steps). Selected pin: option B with a primary glow, see [`pins.html`](redesign/pins.html). Mockups: [`docs/redesign/mockups.html`](redesign/mockups.html). Open it in a browser and use the theme toggle at the top.
 
 ## Direction (decided)
 
@@ -160,7 +160,10 @@ Each step can be deployed on its own.
 - Fixing the ~72 shops with suspect copied hours. It's a data task, but it affects "Open now" below.
 - Offline support, user accounts for visitors, filters beyond search.
 
-## Open questions
-1. **"Open now".** Hours plus the current time in Asia/Jakarta give a real "Open now / Closed now" label. But ~72 imported shops may have wrong, copied hours, so the label would be wrong for them. Show it now, after the hours are cleaned, or never?
-2. **Nearby count.** 4 shops, or everything within 1 km?
-3. **Mobile default height.** Half height on load, or Peek, so the map shows first?
+## Decided while building
+- **"Open now"** is left out until the ~72 suspect imported hours are checked; wrong hours would make it lie.
+- **Nearby** shows the 4 closest shops.
+- **Mobile** starts at Half height.
+- **Photo order:** tap a photo to make it the cover (works on touch), instead of drag-to-reorder.
+- **Search** filters the already-loaded shop list on the device, so it's instant; `/api/coffees/search` is no longer called.
+- **Mini map** has no attribution of its own; the main map behind the panel always shows it.

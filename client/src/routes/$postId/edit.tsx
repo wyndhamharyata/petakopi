@@ -1,30 +1,8 @@
 import { createFileRoute, redirect } from '@tanstack/react-router';
-import { Editor } from '../-coffeeEditor/-editor.tsx';
-import { client } from '@fetcher/fetcher.ts';
-import { getTokens } from '@cookies/tokens.ts';
 
+// Editing happens in the shop panel now; keep old links working.
 export const Route = createFileRoute('/$postId/edit')({
-  component: RouteComponent,
-  beforeLoad: async () => {
-    const { access, refresh } = getTokens();
-    if (!access && !refresh) throw redirect({ to: '/authorize' });
+  beforeLoad: ({ params }) => {
+    throw redirect({ to: '/', search: { shop: params.postId, edit: 1 } });
   },
 });
-
-function RouteComponent() {
-  const { postId } = Route.useParams();
-
-  return (
-    <Editor
-      id={postId}
-      submitQuery={(input) =>
-        client.api.coffees[':id'].update.$post({
-          json: input,
-          param: {
-            id: postId,
-          },
-        })
-      }
-    />
-  );
-}

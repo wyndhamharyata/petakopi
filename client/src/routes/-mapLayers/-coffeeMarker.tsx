@@ -2,16 +2,18 @@ import type { Coffee } from '@rpcTypes/coffee.ts';
 import { RMarker } from 'maplibre-react-components';
 import { CoffeeListItem } from '../-contentTab/-common/-cofeeListItem.tsx';
 import { RiMapPin2Fill } from 'react-icons/ri';
-import { useAppStore } from '@store/store.ts';
+import { type LatLng, useAppStore } from '@store/store.ts';
 
 interface CoffeeMarkerProps {
   coffee: Coffee;
   isSelected: boolean;
   showCard?: boolean;
+  // Set while editing: the pin can be dragged to move the shop.
+  onMove?: (latLng: LatLng) => void;
 }
 
 // The selected or hovered shop, drawn as HTML on top of the map's pin layer.
-export function CoffeeMarker({ coffee, isSelected, showCard = false }: CoffeeMarkerProps) {
+export function CoffeeMarker({ coffee, isSelected, showCard = false, onMove }: CoffeeMarkerProps) {
   const setSelected = useAppStore((state) => state.setSelectedCoffee);
   // The only filled pin, ringed in the base colour with a primary glow, so it never reads as "reviewed".
   const pinClass = isSelected
@@ -26,8 +28,13 @@ export function CoffeeMarker({ coffee, isSelected, showCard = false }: CoffeeMar
       latitude={coffee.lat}
       initialAnchor="bottom"
       // Hover only: letting the pointer through keeps the pin layer's hover from flickering.
-      className={showCard ? 'pointer-events-none' : 'cursor-pointer'}
-      onClick={() => setSelected(coffee)}
+      className={showCard ? 'pointer-events-none' : onMove ? 'cursor-grab' : 'cursor-pointer'}
+      onClick={() => !onMove && setSelected(coffee)}
+      draggable={!!onMove}
+      onDragEnd={(e) => {
+        const { lat, lng } = e.target.getLngLat();
+        onMove?.([lat, lng]);
+      }}
     >
       <div className="relative">
         {isSelected && (
@@ -39,7 +46,7 @@ export function CoffeeMarker({ coffee, isSelected, showCard = false }: CoffeeMar
           strokeWidth={1.7}
         />
         {showCard && (
-          <ul className="absolute bottom-full left-1/2 mb-1 w-72 -translate-x-1/2 p-2 card bg-base-100 border-2 border-base-300 font-atkinson shadow-xl">
+          <ul className="absolute bottom-full left-1/2 mb-1 w-72 -translate-x-1/2 rounded-box border border-base-300 bg-base-100 p-1 font-atkinson shadow-xl">
             <CoffeeListItem coffee={coffee} />
           </ul>
         )}

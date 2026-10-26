@@ -47,7 +47,7 @@ const latLngFromStringSchema = pipe(
     const lng = parseFloat(parts[1].trim());
 
     return validateLatLng(lat, lng);
-  }, 'Must be a comma-separated latitude and longitude with valid ranges'),
+  }, 'Location must be "lat, long"'),
   transform<string, [number, number]>((input) => {
     const parts = (input as string).trim().split(',');
 
@@ -72,6 +72,8 @@ const latLngTupleSchema = custom<[number, number]>((value) => {
 const openHourSchema = pipe(
   string(),
   custom((value) => {
+    // Empty means "hours unknown".
+    if ((value as string).trim() === '') return true;
     const parts = (value as string).trim().split('-');
     if (parts.length !== 2) return false;
 
@@ -92,14 +94,15 @@ const openHourSchema = pipe(
     }
 
     return true;
-  }, 'Must be in HH:MM - HH:MM format')
+  }, 'Hours must be HH:MM-HH:MM, or left unknown')
 );
 
 export const ModifyCoffeeSchema = object({
-  shopName: pipe(string(), minLength(10)),
+  shopName: pipe(string(), minLength(2, 'Name is too short')),
   latLong: latLngFromStringSchema,
   openHours: openHourSchema,
-  address: pipe(string(), minLength(20)),
+  // Optional: 50 imported shops have no address yet.
+  address: string(),
   closed: boolean(),
   // Quick rating for shops without a review; a review's rating overrides it.
   rating: optional(pipe(number(), minValue(0), maxValue(5), multipleOf(0.5))),

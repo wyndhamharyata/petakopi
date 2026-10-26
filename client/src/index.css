@@ -37,13 +37,13 @@
     --color-error: oklch(52% 0.223 3.958);
     --color-error-content: oklch(94% 0.03 12.58);
     --radius-selector: 2rem;
-    --radius-field: 1rem;
-    --radius-box: 0.5rem;
+    --radius-field: 0.5rem;
+    --radius-box: 0.75rem;
     --size-selector: 0.3125rem;
     --size-field: 0.21875rem;
-    --border: 2px;
-    --depth: 1;
-    --noise: 1;
+    --border: 1px;
+    --depth: 0;
+    --noise: 0;
 }
 
 @plugin "daisyui/theme" {
@@ -75,26 +75,16 @@
     --color-error: oklch(52% 0.18 20);
     --color-error-content: oklch(98% 0.02 20);
     --radius-selector: 2rem;
-    --radius-field: 1rem;
-    --radius-box: 0.5rem;
+    --radius-field: 0.5rem;
+    --radius-box: 0.75rem;
     --size-selector: 0.3125rem;
     --size-field: 0.21875rem;
-    --border: 2px;
-    --depth: 1;
-    --noise: 1;
+    --border: 1px;
+    --depth: 0;
+    --noise: 0;
 }
 
 @layer utilities {
-    .grid-bg {
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' stroke='%23ddd'%3E%3Cpath d='M10 0v1M10 19v1M0 10h1M19 10h1'/%3E%3C/svg%3E");
-        background-size: 40px 40px;
-    }
-
-    .dark .grid-bg {
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' fill='none' stroke='%23444'%3E%3Cpath d='M10 0v1M10 19v1M0 10h1M19 10h1'/%3E%3C/svg%3E");
-        background-size: 40px 40px;
-    }
-
 
     .maplibregl-canvas {
         @apply h-full w-full;

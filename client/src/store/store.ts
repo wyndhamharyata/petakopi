@@ -1,19 +1,9 @@
 import type { Coffee } from '@rpcTypes/coffee.ts';
 import { create, type StateCreator } from 'zustand/index';
 
-type CollapsibleSlice = {
-  collapsed: boolean;
-  setCollapsed: (collapsed: boolean) => void;
-};
-
-export const createCollapsibleSlice: StateCreator<CollapsibleSlice> = (
-  set
-) => ({
-  collapsed: false,
-  setCollapsed: (collapsed: boolean) => {
-    set({ collapsed });
-  },
-});
+export type Sheet = 'peek' | 'half' | 'full';
+export type Tab = 'latestReviews' | 'allPlaces';
+export type LatLng = [number, number];
 
 type SelectedCoffeeSlice = {
   selectedCoffee: Coffee | null;
@@ -21,50 +11,80 @@ type SelectedCoffeeSlice = {
   removeSelectedCoffee: () => void;
 };
 
-export const createSelectedCoffeeSlice: StateCreator<SelectedCoffeeSlice> = (set) => ({
+export const createSelectedCoffeeSlice: StateCreator<
+  SelectedCoffeeSlice & PanelSlice,
+  [],
+  [],
+  SelectedCoffeeSlice
+> = (set, get) => ({
   selectedCoffee: null,
   // A fresh object every time, so picking the selected shop again still flies the map back to it.
-  setSelectedCoffee: (coffee: Coffee) => set({ selectedCoffee: { ...coffee } }),
-  removeSelectedCoffee: () => {
-    set({ selectedCoffee: null });
-  },
+  setSelectedCoffee: (coffee: Coffee) =>
+    set({
+      selectedCoffee: { ...coffee },
+      editing: false,
+      placing: false,
+      draft: null,
+      sheet: get().sheet === 'peek' ? 'half' : get().sheet,
+    }),
+  removeSelectedCoffee: () => set({ selectedCoffee: null }),
 });
 
-type SearchResultSlice = {
-  searchResults: Coffee[] | null;
-  setSearchResult: (coffees: Coffee[]) => void;
-  clearSearchResult: () => void;
+type PanelSlice = {
+  sheet: Sheet;
+  setSheet: (sheet: Sheet) => void;
+  tab: Tab;
+  setTab: (tab: Tab) => void;
+  query: string;
+  setQuery: (query: string) => void;
+  // The list on screen in Browse, so J/K can step through it from the shop view.
+  browseList: Coffee[];
+  setBrowseList: (list: Coffee[]) => void;
+  userLocation: LatLng | null;
+  setUserLocation: (location: LatLng) => void;
+  // Editing the selected shop, or a new one when nothing is selected.
+  editing: boolean;
+  // Adding: waiting for a tap on the map.
+  placing: boolean;
+  // Where the shop being edited or added sits; the map pin and the form share it.
+  draft: LatLng | null;
+  setDraft: (draft: LatLng) => void;
+  startEdit: () => void;
+  startAdd: () => void;
+  stopEdit: () => void;
 };
 
-export const createSearchResultSlice: StateCreator<SearchResultSlice> = (
-  set,
-  get
-) => ({
-  searchResults: null,
-  setSearchResult: (coffees: Coffee[]) => {
-    const current = get().searchResults;
-    // Only update if the results are actually different
-    if (
-      !current ||
-      current.length !== coffees.length ||
-      !current.every((coffee, index) => coffee.id === coffees[index]?.id)
-    ) {
-      set({ searchResults: coffees });
-    }
+export const createPanelSlice: StateCreator<
+  SelectedCoffeeSlice & PanelSlice,
+  [],
+  [],
+  PanelSlice
+> = (set, get) => ({
+  sheet: 'half',
+  setSheet: (sheet) => set({ sheet }),
+  tab: 'latestReviews',
+  setTab: (tab) => set({ tab }),
+  query: '',
+  setQuery: (query) => set({ query }),
+  browseList: [],
+  setBrowseList: (browseList) => set({ browseList }),
+  userLocation: null,
+  setUserLocation: (userLocation) => set({ userLocation }),
+  editing: false,
+  placing: false,
+  draft: null,
+  setDraft: (draft) => set({ draft }),
+  startEdit: () => {
+    const coffee = get().selectedCoffee;
+    if (coffee) set({ editing: true, draft: [coffee.lat, coffee.lng], sheet: 'full' });
   },
-  clearSearchResult: () => {
-    const current = get().searchResults;
-    // Only update if there are actually results to clear
-    if (current !== null) {
-      set({ searchResults: null });
-    }
-  },
+  // Shrinks the sheet so the map is free to tap.
+  startAdd: () =>
+    set({ selectedCoffee: null, editing: false, placing: true, draft: null, sheet: 'peek' }),
+  stopEdit: () => set({ editing: false, placing: false, draft: null }),
 });
 
-export const useAppStore = create<
-  SelectedCoffeeSlice & SearchResultSlice & CollapsibleSlice
->()((...a) => ({
+export const useAppStore = create<SelectedCoffeeSlice & PanelSlice>()((...a) => ({
   ...createSelectedCoffeeSlice(...a),
-  ...createSearchResultSlice(...a),
-  ...createCollapsibleSlice(...a),
+  ...createPanelSlice(...a),
 }));

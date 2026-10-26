@@ -1,506 +1,386 @@
-import {
-  type FormEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import { type InferOutput, safeParse } from 'valibot';
+import { type FormEvent, useEffect, useRef, useState } from 'react';
+import { safeParse } from 'valibot';
 import { type Coffee, ModifyCoffeeSchema } from '@rpcTypes/coffee.ts';
-import { client, rpcFetch } from '@fetcher/fetcher.ts';
-import useSWR from 'swr';
 import type { Image } from '@rpcTypes/image.ts';
-import { RiDeleteBin3Line } from 'react-icons/ri';
-import { Rating } from '../-contentTab/-common/-rating.tsx';
+import { client, rpcFetch } from '@fetcher/fetcher.ts';
+import { useAppStore } from '@store/store.ts';
+import useSWR, { mutate } from 'swr';
+import { RiAddLine, RiArrowLeftSLine, RiCloseLine } from 'react-icons/ri';
 
-interface TypedResponse<T> extends Response {
-  json(): Promise<T>;
-}
+type EditableCoffee = Coffee & { review?: { slug: string; title: string } | null };
 
-export interface EditorProps {
-  id?: string | undefined;
-  submitQuery: (input: InferOutput<typeof ModifyCoffeeSchema>) => Promise<
-    TypedResponse<{
-      success: boolean;
-      id: string;
-    }>
-  >;
-}
+// Edits the selected shop in place, or adds a new one when `coffee` is undefined.
+export function Editor({ coffee }: { coffee?: EditableCoffee }) {
+  const draft = useAppStore((state) => state.draft);
+  const setDraft = useAppStore((state) => state.setDraft);
+  const stopEdit = useAppStore((state) => state.stopEdit);
+  const setSelected = useAppStore((state) => state.setSelectedCoffee);
 
-export function Editor({ id = undefined, submitQuery }: EditorProps) {
+  const { data: savedImages } = useSWR(
+    coffee ? `imageData:${coffee.id}` : null,
+    rpcFetch(client.api.coffees.images[':id'].$get)({ param: { id: coffee?.id ?? '' } }),
+    { dedupingInterval: 300000 }
+  );
+  const [images, setImages] = useState<Image[]>([]);
+  const [removed, setRemoved] = useState<string[]>([]);
+  const [files, setFiles] = useState<{ file: File; url: string }[]>([]);
+  useEffect(() => setImages(savedImages ?? []), [savedImages]);
+
+  const [open, close] = coffee?.open_hours ? coffee.open_hours.split('-') : ['', ''];
+  const [hoursUnknown, setHoursUnknown] = useState(!coffee?.open_hours);
+  const [latLong, setLatLong] = useState(draft ? `${draft[0]}, ${draft[1]}` : '');
+  const [dirty, setDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
   const formRef = useRef<HTMLFormElement>(null);
 
-  const shouldFetch: boolean = !!id;
-  const { data, isLoading } = useSWR(
-    shouldFetch ? ['coffees', id] : null,
-    rpcFetch(client.api.coffees[':id'].$get)({
-      param: {
-        id: id ? id : '',
-      },
-    })
-  );
-
-  const [images, setImages] = useState<string[]>([]);
-  const [removedImages, setRemovedImages] = useState<string[]>([]);
-  const [savedId, setSavedId] = useState('');
-  const [state, setState] = useState<'new' | 'loading' | 'success' | 'failure'>(
-    shouldFetch && isLoading ? 'loading' : 'new'
-  );
-
-  const handleSubmit = useCallback(
-    async (e: FormEvent) => {
-      e.preventDefault();
-      setState('loading');
-
-      const form = formRef.current;
-      if (!form) return setState('failure');
-
-      const formData = new FormData(form);
-      const values = Object.fromEntries(formData.entries());
-      const parsed = safeParse(ModifyCoffeeSchema, {
-        ...values,
-        closed: formData.get('closed') === 'on',
-        rating: formData.has('rating') ? Number(formData.get('rating')) : undefined,
-      });
-
-      if (!parsed.success) return setState('failure');
-
-      const res = await submitQuery(parsed.output);
-      if (!res.ok) return setState('failure');
-
-      const data = await res.json();
-      if (!data.success) return setState('failure');
-
-      if (removedImages.length > 0) {
-        for (const img of removedImages) {
-          const res = await client.api.coffees.images[':id'].$delete({
-            param: { id: img },
-          });
-          if (!res.ok) console.warn('Image deletion failed');
-          const body = await res.json();
-          if (!body.success) console.warn('Image deletion failed');
-        }
-      }
-
-      // Before uploads, which append after the saved order.
-      const order = formData.get('imageOrder');
-      if (order) {
-        const orderRes = await client.api.coffees.images.order.$post({
-          json: { coffeeId: data.id, ids: String(order).split(',') },
-        });
-        if (!orderRes.ok) console.warn('Image reorder failed');
-      }
-
-      const imageEntries = [...formData.entries()].filter(([k]) =>
-        k.startsWith('input-image')
-      );
-      for (const [, file] of imageEntries) {
-        const imgRes = await client.api.coffees.images.$put({
-          form: {
-            id: data.id,
-            file: file as File,
-          },
-        });
-
-        if (!imgRes.ok) console.warn('Image upload failed');
-      }
-
-      setSavedId(data.id);
-      setState('success');
-    },
-    [submitQuery, removedImages, formRef]
-  );
-
+  // The map pin moved: follow it, unless this field is what moved it.
   useEffect(() => {
-    if (state === 'loading' && !isLoading) {
-      setState('new');
+    if (!draft) return;
+    const [lat, lng] = latLong.split(',').map(Number);
+    if (lat !== draft[0] || lng !== draft[1]) {
+      setLatLong(`${draft[0].toFixed(6)}, ${draft[1].toFixed(6)}`);
+      if (coffee && (draft[0] !== coffee.lat || draft[1] !== coffee.lng)) setDirty(true);
     }
-  }, [isLoading]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft]);
 
-  const coffee = data ? data.coffee : undefined;
-
-  const onImageRemoved = useCallback(
-    (img: string) => {
-      setRemovedImages([...removedImages, img]);
-    },
-    [removedImages]
-  );
-
-  const shopProps = {
-    coffee,
-    images,
-    setImages,
-    onSubmit: handleSubmit,
-    onImageRemoved,
-    loading: state === 'loading',
+  const cancel = () => {
+    if (dirty && !confirm('Discard changes?')) return;
+    stopEdit();
   };
 
-  return (
-    <div className="absolute inset-0 grid-bg">
-      <form
-        ref={formRef}
-        className="absolute inset-0 flex h-full flex-col bg-linear-to-bl from-secondary/10 via-accent/10 to-base-100/10"
-      >
-        {state === 'success' ? (
-          <SuccessMessage
-            coffeeId={savedId}
-            editing={shouldFetch}
-            review={coffee?.review ?? null}
-          />
-        ) : (
-          // Remount once the shop loads: inputs read their default values only on mount.
-          <AddShopForm key={coffee?.id ?? 'new'} {...shopProps} />
-        )}
-      </form>
-    </div>
-  );
-}
-
-interface Review {
-  slug: string;
-  title: string;
-}
-
-interface AddShopProps {
-  images: string[];
-  coffee: (Coffee & { review: Review | null }) | undefined;
-  loading: boolean;
-  setImages: (v: string[]) => void;
-  onImageRemoved: (v: string) => void;
-  onSubmit: (e: FormEvent) => void;
-}
-
-function AddShopForm({
-  images,
-  setImages,
-  onSubmit,
-  onImageRemoved,
-  loading,
-  coffee,
-}: AddShopProps) {
-  const [existingImages, setExistingImages] = useState<Image[]>([]);
-
-  const { data: imageExisting } = useSWR(
-    coffee ? `imageData:${coffee.id}` : null,
-    rpcFetch(client.api.coffees.images[':id'].$get)({
-      param: {
-        id: coffee?.id ?? '',
-      },
-    }),
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      dedupingInterval: 300000, // 5 minutes for images
-    }
-  );
-
   useEffect(() => {
-    if (!imageExisting) {
-      return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') cancel();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
+
+  const save = async (e: FormEvent) => {
+    e.preventDefault();
+    const form = new FormData(formRef.current!);
+    const parsed = safeParse(ModifyCoffeeSchema, {
+      shopName: String(form.get('shopName')).trim(),
+      address: String(form.get('address')).trim(),
+      latLong,
+      openHours: hoursUnknown ? '' : `${form.get('open')}-${form.get('close')}`,
+      closed: form.get('closed') === 'on',
+      rating: form.has('rating') ? Number(form.get('rating')) : undefined,
+    });
+    if (!parsed.success) return setError(parsed.issues[0].message);
+
+    setSaving(true);
+    setError('');
+    try {
+      const res = coffee
+        ? await client.api.coffees[':id'].update.$post({
+            json: parsed.output,
+            param: { id: coffee.id },
+          })
+        : await client.api.coffees.$post({ json: parsed.output });
+      const body = res.ok ? await res.json() : null;
+      if (!body?.success) throw new Error('The shop could not be saved.');
+
+      // Photo steps after the shop row: a failed photo shouldn't lose the shop's edits.
+      for (const id of removed) {
+        await client.api.coffees.images[':id'].$delete({ param: { id } });
+      }
+      // Before uploads, which append after the saved order.
+      if (images.length > 0) {
+        await client.api.coffees.images.order.$post({
+          json: { coffeeId: body.id, ids: images.map((i) => i.id) },
+        });
+      }
+      for (const { file } of files) {
+        const up = await client.api.coffees.images.$put({ form: { id: body.id, file } });
+        if (!up.ok) throw new Error(`Saved, but uploading ${file.name} failed.`);
+      }
+
+      await Promise.all([
+        mutate('coffees'),
+        mutate('latestReviews'),
+        mutate(`imageData:${body.id}`),
+      ]);
+      const { coffee: saved } = await rpcFetch(client.api.coffees[':id'].$get)({
+        param: { id: body.id },
+      })();
+      stopEdit();
+      if (saved) setSelected(saved);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Saving failed.');
+    } finally {
+      setSaving(false);
     }
+  };
 
-    setExistingImages(imageExisting);
-  }, [imageExisting]);
-
-  const latLongValue = useMemo(() => {
-    return coffee?.lat ? `${coffee.lat}, ${coffee.lng}` : '';
-  }, [coffee?.lat, coffee?.lng]);
-
-  const handleAddImage = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      setImages([...images, `input-image-${images.length}`]);
-    },
-    [images, setImages]
-  );
-
-  const thumbnail = existingImages[0];
+  const ratingOwnedByReview = !!coffee?.review;
 
   return (
-    <fieldset
-      className="m-auto flex max-h-[92%] w-[calc(100%-1rem)] max-w-4xl flex-col overflow-y-auto border rounded-box border-base-300 bg-base-200 shadow-2xl"
-      disabled={loading}
+    <form
+      ref={formRef}
+      onSubmit={save}
+      onChange={() => setDirty(true)}
+      className="flex min-h-0 flex-1 flex-col"
     >
-      <div
-        className={`relative h-44 shrink-0 overflow-hidden rounded-t-box ${thumbnail ? '' : 'bg-neutral'}`}
-      >
-        {thumbnail && (
-          <img
-            src={thumbnail.url}
-            alt={thumbnail.alt}
-            className="absolute inset-0 size-full object-cover"
-          />
-        )}
-        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
-        {coffee && (
-          <span className="badge badge-sm absolute right-4 top-4 border-white/60 bg-black/40 text-white capitalize">
-            {coffee.status}
-          </span>
-        )}
-        <div className="absolute inset-x-0 bottom-0 px-6 pb-4 text-white">
-          <p className="text-xs uppercase tracking-widest text-white/70">
-            {coffee ? 'Edit Shop' : 'Add Shop'}
-          </p>
-          <h2 className="text-2xl font-extrabold">{coffee?.name ?? 'New coffee shop'}</h2>
-          {coffee && (
-            <p className="text-xs text-white/70">
-              Added {formatDate(coffee.created_at)} · last edited {formatDate(coffee.updated_at)}
-            </p>
-          )}
-        </div>
+      <div className="flex items-center gap-1 border-b border-base-300 px-2 py-2">
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm btn-square"
+          onClick={cancel}
+          title="Cancel (Esc)"
+          aria-label="Cancel"
+        >
+          <RiArrowLeftSLine size={22} />
+        </button>
+        <span className="truncate text-[15px] font-semibold">
+          {coffee ? `Edit ${coffee.name}` : 'Add a shop'}
+        </span>
       </div>
 
-      <section className="flex flex-col gap-3 border-b border-base-300 p-6">
-        <div className="flex items-baseline justify-between gap-2">
-          <h3 className="text-sm font-bold">Photos</h3>
-          {existingImages.length > 1 && (
-            <span className="text-xs text-base-content/50">
-              Click a photo to make it the thumbnail
-            </span>
-          )}
-        </div>
-        <input
-          type="hidden"
-          name="imageOrder"
-          value={existingImages.map((i) => i.id).join(',')}
-        />
-        <div className="flex gap-2 overflow-x-auto p-1">
-          {existingImages.map((image, index) => (
-            <div key={image.id} className="group relative size-20 shrink-0">
-              <button
-                type="button"
-                aria-label={index === 0 ? 'Thumbnail' : 'Make thumbnail'}
-                className={`size-full overflow-hidden rounded-box ${
-                  index === 0
-                    ? 'ring-2 ring-primary ring-offset-2 ring-offset-base-200'
-                    : 'opacity-80 hover:opacity-100'
-                }`}
-                onClick={() =>
-                  setExistingImages([image, ...existingImages.filter((i) => i.id !== image.id)])
-                }
-              >
-                <img src={image.url} alt={image.alt} className="size-full object-cover" />
-              </button>
-              {index === 0 && (
-                <span className="badge badge-primary badge-xs absolute -bottom-1 left-1/2 -translate-x-1/2">
-                  1st
-                </span>
-              )}
-              <button
-                type="button"
-                aria-label="Remove photo"
-                className="absolute -right-1 -top-1 hidden size-6 items-center justify-center rounded-full bg-base-content text-base-100 group-hover:flex"
-                onClick={() => {
-                  onImageRemoved(image.id);
-                  setExistingImages(existingImages.filter((i) => i.id !== image.id));
-                }}
-              >
-                <RiDeleteBin3Line className="size-3.5" />
-              </button>
-            </div>
-          ))}
-          <button
-            type="button"
-            className="flex size-20 shrink-0 flex-col items-center justify-center gap-1 rounded-box border-2 border-dashed border-base-300 text-base-content/60 hover:border-accent hover:text-accent"
-            onClick={handleAddImage}
-          >
-            <span className="text-xl leading-none">+</span>
-            <span className="text-[10px]">Add photo</span>
-          </button>
-        </div>
-        {images.map((name) => (
-          <input type="file" key={name} name={name} className="file-input file-input-sm w-full" />
-        ))}
-      </section>
-
-      <div className={`grid gap-6 p-6 ${coffee ? 'md:grid-cols-[1fr_17rem]' : ''}`}>
-        <div className="flex min-w-0 flex-col gap-6">
-          <section className="flex flex-col gap-2">
-            <h3 className="text-sm font-bold">Shop</h3>
-            <label className="label text-xs">Name</label>
-            <input
-              name="shopName"
-              className="w-full input"
-              placeholder="Starbuck Coffee"
-              defaultValue={coffee?.name ?? ''}
-            />
-            <label className="label mt-1 text-xs">Address</label>
-            <textarea
-              name="address"
-              rows={2}
-              className="w-full textarea"
-              placeholder="George St. 17"
-              defaultValue={coffee?.address ?? ''}
-            />
-          </section>
-
-          <section className="flex flex-col gap-2">
-            <h3 className="text-sm font-bold">Location &amp; hours</h3>
-            <div className="grid gap-3 sm:grid-cols-[1fr_10rem]">
-              <div className="flex min-w-0 flex-col gap-2">
-                <label className="label text-xs">Lat, Long</label>
-                <input
-                  name="latLong"
-                  className="w-full input"
-                  placeholder="-7.55, 110.76"
-                  defaultValue={latLongValue}
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="label text-xs">Open hours</label>
-                <input
-                  name="openHours"
-                  className="w-full input"
-                  placeholder="08:00-17:00"
-                  defaultValue={coffee?.open_hours ?? ''}
-                />
-              </div>
-            </div>
-          </section>
-
-          <label className="flex cursor-pointer items-center justify-between gap-4 border rounded-box border-base-300 bg-base-100 px-4 py-3">
-            <span>
-              <span className="block text-sm font-bold">Closed permanently</span>
-              <span className="block text-xs text-base-content/60">
-                Fades the pin and shows a badge. The review stays.
-              </span>
-            </span>
-            <input
-              type="checkbox"
-              name="closed"
-              className="toggle"
-              defaultChecked={coffee?.status === 'closed'}
-            />
-          </label>
-        </div>
-
-        {coffee && (
-          // A review on mwyndham.dev owns the rating; without one, this form sets it.
-          <aside className="flex flex-col gap-3 self-start border rounded-box border-base-300 bg-base-100 p-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold">Review</h3>
-              <span className="text-[10px] uppercase tracking-wider text-base-content/50">
-                mwyndham.dev
-              </span>
-            </div>
-            {coffee.review ? (
-              <>
-                <div className="flex items-center justify-between gap-2">
-                  <Rating ratingValue={coffee.rating} />
-                  <span className="text-xs text-base-content/60">set in the review</span>
-                </div>
-                <p className="text-xs font-bold line-clamp-2">{coffee.review.title}</p>
-                <a
-                  className="btn btn-secondary btn-outline btn-sm"
-                  target="_blank"
-                  href={`https://mwyndham.dev/admin/articles/${coffee.review.slug}/edit`}
-                >
-                  Edit Review ↗
-                </a>
-              </>
-            ) : (
-              <>
-                <p className="text-xs text-base-content/60">
-                  No review yet. You can still give a quick rating.
-                </p>
-                <div className="rating rating-half">
-                  <input
-                    type="radio"
-                    name="rating"
-                    value={0}
-                    className="rating-hidden opacity-0"
-                    defaultChecked={!coffee.rating}
-                    aria-label="Not rated"
-                  />
-                  {[...Array(10)].map((_, i) => {
-                    const v = (i + 1) / 2;
-                    return (
-                      <input
-                        key={v}
-                        type="radio"
-                        name="rating"
-                        value={v}
-                        className={`mask ${i % 2 === 0 ? 'mask-half-1' : 'mask-half-2'} mask-star-2 bg-accent`}
-                        aria-label={`${v} star`}
-                        defaultChecked={coffee.rating === v}
-                      />
-                    );
-                  })}
-                </div>
+      <fieldset disabled={saving} className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-4">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-baseline justify-between gap-2">
+            <h3 className="text-[13px] font-bold uppercase tracking-wide text-base-content/60">
+              Photos
+            </h3>
+            {images.length > 1 && (
+              <span className="text-[13px] text-base-content/60">Tap a photo to make it the cover</span>
+            )}
+          </div>
+          <div className="flex gap-3 overflow-x-auto p-1 pb-3">
+            {images.map((image, index) => (
+              <div key={image.id} className="relative size-20 shrink-0">
                 <button
                   type="button"
-                  className="btn btn-ghost btn-xs self-start px-0 text-base-content/60"
-                  onClick={(e) => {
-                    const radios = e.currentTarget.form?.elements.namedItem('rating');
-                    if (radios instanceof RadioNodeList) radios.value = '0';
+                  aria-label={index === 0 ? 'Cover photo' : 'Make cover'}
+                  className={`size-full overflow-hidden rounded-box ${
+                    index === 0 ? 'outline-2 outline-offset-2 outline-primary' : ''
+                  }`}
+                  onClick={() => {
+                    setImages([image, ...images.filter((i) => i.id !== image.id)]);
+                    setDirty(true);
                   }}
                 >
-                  Clear rating
+                  <img src={image.url} alt={image.alt} className="size-full object-cover" />
                 </button>
-                <div className="divider my-0" />
-                <a
-                  className="btn btn-secondary btn-outline btn-sm"
-                  target="_blank"
-                  href={`https://mwyndham.dev/admin/articles/new?coffeeId=${coffee.id}`}
+                {index === 0 && (
+                  <span className="badge badge-primary badge-xs absolute -bottom-2 left-1/2 -translate-x-1/2">
+                    Cover
+                  </span>
+                )}
+                <button
+                  type="button"
+                  aria-label="Remove photo"
+                  className="absolute -right-2 -top-2 grid size-6 place-items-center rounded-full border border-base-300 bg-base-100 hover:bg-error hover:text-error-content"
+                  onClick={() => {
+                    setRemoved([...removed, image.id]);
+                    setImages(images.filter((i) => i.id !== image.id));
+                    setDirty(true);
+                  }}
                 >
-                  Write Review ↗
-                </a>
-                <p className="text-[11px] text-base-content/50">
-                  Once a review is published, its rating replaces this one.
-                </p>
-              </>
-            )}
-          </aside>
-        )}
-      </div>
+                  <RiCloseLine size={14} />
+                </button>
+              </div>
+            ))}
+            {files.map(({ file, url }) => (
+              <div key={url} className="relative size-20 shrink-0">
+                <img src={url} alt={file.name} className="size-full rounded-box object-cover opacity-80" />
+                <span className="badge badge-xs absolute -bottom-2 left-1/2 -translate-x-1/2">New</span>
+                <button
+                  type="button"
+                  aria-label="Remove photo"
+                  className="absolute -right-2 -top-2 grid size-6 place-items-center rounded-full border border-base-300 bg-base-100 hover:bg-error hover:text-error-content"
+                  onClick={() => {
+                    URL.revokeObjectURL(url);
+                    setFiles(files.filter((f) => f.url !== url));
+                  }}
+                >
+                  <RiCloseLine size={14} />
+                </button>
+              </div>
+            ))}
+            <label className="flex size-20 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-box border border-dashed border-base-content/25 text-[13px] text-base-content/60 hover:border-accent hover:text-accent">
+              <RiAddLine size={18} />
+              Add
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  const picked = [...(e.target.files ?? [])].map((file) => ({
+                    file,
+                    url: URL.createObjectURL(file),
+                  }));
+                  setFiles([...files, ...picked]);
+                  e.target.value = '';
+                }}
+              />
+            </label>
+          </div>
+        </div>
 
-      <div className="mt-auto flex items-center justify-end gap-2 border-t border-base-300 px-6 py-4">
-        {loading && <span className="loading loading-spinner loading-sm mr-auto" />}
-        <a href="/" className="btn btn-ghost">
-          Cancel
-        </a>
-        <button className="btn btn-primary min-w-32" onClick={onSubmit}>
-          Save
-        </button>
+        <Field label="Name">
+          <input
+            name="shopName"
+            className="input w-full"
+            defaultValue={coffee?.name ?? ''}
+            placeholder="Kopi Nusantara"
+            autoFocus={!coffee}
+          />
+        </Field>
+
+        <Field label="Address" hint="optional">
+          <textarea
+            name="address"
+            rows={2}
+            className="textarea w-full"
+            defaultValue={coffee?.address ?? ''}
+            placeholder="Street, area, city"
+          />
+        </Field>
+
+        <Field label="Hours">
+          <div className="flex items-center gap-2">
+            <input
+              type="time"
+              name="open"
+              className="input flex-1"
+              defaultValue={open}
+              disabled={hoursUnknown}
+            />
+            <span>–</span>
+            <input
+              type="time"
+              name="close"
+              className="input flex-1"
+              defaultValue={close}
+              disabled={hoursUnknown}
+            />
+          </div>
+          <label className="label mt-1 text-[13px]">
+            <input
+              type="checkbox"
+              className="checkbox checkbox-xs"
+              checked={hoursUnknown}
+              onChange={(e) => setHoursUnknown(e.target.checked)}
+            />
+            Unknown
+          </label>
+        </Field>
+
+        <Field label="Location">
+          <input
+            className="input w-full font-mono text-[13px]"
+            value={latLong}
+            placeholder="-7.55, 110.77"
+            onChange={(e) => {
+              setLatLong(e.target.value);
+              const [lat, lng] = e.target.value.split(',').map(Number);
+              if (Number.isFinite(lat) && Number.isFinite(lng)) setDraft([lat, lng]);
+            }}
+          />
+          <p className="text-[13px] text-base-content/60">Or drag the pin on the map.</p>
+        </Field>
+
+        {coffee && !ratingOwnedByReview && (
+          // Without a review, this is my rating; a published review replaces it.
+          <Field label="My rating" hint="until a review sets it">
+            <div className="flex items-center gap-3">
+              <div className="rating rating-half">
+                <input
+                  type="radio"
+                  name="rating"
+                  value={0}
+                  className="rating-hidden"
+                  defaultChecked={!coffee.rating}
+                  aria-label="Not rated"
+                />
+                {[...Array(10)].map((_, i) => {
+                  const v = (i + 1) / 2;
+                  return (
+                    <input
+                      key={v}
+                      type="radio"
+                      name="rating"
+                      value={v}
+                      className={`mask mask-star-2 ${i % 2 === 0 ? 'mask-half-1' : 'mask-half-2'} bg-warning`}
+                      aria-label={`${v} star`}
+                      defaultChecked={coffee.rating === v}
+                    />
+                  );
+                })}
+              </div>
+              <button
+                type="button"
+                className="btn btn-ghost btn-xs"
+                onClick={(e) => {
+                  const radios = e.currentTarget.form?.elements.namedItem('rating');
+                  if (radios instanceof RadioNodeList) radios.value = '0';
+                  setDirty(true);
+                }}
+              >
+                Clear
+              </button>
+            </div>
+          </Field>
+        )}
+        {ratingOwnedByReview && (
+          <p className="text-[13px] text-base-content/60">
+            Rating is set by your review, “{coffee?.review?.title}”.
+          </p>
+        )}
+
+        <label className="flex min-h-11 cursor-pointer items-center justify-between gap-4 rounded-field border border-base-300 px-3 py-2">
+          <span>
+            <span className="block text-[15px]">Closed permanently</span>
+            <span className="block text-[13px] text-base-content/60">
+              Fades the pin. The review stays.
+            </span>
+          </span>
+          <input
+            type="checkbox"
+            name="closed"
+            className="toggle toggle-sm toggle-error"
+            defaultChecked={coffee?.status === 'closed'}
+          />
+        </label>
+      </fieldset>
+
+      <div className="flex flex-col gap-2 border-t border-base-300 p-3">
+        {error && <p className="text-[13px] text-error">{error}</p>}
+        <div className="flex gap-2">
+          <button type="button" className="btn btn-ghost flex-1" onClick={cancel} disabled={saving}>
+            Cancel
+          </button>
+          <button type="submit" className="btn btn-primary flex-1" disabled={saving}>
+            {saving && <span className="loading loading-spinner loading-sm" />}
+            Save
+          </button>
+        </div>
       </div>
-    </fieldset>
+    </form>
   );
 }
 
-const formatDate = (d: string | number | Date) =>
-  new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-
-function SuccessMessage({
-  coffeeId,
-  editing,
-  review,
+function Field({
+  label,
+  hint,
+  children,
 }: {
-  coffeeId: string;
-  editing: boolean;
-  review: Review | null;
+  label: string;
+  hint?: string;
+  children: React.ReactNode;
 }) {
   return (
-    <div className="m-auto flex flex-col gap-4 p-6 shadow-2xl card bg-base-100">
-      <div className="">
-        {editing
-          ? 'Successfully Updated Coffee Place!'
-          : 'Successfully Added new Coffee Place!'}
-      </div>
-      <a href="/" className="btn btn-primary">
-        Go to Home
-      </a>
-      <a
-        target="_blank"
-        href={
-          review
-            ? `https://mwyndham.dev/admin/articles/${review.slug}/edit`
-            : `https://mwyndham.dev/admin/articles/new?coffeeId=${coffeeId}`
-        }
-        className="btn btn-secondary btn-outline"
-      >
-        {review ? 'Edit Review' : 'Write Review'}
-      </a>
-    </div>
+    <fieldset className="fieldset gap-1 p-0">
+      <legend className="fieldset-legend text-[13px]">
+        {label}
+        {hint && <span className="font-normal text-base-content/60">{hint}</span>}
+      </legend>
+      {children}
+    </fieldset>
   );
 }

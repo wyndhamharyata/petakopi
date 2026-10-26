@@ -148,6 +148,7 @@ export async function review(id: string) {
     description: string;
     url: string;
     heroImage?: string;
+    pubDate?: string;
   };
   // Astro writes site-relative asset URLs; the card renders on kopimap.
   const html = (await embed.text())

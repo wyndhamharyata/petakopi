@@ -3,9 +3,11 @@ import type { Coffee } from '@rpcTypes/coffee.ts';
 import { RLayer, RSource, useMap } from 'maplibre-react-components';
 import { useCallback, useEffect, useMemo } from 'react';
 import { CoffeeMarker } from './-coffeeMarker.tsx';
+import { isDesktop, isTypingTarget } from '../-util.ts';
 import type {
   GeoJSONSource,
   MapLayerMouseEvent,
+  MapMouseEvent,
   Map as MapLibreMap,
   PointLike,
 } from 'maplibre-gl';
@@ -23,6 +25,16 @@ const CLUSTER_MAX_ZOOM = 16;
 
 const PIN_PATH =
   'M18.364 17.364L12 23.7279L5.63604 17.364C2.12132 13.8492 2.12132 8.15076 5.63604 4.63604C9.15076 1.12132 14.8492 1.12132 18.364 4.63604C21.8787 8.15076 21.8787 13.8492 18.364 17.364ZM12 13C13.1046 13 14 12.1046 14 11C14 9.89543 13.1046 9 12 9C10.8954 9 10 9.89543 10 11C10 12.1046 10.8954 13 12 13Z';
+
+const NEW_SHOP = { id: 'new', name: 'New shop', status: 'known' } as Coffee;
+
+// Keep the shop clear of the panel: right of it on desktop, above the sheet on mobile.
+function panelOffset(): PointLike {
+  if (isDesktop()) return [208, 0];
+  const sheet = useAppStore.getState().sheet;
+  const covered = sheet === 'peek' ? 96 : window.innerHeight * (sheet === 'half' ? 0.5 : 0.92);
+  return [0, -covered / 2];
+}
 
 // MapLibre can't read CSS variables or oklch(); paint one pixel to get rgb.
 function themeColor(name: string, alpha = 1) {
@@ -56,7 +68,10 @@ function addPinImages(map: MapLibreMap) {
 export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps) {
   const selectedCoffee = useAppStore((state) => state.selectedCoffee);
   const setSelected = useAppStore((state) => state.setSelectedCoffee);
-  const collapse = useAppStore((state) => state.collapsed);
+  const editing = useAppStore((state) => state.editing);
+  const placing = useAppStore((state) => state.placing);
+  const draft = useAppStore((state) => state.draft);
+  const setDraft = useAppStore((state) => state.setDraft);
 
   const map = useMap('map-layer');
 
@@ -99,13 +114,22 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
   }, [map, isDark]);
 
   // Center on the visitor once their position arrives; the map has already rendered by then.
+  // L asks again and always flies there.
   useEffect(() => {
     if (!map || !navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition((p) => {
-      if (!useAppStore.getState().selectedCoffee) {
-        map.flyTo({ center: [p.coords.longitude, p.coords.latitude] });
-      }
-    });
+    const locate = (force: boolean) =>
+      navigator.geolocation.getCurrentPosition((p) => {
+        useAppStore.getState().setUserLocation([p.coords.latitude, p.coords.longitude]);
+        if (force || !useAppStore.getState().selectedCoffee) {
+          map.flyTo({ center: [p.coords.longitude, p.coords.latitude], offset: panelOffset() });
+        }
+      });
+    locate(false);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === 'l' && !isTypingTarget(e)) locate(true);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, [map]);
 
   useEffect(() => {
@@ -113,14 +137,31 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
       return;
     }
 
-    const offset: PointLike = collapse ? [0, -200] : [0, 0];
-
     map?.flyTo({
-      offset: offset,
+      offset: panelOffset(),
       center: [selectedCoffee.lng, selectedCoffee.lat],
       zoom: Math.max(map.getZoom(), CLUSTER_MAX_ZOOM + 1),
     });
-  }, [selectedCoffee, map, collapse]);
+  }, [selectedCoffee, map]);
+
+  // Adding a shop: the next tap on the map is where it goes.
+  useEffect(() => {
+    if (!map || !placing) return;
+    map.getCanvas().style.cursor = 'crosshair';
+    const onClick = (e: MapMouseEvent) => {
+      useAppStore.setState({
+        placing: false,
+        editing: true,
+        draft: [e.lngLat.lat, e.lngLat.lng],
+        sheet: 'full',
+      });
+    };
+    map.once('click', onClick);
+    return () => {
+      map.off('click', onClick);
+      map.getCanvas().style.cursor = '';
+    };
+  }, [map, placing]);
 
   const onClusterClick = useCallback(
     async (e: MapLayerMouseEvent) => {
@@ -138,6 +179,7 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
 
   const onPinClick = useCallback(
     (e: MapLayerMouseEvent) => {
+      if (useAppStore.getState().placing || useAppStore.getState().editing) return;
       const coffee = byId.get(e.features?.[0]?.properties.id);
       if (coffee) setSelected(coffee);
     },
@@ -220,7 +262,16 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
         }}
       />
       {/* Only the selected and hovered shops are HTML markers, drawn above every pin. */}
-      {selectedCoffee && <CoffeeMarker coffee={selectedCoffee} isSelected />}
+      {editing && draft ? (
+        <CoffeeMarker
+          // New shops have no row yet; the pin only needs a position.
+          coffee={{ ...(selectedCoffee ?? NEW_SHOP), lat: draft[0], lng: draft[1] }}
+          isSelected
+          onMove={setDraft}
+        />
+      ) : (
+        selectedCoffee && <CoffeeMarker coffee={selectedCoffee} isSelected />
+      )}
       {hoveredCoffee && hoveredCoffee.id !== selectedCoffee?.id && (
         <CoffeeMarker coffee={hoveredCoffee} isSelected={false} showCard />
       )}
