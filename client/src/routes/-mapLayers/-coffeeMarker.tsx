@@ -43,7 +43,7 @@ export function CoffeeMarker({
         <div
           className={`${
             !isHovered ? 'hidden' : ''
-          } absolute p-2 w-72 card bg-base-100 border-2 border-base-300 font-sono shadow-xl`}
+          } absolute p-2 w-72 card bg-base-100 border-2 border-base-300 font-atkinson shadow-xl`}
           style={{
             transform: `translate(${popupOffset[0]}px, ${popupOffset[1]}px)`,
           }}

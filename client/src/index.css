@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Sono:wght@200..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,200..800;1,200..800&display=swap');
 @import "tailwindcss";
 @import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -8,7 +8,7 @@
 }
 
 @theme {
-    --font-sono: "Sono", monospace;
+    --font-atkinson: "Atkinson Hyperlegible Next", sans-serif;
 }
 
 @plugin "daisyui/theme" {
