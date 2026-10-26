@@ -61,6 +61,7 @@ export function Editor({ id = undefined, submitQuery }: EditorProps) {
       const parsed = safeParse(ModifyCoffeeSchema, {
         ...values,
         closed: formData.get('closed') === 'on',
+        rating: formData.has('rating') ? Number(formData.get('rating')) : undefined,
       });
 
       if (!parsed.success) return setState('failure');
@@ -242,7 +243,7 @@ function AddShopForm({
 
         {coffee && (
           <>
-            {/* The review on mwyndham.dev owns the rating; this form owns the shop facts. */}
+            {/* A review on mwyndham.dev owns the rating; without one, this form sets it. */}
             <label className="mt-2 label">Review</label>
             <div className="flex flex-col gap-2 border p-3 rounded-box border-base-300 bg-base-100">
               {coffee.review ? (
@@ -267,6 +268,18 @@ function AddShopForm({
               ) : (
                 <>
                   <p className="text-xs">No review yet</p>
+                  <label className="label text-xs">
+                    Rating (0 = not rated)
+                    <input
+                      name="rating"
+                      type="number"
+                      min={0}
+                      max={5}
+                      step={0.5}
+                      className="input input-sm w-20"
+                      defaultValue={coffee.rating}
+                    />
+                  </label>
                   <a
                     className="btn btn-secondary btn-outline btn-sm"
                     target="_blank"

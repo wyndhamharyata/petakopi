@@ -39,7 +39,7 @@ function withReview(coffee: Coffee, reviews: Review[] | null) {
   return {
     ...coffee,
     status: coffee.status === 'closed' ? 'closed' : review ? 'reviewed' : 'known',
-    rating: review?.rating ?? 0,
+    rating: review?.rating ?? coffee.rating,
     review,
   } as const;
 }
@@ -160,8 +160,8 @@ export async function editCoffeeShop(
 ) {
   const db = await getDB();
 
-  // Only the shop facts: the rating and "reviewed" belong to the review on mwyndham.dev,
-  // and `created_at` must survive edits.
+  // "reviewed" belongs to the review on mwyndham.dev, and `created_at` must survive edits.
+  // The form omits `rating` when a review owns it.
   const result = await db
     .updateTable('coffees')
     .set({
@@ -171,6 +171,7 @@ export async function editCoffeeShop(
       lat: data.latLong[0],
       lng: data.latLong[1],
       status: data.closed ? 'closed' : 'known',
+      ...(data.rating !== undefined && { rating: data.rating }),
       updated_at: new Date(),
     })
     .where('coffees.id', '=', id)
@@ -193,7 +194,7 @@ export async function createCoffeeShop(
       id: id,
       name: data.shopName,
       address: data.address,
-      rating: 0,
+      rating: data.rating ?? 0,
       open_hours: data.openHours as OpenHour,
       lat: data.latLong[0],
       lng: data.latLong[1],

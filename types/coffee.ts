@@ -3,6 +3,11 @@ import type { Selectable } from 'kysely';
 import {
   boolean,
   custom,
+  maxValue,
+  minValue,
+  multipleOf,
+  number,
+  optional,
   minLength,
   object,
   pipe,
@@ -94,8 +99,9 @@ export const ModifyCoffeeSchema = object({
   latLong: latLngFromStringSchema,
   openHours: openHourSchema,
   address: pipe(string(), minLength(20)),
-  // The rating comes from the review on mwyndham.dev; only "closed" is set here.
   closed: boolean(),
+  // Quick rating for shops without a review; a review's rating overrides it.
+  rating: optional(pipe(number(), minValue(0), maxValue(5), multipleOf(0.5))),
 });
 
 export const ModifyCoffeeReqSchema = object({
