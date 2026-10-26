@@ -36,13 +36,14 @@ function themeColor(name: string, alpha = 1) {
 // Pins are map images, drawn once per theme; a style switch drops them, so they are re-added.
 function addPinImages(map: MapLibreMap) {
   const base = themeColor('--color-base-100');
+  // Reviewed: outlined in primary, so it stands out without competing with the filled selected pin.
   const pins = {
-    'pin-known': [base, themeColor('--color-accent')],
-    'pin-reviewed': [themeColor('--color-primary'), themeColor('--color-base-content')],
+    'pin-known': [base, themeColor('--color-accent'), '1.7'],
+    'pin-reviewed': [base, themeColor('--color-primary'), '2.6'],
   };
   const ratio = 2;
-  for (const [id, [fill, stroke]] of Object.entries(pins)) {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${40 * ratio}" height="${40 * ratio}" viewBox="-1 -1 26 26"><path d="${PIN_PATH}" fill="${fill}" stroke="${stroke}" stroke-width="1.7"/></svg>`;
+  for (const [id, [fill, stroke, width]] of Object.entries(pins)) {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${40 * ratio}" height="${40 * ratio}" viewBox="-1 -1 26 26"><path d="${PIN_PATH}" fill="${fill}" stroke="${stroke}" stroke-width="${width}"/></svg>`;
     const img = new Image();
     img.onload = () => {
       if (map.hasImage(id)) map.removeImage(id);

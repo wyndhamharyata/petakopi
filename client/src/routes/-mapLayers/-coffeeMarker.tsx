@@ -17,7 +17,7 @@ export function CoffeeMarker({ coffee, isSelected, showCard = false }: CoffeeMar
   const pinClass = isSelected
     ? 'fill-primary stroke-base-content text-[56px] drop-shadow-lg'
     : coffee.status === 'reviewed'
-      ? 'fill-primary stroke-base-content text-[40px]'
+      ? 'fill-base-100 stroke-primary text-[40px] [&_path]:[stroke-width:2.6]'
       : 'fill-base-100 stroke-accent text-[40px]';
 
   return (
