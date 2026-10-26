@@ -268,18 +268,23 @@ function AddShopForm({
               ) : (
                 <>
                   <p className="text-xs">No review yet</p>
-                  <label className="label text-xs">
-                    Rating (0 = not rated)
-                    <input
-                      name="rating"
-                      type="number"
-                      min={0}
-                      max={5}
-                      step={0.5}
-                      className="input input-sm w-20"
-                      defaultValue={coffee.rating}
-                    />
-                  </label>
+                  <div className="rating rating-half">
+                    <input type="radio" name="rating" value={0} className="rating-hidden" defaultChecked={!coffee.rating} aria-label="Not rated" />
+                    {[...Array(10)].map((_, i) => {
+                      const v = (i + 1) / 2;
+                      return (
+                        <input
+                          key={v}
+                          type="radio"
+                          name="rating"
+                          value={v}
+                          className={`mask ${i % 2 === 0 ? 'mask-half-1' : 'mask-half-2'} mask-star-2 bg-accent`}
+                          aria-label={`${v} star`}
+                          defaultChecked={coffee.rating === v}
+                        />
+                      );
+                    })}
+                  </div>
                   <a
                     className="btn btn-secondary btn-outline btn-sm"
                     target="_blank"
