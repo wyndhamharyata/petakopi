@@ -307,7 +307,7 @@ export const CoffeeDetail = memo(function CoffeeDetail({
                   Comments ({review.comments.count})
                   <RiArrowDownSLine
                     size={16}
-                    className="ml-auto shrink-0 rotate-180 transition-transform duration-300 group-open:rotate-0"
+                    className="ml-auto shrink-0 transition-transform duration-300 group-open:rotate-180"
                   />
                 </summary>
                 <div className="flex flex-col gap-3 pt-2">
