@@ -319,12 +319,20 @@ export const CoffeeDetail = memo(function CoffeeDetail({
                       {/* Same seed and settings as marknotes, so the alias has the same face. */}
                       <img
                         className="size-7 shrink-0 rounded-field bg-base-300"
-                        src={`data:image/svg+xml;utf8,${encodeURIComponent(minidenticon(comment.alias, 95, 45))}`}
+                        src={
+                          // mwyndham.dev reserves this alias for its author's comments.
+                          comment.alias === 'Wyndham'
+                            ? 'https://avatars.githubusercontent.com/u/34619560?v=4&s=96'
+                            : `data:image/svg+xml;utf8,${encodeURIComponent(minidenticon(comment.alias, 95, 45))}`
+                        }
                         alt=""
                       />
                       <div className="min-w-0">
                         <p className="mb-1 text-[13px]">
                           <span className="font-semibold">{comment.alias}</span>{' '}
+                          {comment.alias === 'Wyndham' && (
+                            <span className="badge badge-primary badge-soft badge-xs mr-1">Author</span>
+                          )}
                           <span className="text-base-content/60">
                             {formatDate(comment.createdAt)}
                           </span>
