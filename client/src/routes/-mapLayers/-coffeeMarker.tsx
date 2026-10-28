@@ -15,6 +15,7 @@ interface CoffeeMarkerProps {
 // The selected or hovered shop, drawn as HTML on top of the map's pin layer.
 export function CoffeeMarker({ coffee, isSelected, showCard = false, onMove }: CoffeeMarkerProps) {
   const setSelected = useAppStore((state) => state.setSelectedCoffee);
+  const clearSelected = useAppStore((state) => state.removeSelectedCoffee);
   // The only filled pin, ringed in the base colour with a primary glow, so it never reads as "reviewed".
   const pinClass = isSelected
     ? 'relative fill-primary stroke-base-100 text-[50px] drop-shadow-lg drop-shadow-primary/60'
@@ -29,7 +30,8 @@ export function CoffeeMarker({ coffee, isSelected, showCard = false, onMove }: C
       initialAnchor="bottom"
       // Hover only: letting the pointer through keeps the pin layer's hover from flickering.
       className={showCard ? 'pointer-events-none' : onMove ? 'cursor-grab' : 'cursor-pointer'}
-      onClick={() => !onMove && setSelected(coffee)}
+      // Tapping the selected pin again closes the panel.
+      onClick={() => !onMove && (isSelected ? clearSelected() : setSelected(coffee))}
       draggable={!!onMove}
       onDragEnd={(e) => {
         const { lat, lng } = e.target.getLngLat();

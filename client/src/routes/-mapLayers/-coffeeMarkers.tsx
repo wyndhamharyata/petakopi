@@ -80,13 +80,16 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
   const geojson = useMemo<GeoJSON.FeatureCollection>(
     () => ({
       type: 'FeatureCollection',
-      features: (data ?? []).map((c) => ({
-        type: 'Feature',
-        geometry: { type: 'Point', coordinates: [c.lng, c.lat] },
-        properties: { id: c.id, status: c.status },
-      })),
+      // The selected shop is drawn as an HTML marker, so leaving it in would count it in a cluster.
+      features: (data ?? [])
+        .filter((c) => c.id !== selectedCoffee?.id)
+        .map((c) => ({
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [c.lng, c.lat] },
+          properties: { id: c.id, status: c.status },
+        })),
     }),
-    [data]
+    [data, selectedCoffee?.id]
   );
 
   // Colors follow the daisyUI theme, which changes with dark mode.
