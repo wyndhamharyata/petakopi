@@ -105,7 +105,9 @@ From top to bottom:
 - **Sticky footer:** `Cancel` (ghost) and `Save` (primary). Saving returns to the Shop view with the new data. Leaving with unsaved changes asks "Discard changes?".
 
 ### Add shop
-- `+` → the panel shows "Tap the map where the shop is", and the cursor becomes a crosshair.
+- `+` → the panel shows a link field and "Tap the map where the shop is"; the cursor becomes a crosshair.
+- Pasting a Google Maps link skips the tap: the name and pin come from the link, and the Edit view opens on that spot. Short links are resolved by the worker, since a browser cannot read where they redirect. The link carries no address, hours, rating or photos, so those stay manual.
+- A link to a shop already saved (similar name, within 40 m) opens that shop instead of making a second one.
 - Tapping drops a draggable pin and opens the Edit view, empty, with the coordinates filled in.
 - Saving opens the new shop in the Shop view.
 

@@ -166,6 +166,18 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
     };
   }, [map, placing]);
 
+  // An imported link can point anywhere; bring the pin into view once, not on every drag.
+  const centeredEdit = useRef(false);
+  useEffect(() => {
+    if (!editing) {
+      centeredEdit.current = false;
+      return;
+    }
+    if (!map || !draft || centeredEdit.current) return;
+    centeredEdit.current = true;
+    map.flyTo({ center: [draft[1], draft[0]], offset: panelOffset() });
+  }, [editing, draft, map]);
+
   const onClusterClick = useCallback(
     async (e: MapLayerMouseEvent) => {
       const feature = e.features?.[0];

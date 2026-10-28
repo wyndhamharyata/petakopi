@@ -1,10 +1,13 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { RiAddLine } from 'react-icons/ri';
+import useSWR from 'swr';
 import { type Sheet, useAppStore } from '@store/store.ts';
 import { getTokens } from '@cookies/tokens.ts';
+import { client, rpcFetch } from '@fetcher/fetcher.ts';
 import { Browse } from './-browse.tsx';
 import { CoffeeDetail } from './-coffeeDetail.tsx';
 import { Editor } from './-coffeeEditor/-editor.tsx';
+import { findExistingShop, readGoogleMapsLink } from './-googleMaps.ts';
 
 const HEIGHT: Record<Sheet, string> = {
   peek: 'h-24',
@@ -23,6 +26,28 @@ export function Panel() {
   const startAdd = useAppStore((state) => state.startAdd);
   const stopEdit = useAppStore((state) => state.stopEdit);
   const { authenticated } = getTokens();
+  const importShop = useAppStore((state) => state.importShop);
+  const setSelected = useAppStore((state) => state.setSelectedCoffee);
+  const { data: shops } = useSWR('coffees', rpcFetch(client.api.coffees.$get)({}));
+  const [linkError, setLinkError] = useState('');
+  // Each Add starts clean; the error belongs to the last link only.
+  useEffect(() => {
+    if (placing) setLinkError('');
+  }, [placing]);
+
+  const importLink = async (text: string) => {
+    if (!text.trim()) return;
+    const imported = await readGoogleMapsLink(text).catch(() => null);
+    if (!imported) {
+      // The peek sheet is too shallow for a second line.
+      setSheet('half');
+      return setLinkError('That link has no shop location.');
+    }
+    setLinkError('');
+    const existing = shops && findExistingShop(shops, imported);
+    if (existing) return setSelected(existing);
+    importShop(imported.name, imported.latLng);
+  };
 
   // Drag the handle up or down a step; a tap moves up, or back to half from full.
   const dragStart = useRef(0);
@@ -64,11 +89,23 @@ export function Panel() {
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:rounded-box">
         {placing ? (
-          <div className="flex items-center gap-3 px-4 py-3 lg:py-4">
-            <p className="flex-1 text-[15px]">Tap the map where the shop is.</p>
-            <button type="button" className="btn btn-ghost btn-sm" onClick={stopEdit}>
-              Cancel
-            </button>
+          // One row: the peek sheet is shallow, and the map below it must stay tappable.
+          <div className="flex flex-col gap-2 px-4 py-3 lg:py-4">
+            <div className="flex items-center gap-2">
+              <input
+                className="input flex-1"
+                placeholder="Paste a link, or tap the map"
+                aria-label="Paste a Google Maps link"
+                onPaste={(e) => importLink(e.clipboardData.getData('text'))}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') importLink(e.currentTarget.value);
+                }}
+              />
+              <button type="button" className="btn btn-ghost btn-sm" onClick={stopEdit}>
+                Cancel
+              </button>
+            </div>
+            {linkError && <p className="text-[13px] text-error">{linkError}</p>}
           </div>
         ) : editing ? (
           <Editor key={selected?.id ?? 'new'} coffee={selected ?? undefined} />

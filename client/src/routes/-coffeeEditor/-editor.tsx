@@ -15,6 +15,7 @@ type EditableCoffee = Coffee & {
 // Edits the selected shop in place, or adds a new one when `coffee` is undefined.
 export function Editor({ coffee }: { coffee?: EditableCoffee }) {
   const draft = useAppStore((state) => state.draft);
+  const draftName = useAppStore((state) => state.draftName);
   const setDraft = useAppStore((state) => state.setDraft);
   const stopEdit = useAppStore((state) => state.stopEdit);
   const setSelected = useAppStore((state) => state.setSelectedCoffee);
@@ -240,7 +241,7 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
           <input
             name="shopName"
             className="input w-full"
-            defaultValue={coffee?.name ?? ''}
+            defaultValue={coffee?.name ?? draftName}
             placeholder="Kopi Nusantara"
             autoFocus={!coffee}
           />

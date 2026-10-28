@@ -25,6 +25,7 @@ export const createSelectedCoffeeSlice: StateCreator<
       editing: false,
       placing: false,
       draft: null,
+      draftName: '',
       sheet: get().sheet === 'peek' ? 'half' : get().sheet,
     }),
   removeSelectedCoffee: () => set({ selectedCoffee: null }),
@@ -48,7 +49,10 @@ type PanelSlice = {
   placing: boolean;
   // Where the shop being edited or added sits; the map pin and the form share it.
   draft: LatLng | null;
+  // The name a Google Maps link gave the shop being added.
+  draftName: string;
   setDraft: (draft: LatLng) => void;
+  importShop: (name: string, latLng: LatLng) => void;
   startEdit: () => void;
   startAdd: () => void;
   stopEdit: () => void;
@@ -73,6 +77,7 @@ export const createPanelSlice: StateCreator<
   editing: false,
   placing: false,
   draft: null,
+  draftName: '',
   setDraft: (draft) => set({ draft }),
   startEdit: () => {
     const coffee = get().selectedCoffee;
@@ -80,8 +85,18 @@ export const createPanelSlice: StateCreator<
   },
   // Shrinks the sheet so the map is free to tap.
   startAdd: () =>
-    set({ selectedCoffee: null, editing: false, placing: true, draft: null, sheet: 'peek' }),
-  stopEdit: () => set({ editing: false, placing: false, draft: null }),
+    set({
+      selectedCoffee: null,
+      editing: false,
+      placing: true,
+      draft: null,
+      draftName: '',
+      sheet: 'peek',
+    }),
+  // A Google Maps link gave the name and the spot: skip the map tap.
+  importShop: (draftName, draft) =>
+    set({ selectedCoffee: null, editing: true, placing: false, draftName, draft, sheet: 'full' }),
+  stopEdit: () => set({ editing: false, placing: false, draft: null, draftName: '' }),
 });
 
 export const useAppStore = create<SelectedCoffeeSlice & PanelSlice>()((...a) => ({
