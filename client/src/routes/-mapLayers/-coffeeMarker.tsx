@@ -4,6 +4,22 @@ import { CoffeeListItem } from '../-contentTab/-common/-cofeeListItem.tsx';
 import { RiMapPin2Fill } from 'react-icons/ri';
 import { type LatLng, useAppStore } from '@store/store.ts';
 
+// The hover card: one shop, or the first few in a cluster.
+export function CoffeeHoverCard({ coffees, total }: { coffees: Coffee[]; total?: number }) {
+  return (
+    <ul className="absolute bottom-full left-1/2 mb-1 w-72 -translate-x-1/2 rounded-box border border-base-300 bg-base-100 p-1 font-atkinson shadow-xl">
+      {coffees.map((coffee) => (
+        <CoffeeListItem key={coffee.id} coffee={coffee} />
+      ))}
+      {total !== undefined && total > coffees.length && (
+        <li className="px-3 py-2 text-[13px] text-base-content/60">
+          +{total - coffees.length} more
+        </li>
+      )}
+    </ul>
+  );
+}
+
 interface CoffeeMarkerProps {
   coffee: Coffee;
   isSelected: boolean;
@@ -47,11 +63,7 @@ export function CoffeeMarker({ coffee, isSelected, showCard = false, onMove }: C
           className={`${pinClass} ${coffee.status === 'closed' ? 'opacity-40' : ''}`}
           strokeWidth={1.7}
         />
-        {showCard && (
-          <ul className="absolute bottom-full left-1/2 mb-1 w-72 -translate-x-1/2 rounded-box border border-base-300 bg-base-100 p-1 font-atkinson shadow-xl">
-            <CoffeeListItem coffee={coffee} />
-          </ul>
-        )}
+        {showCard && <CoffeeHoverCard coffees={[coffee]} />}
       </div>
     </RMarker>
   );

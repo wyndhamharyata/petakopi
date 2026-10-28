@@ -1,8 +1,8 @@
 import { useAppStore } from '@store/store.ts';
 import type { Coffee } from '@rpcTypes/coffee.ts';
-import { RLayer, RSource, useMap } from 'maplibre-react-components';
-import { useCallback, useEffect, useMemo } from 'react';
-import { CoffeeMarker } from './-coffeeMarker.tsx';
+import { RLayer, RMarker, RSource, useMap } from 'maplibre-react-components';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { CoffeeHoverCard, CoffeeMarker } from './-coffeeMarker.tsx';
 import { isDesktop, isTypingTarget } from '../-util.ts';
 import type {
   GeoJSONSource,
@@ -170,6 +170,8 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
     async (e: MapLayerMouseEvent) => {
       const feature = e.features?.[0];
       if (!map || !feature || feature.geometry.type !== 'Point') return;
+      hoveredCluster.current = null;
+      setClusterCard(null);
       const source = map.getSource<GeoJSONSource>('coffees');
       const zoom = await source?.getClusterExpansionZoom(feature.properties.cluster_id);
       map.easeTo({
@@ -179,6 +181,46 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
     },
     [map]
   );
+
+  // Hovering a bubble lists its first shops. The id is kept so a late answer for a bubble
+  // the pointer already left does not open a card.
+  const hoveredCluster = useRef<string | null>(null);
+  const [clusterCard, setClusterCard] = useState<{
+    lng: number;
+    lat: number;
+    coffees: Coffee[];
+    total: number;
+  } | null>(null);
+
+  const onClusterEnter = useCallback(
+    async (e: MapLayerMouseEvent) => {
+      if (map) map.getCanvas().style.cursor = 'pointer';
+      const feature = e.features?.[0];
+      if (!map || !feature || feature.geometry.type !== 'Point') return;
+      const clusterId = String(feature.properties.cluster_id);
+      hoveredCluster.current = clusterId;
+      const leaves = await map
+        .getSource<GeoJSONSource>('coffees')
+        ?.getClusterLeaves(feature.properties.cluster_id, 3, 0);
+      if (hoveredCluster.current !== clusterId) return;
+      const [lng, lat] = feature.geometry.coordinates as [number, number];
+      setClusterCard({
+        lng,
+        lat,
+        coffees: (leaves ?? [])
+          .map((leaf) => byId.get(leaf.properties?.id))
+          .filter((c): c is Coffee => !!c),
+        total: feature.properties.point_count,
+      });
+    },
+    [map, byId]
+  );
+
+  const onClusterLeave = useCallback(() => {
+    hoveredCluster.current = null;
+    setClusterCard(null);
+    if (map) map.getCanvas().style.cursor = '';
+  }, [map]);
 
   const onPinClick = useCallback(
     (e: MapLayerMouseEvent) => {
@@ -225,8 +267,8 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
           ],
         }}
         onClick={onClusterClick}
-        onMouseEnter={setCursor('pointer')}
-        onMouseLeave={setCursor('')}
+        onMouseEnter={onClusterEnter}
+        onMouseLeave={onClusterLeave}
       />
       <RLayer
         id="coffee-cluster-count"
@@ -277,6 +319,22 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
       )}
       {hoveredCoffee && hoveredCoffee.id !== selectedCoffee?.id && (
         <CoffeeMarker coffee={hoveredCoffee} isSelected={false} showCard />
+      )}
+      {clusterCard && (
+        <RMarker
+          longitude={clusterCard.lng}
+          latitude={clusterCard.lat}
+          initialAnchor="bottom"
+          className="pointer-events-none"
+        >
+          {/* As tall as the bubble, so the card starts at its top edge instead of covering it. */}
+          <div
+            className="relative"
+            style={{ height: clusterCard.total < 10 ? 32 : clusterCard.total < 30 ? 40 : 52 }}
+          >
+            <CoffeeHoverCard coffees={clusterCard.coffees} total={clusterCard.total} />
+          </div>
+        </RMarker>
       )}
     </>
   );
