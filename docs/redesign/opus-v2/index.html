@@ -1,0 +1,1302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Nota: a redesign proposal for Kopimap — second pass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;500;700&family=Atkinson+Hyperlegible+Next:ital,wght@0,400;0,600;0,700;1,400&family=Big+Shoulders:opsz,wght@10..72,700..900&family=Big+Shoulders+Stencil:opsz,wght@10..72,800&display=swap">
+<style>
+:root{
+  --ink:#221F1B; --ink-2:#5A5148;
+  --thermal:#F1EEE6; --ticket:#EBDFC2; --nota:#F2E5A8; --news:#E2DDD0; --ground:#D9D7CC; --counter:#E3DFD4;
+  --chop:#B02A1C; --biro:#1F4A9C; --marker:#F0C53A; --kopi:#6B3D1E;
+  --steel:#C4C8C8; --graphite:#2D2B28; --glass:#101A18; --vfd:#8FF0D2; --vfd-dim:#5FA592; --led:#FFB21A;
+  --display:'Big Shoulders','Arial Narrow',sans-serif;
+  --stencil:'Big Shoulders Stencil','Big Shoulders','Arial Narrow',sans-serif;
+  --sans:'Atkinson Hyperlegible Next',system-ui,sans-serif;
+  --mono:'Atkinson Hyperlegible Mono',ui-monospace,Menlo,monospace;
+  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23f)' opacity='.10'/%3E%3C/svg%3E");
+  --fiber:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.011 .32' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='320' height='320' filter='url(%23f)' opacity='.10'/%3E%3C/svg%3E");
+  --mottle:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.035' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23f)' opacity='.12'/%3E%3C/svg%3E");
+  --brush:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='80'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.004 .95' numOctaves='2' seed='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='80' filter='url(%23f)' opacity='.24'/%3E%3C/svg%3E");
+  --cup:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M2 2.2h12v2.6H2zM3.3 5.8h9.4l-1.4 8.6H4.7z'/%3E%3C/svg%3E");
+}
+*,*::before,*::after{box-sizing:border-box;border-radius:0}
+html{background:var(--counter)}
+body{margin:0;color:var(--ink);font:400 17px/1.6 var(--sans);background:var(--grain),var(--counter);-webkit-font-smoothing:antialiased}
+a{color:var(--biro)}
+img{max-width:100%}
+.wrap{max-width:1240px;margin:0 auto;padding:0 24px}
+.prose{max-width:800px}
+h1{font:900 clamp(64px,11vw,150px)/.82 var(--display);text-transform:uppercase;margin:56px 0 28px;letter-spacing:-.005em}
+h2{font:900 clamp(34px,5vw,52px)/.95 var(--display);text-transform:uppercase;margin:104px 0 20px;padding-top:18px;border-top:4px solid var(--ink)}
+h3{font:800 28px/1.05 var(--display);text-transform:uppercase;margin:56px 0 12px}
+h4{font:700 18px/1.3 var(--sans);margin:28px 0 8px}
+p,li{max-width:800px}
+li+li{margin-top:6px}
+code{font:500 .86em var(--mono);background:rgba(34,31,27,.07);padding:1px 5px;word-break:break-word}
+pre{font:400 13px/1.55 var(--mono);background:var(--grain),var(--thermal);border:1px solid rgba(34,31,27,.35);padding:14px 16px;overflow:auto;max-width:100%}
+pre code{background:none;padding:0;font-size:inherit}
+.tbl{overflow-x:auto;margin:16px 0 8px;max-width:100%}
+table{border-collapse:collapse;width:100%;font-size:15px;line-height:1.45;background:var(--grain),var(--thermal)}
+th,td{border:1px solid rgba(34,31,27,.32);padding:8px 10px;text-align:left;vertical-align:top}
+th{font-weight:700;background:rgba(34,31,27,.06)}
+td.num{font-family:var(--mono)}
+.sw{display:inline-block;width:18px;height:18px;border:1px solid rgba(34,31,27,.45);vertical-align:-4px;margin-right:6px}
+.notice{border:3px solid var(--ink);background:var(--grain),var(--thermal);padding:16px 20px;margin:0 0 28px;max-width:800px;position:relative}
+.notice p{margin:0}
+.notice p+p{margin-top:8px}
+.toc{columns:2 260px;padding-left:20px;margin:0 0 8px}
+.toc li{break-inside:avoid}
+.lede{font-size:21px;line-height:1.5;max-width:820px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:28px;align-items:start}
+.cols>div>h4:first-child{margin-top:0}
+.notes{padding-left:20px}
+.notes li{max-width:820px}
+footer.end{margin:120px 0 0;padding:28px 0 64px;border-top:4px solid var(--ink)}
+
+/* ---------- figure scaling ---------- */
+.fig{margin:20px 0 10px}
+.fit{overflow-x:auto;overflow-y:hidden;border:1px solid rgba(34,31,27,.45);background:var(--ground);max-width:100%}
+.fit-in{position:relative;overflow:hidden}
+.n-frame{position:absolute;left:0;top:0;transform-origin:0 0;overflow:hidden;background:var(--ground);font:400 15px/1.35 var(--sans);color:var(--ink)}
+.phones{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px 20px}
+.phones h4{margin:0 0 8px}
+
+/* ---------- map ---------- */
+.n-map{position:absolute;inset:0;overflow:hidden;background:var(--ground)}
+.n-world{position:absolute;left:0;top:0;max-width:none;transform-origin:0 0;pointer-events:none;user-select:none;filter:saturate(.55) contrast(.94) brightness(1.03)}
+.n-map::after{content:"";position:absolute;inset:0;background:var(--grain);opacity:.9;pointer-events:none;z-index:1}
+.n-pins{position:absolute;inset:0;z-index:2}
+.n-pin{position:absolute;transform:translate(-50%,-50%) rotate(var(--r,0deg))}
+.n-pin.k{width:13px;height:13px;background:var(--thermal);border:2px solid var(--ink);box-shadow:1px 1px 0 rgba(34,31,27,.3)}
+.n-pin.r{width:21px;height:21px;background:var(--chop);filter:url(#rough)}
+.n-pin.r::after{content:"";position:absolute;inset:3.5px;background:var(--thermal);clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
+.n-pin.c{width:13px;height:13px;border:2px solid rgba(34,31,27,.55);background:linear-gradient(45deg,transparent 44%,rgba(34,31,27,.6) 44% 56%,transparent 56%),linear-gradient(-45deg,transparent 44%,rgba(34,31,27,.6) 44% 56%,transparent 56%),rgba(241,238,230,.55)}
+.n-pin.d{width:17px;height:17px;background:var(--biro);border:2px solid var(--thermal);outline:2px solid var(--biro);box-shadow:4px 7px 6px rgba(0,0,0,.35)}
+.n-clu{position:absolute;transform:translate(-50%,-50%);min-width:28px;height:28px;padding:0 5px;background:var(--grain),var(--thermal);border:1.5px solid var(--ink);font:700 13px/25px var(--mono);text-align:center}
+.n-clu.s2{box-shadow:3px 3px 0 -1.5px var(--thermal),3px 3px 0 0 var(--ink)}
+.n-clu.s3{min-width:32px;height:32px;line-height:29px;box-shadow:3px 3px 0 -1.5px var(--thermal),3px 3px 0 0 var(--ink),6px 6px 0 -1.5px var(--thermal),6px 6px 0 0 var(--ink)}
+.n-clu.s4{min-width:38px;height:38px;line-height:35px;font-size:15px;box-shadow:3px 3px 0 -1.5px var(--thermal),3px 3px 0 0 var(--ink),6px 6px 0 -1.5px var(--thermal),6px 6px 0 0 var(--ink),9px 9px 0 -1.5px var(--thermal),9px 9px 0 0 var(--ink)}
+.n-clu.hasr::after{content:"";position:absolute;right:-6px;top:-6px;width:11px;height:11px;background:var(--chop);filter:url(#rough)}
+.n-sel{position:absolute;width:42px;height:42px;transform:translate(-50%,-50%);z-index:3}
+.n-sel::before{content:"";position:absolute;inset:7px;background:var(--marker);mix-blend-mode:multiply;transform:rotate(-5deg);box-shadow:inset 0 0 0 1.5px rgba(34,31,27,.55)}
+.n-sel i{position:absolute;width:11px;height:11px;border:0 solid var(--ink)}
+.n-sel i:nth-of-type(1){left:0;top:0;border-left-width:2px;border-top-width:2px}
+.n-sel i:nth-of-type(2){right:0;top:0;border-right-width:2px;border-top-width:2px}
+.n-sel i:nth-of-type(3){left:0;bottom:0;border-left-width:2px;border-bottom-width:2px}
+.n-sel i:nth-of-type(4){right:0;bottom:0;border-right-width:2px;border-bottom-width:2px}
+.n-sel .n-pin{left:50%;top:50%}
+.n-me{position:absolute;width:26px;height:26px;transform:translate(-50%,-50%);z-index:3}
+.n-me::before{content:"";position:absolute;inset:6px;border:2px solid var(--ink);background:rgba(241,238,230,.7);transform:rotate(45deg)}
+.n-me::after{content:"";position:absolute;inset:0;background:linear-gradient(var(--ink),var(--ink)) center/2px 100% no-repeat,linear-gradient(var(--ink),var(--ink)) center/100% 2px no-repeat}
+.n-tag{position:absolute;z-index:4;width:236px;transform:translate(-50%,calc(-100% - 20px));filter:drop-shadow(0 1px 0 rgba(34,31,27,.3)) drop-shadow(0 6px 8px rgba(0,0,0,.22))}
+.n-tag>div{background:var(--grain),var(--thermal);padding:9px 11px 15px}
+.n-tag b{display:block;font:600 14px/1.25 var(--sans)}
+.n-tag .ln{margin-top:3px}
+.n-teth{position:absolute;left:0;top:0;width:100%;height:100%;z-index:25;pointer-events:none;overflow:visible}
+.n-cross{position:absolute;inset:0;z-index:3;pointer-events:none}
+.n-cross::before,.n-cross::after{content:"";position:absolute;background:var(--ink)}
+.n-cross::before{left:var(--x);top:0;bottom:0;width:1px}
+.n-cross::after{top:var(--y);left:0;right:0;height:1px}
+.n-cross span{position:absolute;left:calc(var(--x) + 10px);top:calc(var(--y) + 10px);font:700 13px/1 var(--mono);background:var(--thermal);border:1.5px solid var(--ink);padding:5px 7px}
+
+/* ---------- steel, till, rail ---------- */
+.n-rail{position:absolute;height:24px;z-index:20;background:var(--brush),linear-gradient(180deg,#EEF0EF 0,#CBCFCF 32%,#9A9FA0 74%,#B5BABA 100%);border:1px solid #545A5B;box-shadow:0 5px 7px -3px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.9)}
+.n-rail::before,.n-rail::after{content:"";position:absolute;top:5px;width:12px;height:12px;background:linear-gradient(135deg,#F4F5F5,#8E9394);clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)}
+.n-rail::before{left:6px}.n-rail::after{right:6px}
+.n-hold{position:absolute;left:50%;top:-8px;width:30px;height:12px;transform:translateX(-50%);z-index:26;background:var(--brush),linear-gradient(180deg,#F1F2F2,#9DA2A3);border:1px solid #545A5B;box-shadow:0 2px 2px rgba(0,0,0,.25)}
+.n-till{position:absolute;z-index:22;padding:12px 12px 0;background:var(--grain),linear-gradient(180deg,#3B3834,#292724);border:1px solid #0D0C0B;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 8px 16px -4px rgba(0,0,0,.45)}
+.n-till .bolt{position:absolute;width:9px;height:9px;background:linear-gradient(135deg,#E6E8E8,#7E8384);clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)}
+.n-slot{height:8px;margin:12px -12px 0;background:#0A0908;box-shadow:inset 0 3px 3px #000}
+.n-keys{display:flex;gap:8px;margin-top:10px}
+.n-vfd{position:relative;display:flex;align-items:center;gap:10px;height:48px;padding:0 12px;overflow:hidden;background:radial-gradient(120% 160% at 50% 0,#1C2C29 0,#0B1311 70%);border:2px solid #050807;box-shadow:inset 0 3px 8px rgba(0,0,0,.85),0 1px 0 rgba(255,255,255,.16);color:var(--vfd);font:500 17px/1 var(--mono);letter-spacing:.03em;text-shadow:0 0 3px rgba(143,240,210,.8),0 0 10px rgba(143,240,210,.35)}
+.n-vfd::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.26) 0 1px,transparent 1px 3px),repeating-linear-gradient(90deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px)}
+.n-vfd svg{flex:none;width:20px;height:20px;filter:drop-shadow(0 0 3px rgba(143,240,210,.6))}
+.n-vfd input{all:unset;flex:1;min-width:0;font:inherit;color:inherit;caret-color:var(--vfd)}
+.n-vfd input::placeholder{color:var(--vfd-dim);text-shadow:none;opacity:1}
+.n-vfd .ph{color:var(--vfd-dim);text-shadow:none;flex:1}
+.n-vfd .txt{flex:none}
+.n-vfd .cur{flex:none;width:10px;height:19px;background:var(--vfd);box-shadow:0 0 6px rgba(143,240,210,.7);animation:blink 1.05s steps(1) infinite;margin-left:-8px}
+.n-vfd:focus-within{border-color:var(--vfd)}
+@keyframes blink{50%{opacity:0}}
+
+/* ---------- keys ---------- */
+.n-key{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 14px;font:700 14px/1 var(--sans);color:var(--ink);text-decoration:none;white-space:nowrap;cursor:pointer;background:var(--brush),linear-gradient(180deg,#E9EBEA,#BEC2C2);border:1px solid #5A5F60;box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 -3px 0 rgba(0,0,0,.14),0 2px 0 #484D4E,0 3px 5px rgba(0,0,0,.28);transition:transform .06s,box-shadow .06s}
+.n-key:hover{background:var(--brush),linear-gradient(180deg,#F3F4F3,#CBCFCF)}
+.n-key:active,.n-key.down,.n-key[aria-selected=true],.n-key[aria-pressed=true]{transform:translateY(2px);box-shadow:inset 0 2px 4px rgba(0,0,0,.3),0 0 0 #484D4E,0 1px 1px rgba(0,0,0,.2)}
+.n-key:focus-visible,.n-key.focus{outline:2px solid var(--ink);outline-offset:3px}
+.n-till .n-key:focus-visible,.n-till .n-key.focus,.m-till .n-key:focus-visible{outline-color:var(--vfd)}
+.n-key.ink{color:var(--thermal);background:var(--grain),linear-gradient(180deg,#3D3933,#1B1916);border-color:#000;box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -3px 0 rgba(0,0,0,.5),0 2px 0 #000,0 3px 5px rgba(0,0,0,.32)}
+.n-key.ink:hover{background:var(--grain),linear-gradient(180deg,#4A453E,#25221E)}
+.n-key.ink:active,.n-key.ink.down{box-shadow:inset 0 2px 4px rgba(0,0,0,.6),0 0 0 #000}
+.n-key[disabled],.n-key.off{opacity:.45;cursor:not-allowed;transform:none}
+.n-key.sq{width:40px;padding:0;font-size:18px}
+.n-key.sm{min-height:32px;padding:0 10px;font-size:13px}
+.n-key.sq.sm{width:32px}
+.n-key.grow{flex:1}
+.n-key svg{width:16px;height:16px;flex:none}
+.n-key .led{width:7px;height:7px;flex:none;background:#4B402B;box-shadow:inset 0 0 0 1px rgba(0,0,0,.5)}
+.n-key[aria-selected=true] .led,.n-key[aria-pressed=true] .led{background:var(--led);box-shadow:0 0 6px 1px rgba(255,178,26,.75)}
+.cap{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:24px;padding:0 6px;font:700 12px/1 var(--mono);color:var(--ink);background:var(--brush),linear-gradient(180deg,#EEF0EF,#C3C7C7);border:1px solid #5A5F60;box-shadow:inset 0 -2px 0 rgba(0,0,0,.14),0 1.5px 0 #484D4E}
+
+/* ---------- paper ---------- */
+.n-paperwrap{position:absolute;z-index:21;filter:drop-shadow(0 1px 0 rgba(34,31,27,.28)) drop-shadow(0 9px 10px rgba(0,0,0,.2))}
+.n-receipt{position:relative;color:var(--ink);background:linear-gradient(90deg,rgba(0,0,0,.055),transparent 5%,transparent 95%,rgba(0,0,0,.055)),var(--grain),var(--thermal);padding:4px 12px 20px}
+.tear-b{-webkit-mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50%/14px 100%;mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50%/14px 100%}
+.tear-t{-webkit-mask:conic-gradient(from 135deg at top,#0000,#000 1deg 89deg,#0000 90deg) 50%/14px 100%;mask:conic-gradient(from 135deg at top,#0000,#000 1deg 89deg,#0000 90deg) 50%/14px 100%}
+.n-total{margin:0;padding:10px 4px 9px;text-align:center;font:400 13px/1.3 var(--mono);border-bottom:2px solid transparent;border-image:repeating-linear-gradient(90deg,rgba(34,31,27,.45) 0 4px,transparent 4px 8px) 2}
+.n-total a{color:var(--biro);font-weight:700}
+.n-rows{list-style:none;margin:0;padding:0}
+.n-rows li{margin:0;max-width:none}
+.n-row{position:relative;display:grid;grid-template-columns:40px minmax(0,1fr);gap:11px;align-items:center;width:100%;min-height:58px;padding:8px 6px;border:0;border-bottom:1px dashed rgba(34,31,27,.28);background:none;text-align:left;color:inherit;font:inherit;cursor:pointer}
+.n-row:hover,.n-row.hover{background:rgba(34,31,27,.05)}
+.n-row.kb{outline:2px solid var(--ink);outline-offset:-2px}
+.n-row.sel::before{content:"";position:absolute;left:46px;right:-2px;top:9px;bottom:9px;background:var(--marker);mix-blend-mode:multiply;transform:skewX(-8deg) rotate(-.5deg);opacity:.9}
+.n-row>*{position:relative}
+.n-row .nm{display:block;font:600 15px/1.25 var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.n-row.closed .nm{text-decoration:line-through;text-decoration-thickness:1.5px}
+.ln{display:flex;align-items:center;gap:6px;font:400 13px/1.3 var(--mono);color:var(--ink);margin-top:3px;min-width:0}
+.ln .ar{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.ln .d{color:var(--ink);font-weight:700;white-space:nowrap}
+.n-lead{flex:1 1 12px;min-width:12px;height:2px;margin-top:6px;background:repeating-linear-gradient(90deg,rgba(90,81,72,.75) 0 2px,transparent 2px 6px)}
+.n-thumb{position:relative;width:40px;height:40px;overflow:hidden;background:var(--thermal);outline:1px solid rgba(34,31,27,.3)}
+.n-thumb img{display:block;width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.25) brightness(1.04);mix-blend-mode:multiply}
+.n-thumb::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(241,238,230,.55) 0 1px,transparent 1px 2px),repeating-linear-gradient(90deg,rgba(241,238,230,.55) 0 1px,transparent 1px 2px);mix-blend-mode:lighten}
+.mini-cup{display:inline-block;width:12px;height:12px;flex:none;background:var(--kopi);-webkit-mask:var(--cup) center/contain no-repeat;mask:var(--cup) center/contain no-repeat}
+.ln .rt{color:var(--kopi);font-weight:700;display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
+
+.n-tk,.n-stub{position:absolute;z-index:19;background:var(--fiber),var(--grain),var(--ticket);border:1px solid rgba(34,31,27,.3);box-shadow:0 2px 0 rgba(34,31,27,.12),0 18px 28px -12px rgba(0,0,0,.5)}
+.n-tk.nota{background:var(--fiber),var(--grain),var(--nota)}
+.n-tk-body{position:absolute;inset:0;overflow:hidden;padding:26px 16px 16px}
+.n-tk.tk-scroll .n-tk-body{-webkit-mask-image:linear-gradient(#000 calc(100% - 54px),transparent);mask-image:linear-gradient(#000 calc(100% - 54px),transparent)}
+.n-eye{position:absolute;width:14px;height:14px;z-index:2;background:var(--ground);border:3px solid #A2A7A8;box-shadow:inset 1px 1px 0 rgba(0,0,0,.4),0 0 0 1px rgba(34,31,27,.35)}
+.n-tk-head{display:flex;gap:10px;align-items:flex-start}
+.n-name{margin:0;flex:1;font:900 34px/.94 var(--display);text-transform:uppercase;letter-spacing:.004em;text-wrap:balance}
+.n-status{display:flex;align-items:center;gap:12px;margin:14px 0 16px;flex-wrap:wrap}
+.n-score{font:700 15px/1 var(--mono);color:var(--kopi)}
+.n-stub{top:28px;width:168px;height:96px;padding:15px 12px 10px;cursor:pointer}
+.n-stub .nm{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font:800 19px/1 var(--display);text-transform:uppercase}
+.n-stub .ln{margin-top:8px}
+.n-stub::after{content:"";position:absolute;left:0;right:0;bottom:7px;height:2px;background:repeating-linear-gradient(90deg,rgba(34,31,27,.35) 0 4px,transparent 4px 8px)}
+.n-stub .x{position:absolute;right:4px;top:6px;width:24px;height:24px;display:grid;place-items:center;font:700 15px/1 var(--mono);color:var(--ink);border:1.5px solid var(--ink);background:var(--thermal)}
+
+/* stamps and cups */
+.n-stamp{display:inline-flex;align-items:center;gap:6px;padding:5px 8px 4px;border:2.5px solid currentColor;outline:1.5px solid currentColor;outline-offset:2px;font:800 15px/1 var(--stencil);letter-spacing:.09em;text-transform:uppercase;color:var(--chop);transform:rotate(var(--r,-3deg));filter:url(#rough);white-space:nowrap}
+.n-stamp.ink{color:var(--ink)}
+.n-stamp.dim{color:var(--ink-2)}
+.n-stamp.biro{color:var(--biro)}
+.n-stamp.sm{font-size:12px;padding:3px 5px 2px;border-width:2px;outline:0;letter-spacing:.07em;filter:url(#rough-sm)}
+.n-cups{display:inline-flex;gap:3px}
+.n-cup{position:relative;width:20px;height:20px;border:1.5px solid var(--kopi);background:none;padding:0}
+.n-cup::after{content:"";position:absolute;inset:2px;background:var(--kopi);-webkit-mask:var(--cup) center/contain no-repeat;mask:var(--cup) center/contain no-repeat;opacity:0}
+.n-cup.f::after{opacity:1}
+.n-cup.h::after{opacity:1;clip-path:inset(0 50% 0 0)}
+
+/* facts, clipping, photos */
+.n-photos{position:relative;height:178px;margin:0 6px 22px 2px}
+.n-ph{position:absolute;inset:0;background:var(--thermal);border:1px solid rgba(34,31,27,.25);box-shadow:0 2px 4px rgba(0,0,0,.2)}
+.n-ph.b2{transform:translate(8px,8px) rotate(1.6deg)}
+.n-ph.b1{transform:translate(4px,4px) rotate(-1.1deg)}
+.n-ph.top{padding:6px;margin:0}
+.n-ph.top img{display:block;width:100%;height:100%;object-fit:cover}
+.pc{position:absolute;width:20px;height:20px;background:#1E1C19}
+.pc.tl{left:2px;top:2px;clip-path:polygon(0 0,100% 0,0 100%)}
+.pc.tr{right:2px;top:2px;clip-path:polygon(0 0,100% 0,100% 100%)}
+.pc.bl{left:2px;bottom:2px;clip-path:polygon(0 0,0 100%,100% 100%)}
+.pc.br{right:2px;bottom:2px;clip-path:polygon(100% 0,100% 100%,0 100%)}
+.n-count{position:absolute;right:-6px;bottom:-10px;z-index:2;font:700 13px/1 var(--mono);background:var(--thermal);border:1.5px solid var(--ink);padding:5px 7px}
+.n-facts{margin:0 0 14px;font:400 14px/1.35 var(--mono)}
+.n-facts>div{display:flex;align-items:center;min-height:36px;border-bottom:1px dashed rgba(34,31,27,.25)}
+.n-facts dt{font-weight:400;color:var(--ink-2)}
+.n-facts dd{margin:0;font-weight:700}
+.n-facts .addr{display:block;padding:8px 0}
+.n-facts .addr dd{font:400 14px/1.4 var(--sans);margin-top:3px}
+.n-facts .add{color:var(--biro);font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.n-actions{display:flex;gap:8px;margin:16px 0 22px}
+.n-clip{position:relative;margin:10px 4px 22px;padding:22px 16px 16px;background:var(--mottle),var(--grain),var(--news);transform:rotate(-.6deg);box-shadow:0 1px 0 rgba(0,0,0,.14),0 7px 10px -6px rgba(0,0,0,.4)}
+.n-tape{position:absolute;top:-11px;left:50%;width:96px;height:24px;transform:translateX(-50%) rotate(2.5deg);background:rgba(240,232,200,.66);box-shadow:0 1px 1px rgba(0,0,0,.1);-webkit-mask:conic-gradient(from 45deg at left,#0000,#000 1deg 89deg,#0000 90deg) 0 50%/51% 8px repeat-y,conic-gradient(from -135deg at right,#0000,#000 1deg 89deg,#0000 90deg) 100% 50%/51% 8px repeat-y;mask:conic-gradient(from 45deg at left,#0000,#000 1deg 89deg,#0000 90deg) 0 50%/51% 8px repeat-y,conic-gradient(from -135deg at right,#0000,#000 1deg 89deg,#0000 90deg) 100% 50%/51% 8px repeat-y}
+.n-clip h5{margin:0 0 8px;font:700 18px/1.2 var(--sans)}
+.n-clip .txt{max-height:128px;overflow:hidden;-webkit-mask:linear-gradient(#000 50%,transparent);mask:linear-gradient(#000 50%,transparent)}
+.n-clip p{margin:0 0 8px;font:400 14.5px/1.55 var(--sans)}
+.n-clip .n-key{margin-top:6px;width:100%}
+.n-fold{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;margin:0 0 18px;padding:0 2px;background:none;border:0;border-top:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink);font:800 20px/1 var(--display);text-transform:uppercase;color:inherit;cursor:pointer;text-align:left}
+.n-fold .ct{font:700 14px/1 var(--mono);margin-left:auto}
+.n-near{position:relative;margin:4px 2px 20px;filter:drop-shadow(0 1px 0 rgba(34,31,27,.25)) drop-shadow(0 4px 5px rgba(0,0,0,.16))}
+.n-near .n-receipt{padding:12px 12px 20px}
+.n-near h5{margin:0 0 4px;font:800 20px/1 var(--display);text-transform:uppercase}
+.n-near .r{display:flex;align-items:center;min-height:40px;font:400 13px/1.3 var(--mono);border-bottom:1px dashed rgba(34,31,27,.25)}
+.n-near .r b{font:600 14px/1.25 var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.n-staple{position:absolute;top:-3px;z-index:3;width:28px;height:6px;background:linear-gradient(180deg,#F2F3F3,#8D9293);border:1px solid #4F5455}
+.n-foot{display:flex;gap:8px;padding-top:4px}
+
+/* edit: nota */
+.n-form{display:grid;gap:16px}
+.n-field{display:grid;gap:4px;min-width:0}
+.n-field>label,.n-field>.lb{font:700 14px/1.2 var(--sans)}
+.n-line{display:block;width:100%;padding:6px 2px 5px;font:500 16px/1.35 var(--mono);color:var(--biro);background:none;border:0;border-bottom:1.5px solid var(--ink);outline:0}
+.n-line:focus,.n-line.focus{border-bottom-width:3px;padding-bottom:3.5px;background:rgba(255,255,255,.35)}
+textarea.n-line{resize:none;line-height:26px;padding:0 2px;border-bottom:0;background:repeating-linear-gradient(transparent 0 25px,rgba(34,31,27,.55) 25px 26.5px);min-height:52px}
+textarea.n-line:focus{background:repeating-linear-gradient(transparent 0 25px,rgba(34,31,27,.9) 25px 27px),rgba(255,255,255,.3)}
+.n-field.err .n-line{border-bottom-color:var(--chop)}
+.n-err{margin:4px 0 0;font:700 14px/1.35 var(--sans);color:var(--chop)}
+.n-hours{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.n-time{width:88px;padding:7px 8px;font:700 17px/1 var(--mono);color:var(--biro);background:rgba(255,255,255,.35);border:1.5px solid var(--ink)}
+.n-time:disabled,.n-time.off{color:rgba(34,31,27,.45);border-color:rgba(34,31,27,.35);background:none}
+.n-chk{display:inline-flex;align-items:center;gap:8px;min-height:36px;font:600 14px/1 var(--sans);cursor:pointer}
+.n-box{appearance:none;-webkit-appearance:none;width:20px;height:20px;margin:0;border:2px solid var(--ink);background:rgba(255,255,255,.3);display:grid;place-content:center;cursor:pointer}
+.n-box::after{content:"";width:13px;height:13px;background:linear-gradient(45deg,transparent 42%,var(--biro) 42% 58%,transparent 58%),linear-gradient(-45deg,transparent 42%,var(--biro) 42% 58%,transparent 58%);opacity:0}
+.n-box:checked::after{opacity:1}
+.n-box:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.n-stog{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px;padding:6px 0;border-top:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink);cursor:pointer;font:600 15px/1.2 var(--sans)}
+.n-stog input{position:absolute;opacity:0;width:1px;height:1px}
+.n-stog .well{width:118px;height:40px;display:grid;place-items:center;border:1.5px dashed rgba(34,31,27,.5)}
+.n-stog .well .n-stamp{opacity:0;transform:rotate(-6deg) scale(1.25)}
+.n-stog input:checked+.well{border-color:transparent}
+.n-stog input:checked+.well .n-stamp{opacity:1;transform:rotate(-6deg);animation:stamp .16s ease-out}
+.n-stog input:focus-visible+.well{outline:2px solid var(--ink);outline-offset:3px}
+.n-rate{display:flex;align-items:center;gap:10px 12px;flex-wrap:wrap}
+.n-cupin{display:inline-flex;gap:4px}
+.n-cupin .n-cup{width:30px;height:30px;cursor:pointer}
+.n-cupin .n-cup::before{content:"";position:absolute;inset:0;right:50%;z-index:1}
+.n-contact{position:relative;display:flex;gap:8px;padding:14px 10px 30px;background:#1C1B19;overflow:hidden}
+.n-contact::before,.n-contact::after{content:"";position:absolute;left:0;right:0;height:5px;background:repeating-linear-gradient(90deg,transparent 0 5px,#CFC9BB 5px 11px,transparent 11px 14px)}
+.n-contact::before{top:4px}.n-contact::after{bottom:3px}
+.n-fr{position:relative;flex:none;width:100px;height:74px;outline:1px solid #000}
+.n-fr img{display:block;width:100%;height:100%;object-fit:cover}
+.n-fr.cover::after{content:"";position:absolute;inset:-5px;border:3px solid var(--marker);filter:url(#grease)}
+.n-fr .x{position:absolute;right:0;top:0;width:24px;height:24px;display:grid;place-items:center;font:700 15px/1 var(--mono);color:var(--ink);background:var(--thermal);border:0;cursor:pointer}
+.n-fr .x:hover{background:var(--ink);color:var(--thermal)}
+.n-fr.add{display:grid;place-items:center;outline:1.5px dashed #9B958A;color:#E9E4D8;font:700 13px/1.2 var(--sans);text-align:center;background:none;border:0;cursor:pointer}
+.n-edge{position:absolute;left:10px;bottom:12px;font:700 12px/1 var(--mono);color:var(--marker);letter-spacing:.08em}
+.n-errslip{color:var(--chop);font:700 14px/1.35 var(--sans);margin:8px 0 0}
+
+/* mobile */
+.phone{background:var(--ground)}
+.m-till{position:absolute;left:0;right:0;bottom:0;z-index:22;padding:10px 10px 22px;display:flex;gap:8px;align-items:center;background:var(--grain),linear-gradient(180deg,#3B3834,#292724);border-top:1px solid #0D0C0B;box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 -6px 14px -6px rgba(0,0,0,.45)}
+.m-till .n-vfd{flex:1;height:48px}
+.m-till .n-key{min-height:46px}
+.m-till::before{content:"";position:absolute;left:0;right:0;top:-9px;height:9px;background:#0A0908;box-shadow:inset 0 -3px 3px #000}
+.m-wrap{position:absolute;left:8px;right:8px;bottom:84px;z-index:21;filter:drop-shadow(0 1px 0 rgba(34,31,27,.28)) drop-shadow(0 -6px 10px rgba(0,0,0,.18))}
+.m-search{display:flex;align-items:center;gap:9px;margin:2px 0 0;padding:8px 0;border-bottom:2px solid var(--ink);font:500 16px/1.2 var(--mono);color:var(--biro)}
+.m-search svg{width:19px;height:19px;flex:none;color:var(--ink)}
+.m-search .q{flex:1;min-width:0;white-space:nowrap;overflow:hidden}
+.m-search .x{width:40px;height:40px;display:grid;place-items:center;border:1.5px solid var(--ink);background:var(--thermal);color:var(--ink);font:700 18px/1 var(--mono);cursor:pointer}
+.m-paper{position:relative;height:100%;overflow:hidden;padding:0 12px}
+.m-grab{height:30px;display:grid;place-items:center;cursor:grab}
+.m-grab i{width:26px;height:9px;background:linear-gradient(var(--ink),var(--ink)) 0 0/100% 2px no-repeat,linear-gradient(var(--ink),var(--ink)) 0 50%/100% 2px no-repeat,linear-gradient(var(--ink),var(--ink)) 0 100%/100% 2px no-repeat;opacity:.7}
+.m-tk{background:var(--fiber),var(--grain),var(--ticket)}
+.m-nota{background:var(--fiber),var(--grain),var(--nota)}
+.m-rail{position:absolute;left:0;right:0;top:0;height:18px;z-index:20;background:var(--brush),linear-gradient(180deg,#EEF0EF 0,#CBCFCF 32%,#9A9FA0 74%,#B5BABA 100%);border-bottom:1px solid #545A5B;box-shadow:0 4px 6px -3px rgba(0,0,0,.4)}
+.n-stub.m{top:14px;width:132px;height:44px;padding:10px 9px 6px}
+.n-stub.m .nm{-webkit-line-clamp:1;font-size:16px}
+.n-stub.m::after{display:none}
+.m-tabs{display:flex;gap:8px;padding:6px 0 10px}
+.m-tabs .n-key{flex:1;min-height:44px}
+.m-tk .n-name{font-size:30px}
+.m-strip{display:flex;gap:6px;height:96px;margin:0 0 14px}
+.m-strip img{flex:1;min-width:0;object-fit:cover;border:5px solid var(--thermal);outline:1px solid rgba(34,31,27,.25);box-shadow:0 2px 3px rgba(0,0,0,.18)}
+
+/* specimens */
+.spec{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:20px;margin:16px 0}
+.card{position:relative;padding:18px;background:var(--grain),var(--thermal);border:1px solid rgba(34,31,27,.3);min-width:0}
+.card.tk{background:var(--fiber),var(--grain),var(--ticket)}
+.card.nota{background:var(--fiber),var(--grain),var(--nota)}
+.card.dark{background:var(--grain),linear-gradient(180deg,#3B3834,#292724);border-color:#0D0C0B;color:var(--thermal)}
+.card>h4:first-child{margin-top:0}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.row+.row{margin-top:14px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;margin:16px 0}
+.tile{margin:0}
+.tile>div{height:118px;border:1px solid rgba(34,31,27,.35)}
+.tile figcaption{font:700 14px/1.3 var(--sans);margin-top:6px}
+.type-row{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;padding:16px 0;border-bottom:1px dashed rgba(34,31,27,.35)}
+.type-row .s{font:400 13px/1.4 var(--mono)}
+.legend{display:flex;flex-wrap:wrap;gap:12px 14px;margin:16px 0}
+.legend>div{display:flex;align-items:center;gap:14px;min-width:250px;flex:1;padding:12px 14px;background:var(--grain),var(--ground);border:1px solid rgba(34,31,27,.3)}
+.legend .pinbox{position:relative;flex:none;width:52px;height:52px}
+.legend .pinbox>*{left:50%;top:50%}
+.demo{position:relative;height:150px;overflow:hidden;background:var(--grain),var(--ground);border:1px solid rgba(34,31,27,.35)}
+.demo .n-rail{left:0;right:0;top:0}
+.anim-print .n-rows li{animation:print .16s steps(4) both}
+.anim-hang{animation:hang .48s cubic-bezier(.3,.7,.4,1) both;transform-origin:50% 0}
+.anim-stamp{animation:stamp .16s ease-out both}
+.anim-tear{animation:tear .5s ease-in-out both}
+@keyframes print{from{clip-path:inset(0 0 100% 0);transform:translateY(-6px)}to{clip-path:inset(0);transform:none}}
+@keyframes hang{0%{transform:translateY(-60px) rotate(2.2deg)}45%{transform:translateY(0) rotate(-1.3deg)}72%{transform:rotate(.6deg)}100%{transform:none}}
+@keyframes stamp{0%{opacity:0;transform:rotate(var(--r,-3deg)) scale(1.3)}60%{opacity:1;transform:rotate(var(--r,-3deg)) scale(.96)}100%{transform:rotate(var(--r,-3deg)) scale(1)}}
+@keyframes tear{0%{background-color:var(--nota);transform:none}35%{transform:translateY(-6px) rotate(-1.4deg)}100%{background-color:var(--ticket);transform:none}}
+.laminate{position:relative;padding:20px;background:var(--grain),var(--thermal);border:1px solid rgba(34,31,27,.5);box-shadow:0 10px 24px -10px rgba(0,0,0,.45)}
+.laminate::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,.55) 0,rgba(255,255,255,0) 32%,rgba(255,255,255,0) 68%,rgba(255,255,255,.25) 100%);outline:6px solid rgba(255,255,255,.35);outline-offset:-1px}
+.laminate dl{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;margin:0;font-size:15px;align-items:center}
+.laminate dt{display:flex;gap:4px}
+.laminate dd{margin:0}
+.toast{display:inline-block;position:relative;filter:drop-shadow(0 1px 0 rgba(34,31,27,.3)) drop-shadow(0 5px 6px rgba(0,0,0,.2))}
+.toast>div{background:var(--grain),var(--thermal);padding:8px 16px 16px;font:700 14px/1 var(--mono)}
+.night{background:#1D1C1A}
+.night .n-world{filter:invert(1) hue-rotate(180deg) brightness(.78) saturate(.35)}
+.night .n-map{background:#1D1C1A}
+.night .n-map::after{opacity:.5}
+.night .n-pin.k{background:#2B2926;border-color:#D9D4C8}
+.night .n-tk{background:var(--fiber),var(--grain),#CFC4A8;box-shadow:0 18px 28px -12px rgba(0,0,0,.8)}
+.night .n-stamp{color:#9A2316}
+.night .n-facts dt{color:#4F473F}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+@media (max-width:640px){body{font-size:16px}.wrap{padding:0 16px}.lede{font-size:19px}h3{font-size:24px}th,td{padding:6px 8px;font-size:14px}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <filter id="rough" x="-10%" y="-10%" width="120%" height="120%">
+    <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="3" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="2.2" xChannelSelector="R" yChannelSelector="G" result="d"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".55" numOctaves="2" seed="11" result="m"/>
+    <feColorMatrix in="m" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2.4 2.05" result="mask"/>
+    <feComposite in="d" in2="mask" operator="in"/>
+  </filter>
+  <filter id="rough-sm" x="-10%" y="-10%" width="120%" height="120%">
+    <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="3" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="1.1" xChannelSelector="R" yChannelSelector="G" result="d"/>
+    <feTurbulence type="fractalNoise" baseFrequency=".7" numOctaves="2" seed="11" result="m"/>
+    <feColorMatrix in="m" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.6 1.8" result="mask"/>
+    <feComposite in="d" in2="mask" operator="in"/>
+  </filter>
+  <filter id="grease" x="-10%" y="-10%" width="120%" height="120%">
+    <feTurbulence type="fractalNoise" baseFrequency=".09" numOctaves="2" seed="5" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+  <symbol id="i-search" viewBox="0 0 24 24"><path d="M4 4h11v11H4zM15 15l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"/></symbol>
+  <symbol id="i-dir" viewBox="0 0 24 24"><path d="M12 2.5 21.5 12 12 21.5 2.5 12z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.5 15v-4h6M12.5 8l3 3-3 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><path d="M8 8h12v12H8zM4 16V4h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24"><path d="M9 5h10v10M19 5 6 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="square"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 4 7 12l8 8" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="square"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="square"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="square"/></symbol>
+</svg>
+
+<main class="wrap">
+<h1>Nota<br>for Kopimap</h1>
+
+<div class="notice">
+  <p><strong>Proposal only. No application code changed.</strong> Nothing under <code>client/</code>, <code>server/</code>, config, the database or production was touched, and nothing was deployed.</p>
+  <p>This report is <code>docs/redesign/opus-v2/index.html</code>. Its assets sit beside it in <code>docs/redesign/opus-v2/</code>: <code>map.svg</code>, drawn from OpenStreetMap roads of Solo, and shop photos from the live API (<code>p-*.jpg</code>, <code>t-*.jpg</code>). Shop names, hours, ratings and coordinates come from <code>https://kopimap.mwyndham.dev/api/coffees</code>, read on 29 October 2026 (150 shops). Distances are measured from a visitor on Jl. Slamet Riyadi near Sriwedari.</p>
+  <p>The first pass, <code>docs/redesign/opus/index.html</code>, is unchanged; this is the improvement pass.</p>
+</div>
+
+<p class="lede">Kopimap becomes the back counter of a kopi bar in Solo. The list is a receipt that prints out of a till. Every shop you open is a ticket clipped to a steel rail and tied to its spot on the map with a thread. Editing is writing on a yellow carbon nota. Everything is paper, ink and steel, and every edge is cut square or torn.</p>
+
+<p style="font:700 16px/1.5 var(--sans);margin:0 0 8px"><a href="#changes">Changes in this pass</a></p>
+<ol class="toc">
+  <li><a href="#diagnosis">What the current UI is, read from the code</a></li>
+  <li><a href="#direction">The direction: Nota</a></li>
+  <li><a href="#desk-browse">Desktop: browse</a></li>
+  <li><a href="#desk-shop">Desktop: a shop on the rail</a></li>
+  <li><a href="#desk-edit">Desktop: edit and add</a></li>
+  <li><a href="#mobile">Mobile: peek, half and full</a></li>
+  <li><a href="#map">Map: pins, clusters and selection</a></li>
+  <li><a href="#specimens">Type, texture and control specimens</a></li>
+  <li><a href="#system">The system: palette, type, texture, shape, motion, status</a></li>
+  <li><a href="#daisy">daisyUI goes</a></li>
+  <li><a href="#stays">What stays and what changes</a></li>
+  <li><a href="#build">Build order and cost</a></li>
+  <li><a href="#risks">Risks</a></li>
+  <li><a href="#decisions">Decisions I need from you</a></li>
+</ol>
+
+<section id="changes" style="margin:34px 0 0;border-top:4px solid var(--ink);border-bottom:1px solid var(--ink);padding:14px 0 18px">
+  <h3 style="margin:0 0 8px;font-size:26px">Changes in this pass</h3>
+  <ol class="notes">
+    <li><strong>Mobile search has a safe place to live.</strong> The till's display is now a key. Tapping it raises the receipt to Full and puts the query on the paper's top edge, so the keyboard covers the till, never the field. The new mockup is in §6; the risk and the decision below are updated.</li>
+    <li><strong>The map is printed quieter.</strong> The mockups desaturate the placemat by about 45%. In MapLibre the land goes to 4% ink, minor roads 10%, major roads 18%, water 8% blue-grey; only the motorway keeps the ochre. The marigold selection gets a 1.5px ink edge so it cannot be mistaken for a road.</li>
+    <li><strong>The ticket fades instead of being cut.</strong> The shop ticket's lower edge now fades over the last 54px, so “Comments” is no longer sliced by the frame. The app still scrolls; the mockup now says so.</li>
+    <li><strong>The stamp stays small, the tap target does not.</strong> Each map stamp sits in a 44px invisible square. That is the iOS and Android minimum, and it keeps the ink drawing at 13–21px.</li>
+    <li><strong>The district fix ships first.</strong> <code>area()</code> is a few lines and every list surface uses it, so it is step 0 rather than a decision. The rest of the build order is unchanged.</li>
+  </ol>
+</section>
+
+<!-- ================================================================== -->
+<h2 id="diagnosis">1. What the current UI is, read from the code</h2>
+<p>The redesign in <code>docs/redesign.md</code> fixed the structure: one panel, edit in place, honest empty states. What it kept is the look of every other map app. These are the specific reasons, with the lines that cause them.</p>
+<ol class="notes">
+  <li><strong>It is the stock map-app shell.</strong> Desktop is a 400px card with <code>lg:rounded-box lg:shadow-xl</code> floating on the left (<code>client/src/routes/-panel.tsx:64</code>). Phones get a <code>rounded-t-[1.25rem]</code> bottom sheet with a 40×4px pill handle (<code>-panel.tsx:87</code>) and a round floating <code>btn-circle btn-lg</code> “+” (<code>-panel.tsx:69</code>). That is the Google Maps and Material kit, part for part. Nothing on screen is about coffee or about Solo.</li>
+  <li><strong>The surface has no material.</strong> The light theme is three almost identical greys with no chroma: <code>base-100</code> 98%, <code>base-200</code> 97%, <code>base-300</code> 92% lightness, with daisyUI’s <code>--depth: 0</code> and <code>--noise: 0</code> (<code>client/src/index.css:19-21, 45-46</code>). The only identity left is one green and one blue.</li>
+  <li><strong>“Reviewed” changes colour at night.</strong> <code>--color-primary</code> is green in light mode (<code>index.css:23</code>, oklch 45% 0.15 150) and coral red in dark mode (<code>index.css:59</code>, oklch 66% 0.2 22). The pin, chip and list star that mean “reviewed” change hue with the OS theme.</li>
+  <li><strong>Status is colour on identical shapes.</strong> Known and reviewed pins use the same <code>PIN_PATH</code> and differ only by stroke colour and stroke width, 1.7 against 2.6 (<code>-mapLayers/-coffeeMarkers.tsx:52-54</code>). The selected pin is the same teardrop, filled, with an <code>animate-ping</code> halo (<code>-mapLayers/-coffeeMarker.tsx:58-61</code>), which is the “blue dot” idiom. In the list, a reviewed ★ 3.5 and a rated-but-not-reviewed ★ 3.5 differ only by <code>text-primary</code> (<code>-contentTab/-common/-cofeeListItem.tsx:58-61</code>), and 20 known shops carry a rating.</li>
+  <li><strong>The exception is printed as the rule.</strong> 126 of 150 rows print “Not reviewed” in accent blue (<code>-cofeeListItem.tsx:62-63</code>), and only 3 shops are reviewed. The word that repeats on almost every row is the one that should stand out least.</li>
+  <li><strong>District labels leak street names and plus codes.</strong> <code>area()</code> (<code>-util.ts:19-20</code>) looks for “Kec.” and otherwise takes the first comma part. 29 of 150 addresses are in Google’s English format, so rows show “Slamet Riyadi St No.241”, “CRJ8+9QG”, “Parking area” or “Dusun III” where the district belongs, although those addresses do name it (“…, Sriwedari, Laweyan, Surakarta City”).</li>
+  <li><strong>The panel’s height ignores its content.</strong> The default tab is Latest reviews (<code>client/src/store/store.ts:69</code>), which has 3 shops, but the panel always runs from <code>top-4</code> to <code>bottom-4</code>. On production at 1440×900 the three rows fill about 180px of an 868px card. The rest is empty grey.</li>
+  <li><strong>One shop at a time, no trail.</strong> Browse and Shop swap inside the same column (<code>-panel.tsx:110-116</code>). Comparing three shops means Back, scroll, open, Back. J and K only walk the list a shop was opened from (<code>-shortcuts.tsx:56-61</code>), and nothing remembers what you looked at a minute ago.</li>
+  <li><strong>Rounded everything.</strong> <code>rounded-box</code> (0.75rem) appears 12 times, <code>rounded-full</code> 7 times and <code>rounded-field</code> 3 times, on top of daisyUI’s own radii on every <code>btn</code>, <code>input</code>, <code>badge</code>, <code>tab</code>, <code>kbd</code> and <code>modal-box</code>.</li>
+  <li><strong>The sparse-shop machinery now rarely shows.</strong> <code>redesign.md</code> was written when 50 shops had no address. Today the API returns 0 shops without an address, 1 without hours (Arzi Coffee), and a thumbnail for every shop. The real gaps are reviews (3 of 150) and ratings (23 of 150), so that is where the design should spend its attention.</li>
+</ol>
+
+<!-- ================================================================== -->
+<h2 id="direction">2. The direction: Nota</h2>
+<p><em>Nota</em> is the carbon slip a warung writes your order on. The whole app is the counter where those slips live. It has one source of objects, the bar of a kopi shop, so the metaphor stays coherent instead of turning into a costume.</p>
+<div class="tbl"><table>
+  <tr><th>Object on the counter</th><th>What it is in Kopimap</th><th>Material</th></tr>
+  <tr><td>The till, with a cash-register display</td><td>Search and the global keys: Latest reviews, All places, Add shop, shortcuts</td><td>Graphite plastic, steel keys, green VFD glass</td></tr>
+  <tr><td>The receipt roll</td><td>The list. It is only as long as its content.</td><td>Thermal paper with halftone thumbnails and dot leaders</td></tr>
+  <tr><td>The order rail and its tickets</td><td>The open shop, plus the shops you opened before it</td><td>Brushed steel rail, buff card tickets</td></tr>
+  <tr><td>The thread</td><td>Which stamp on the map belongs to the open ticket</td><td>Twine</td></tr>
+  <tr><td>The rubber stamps and the cup stamp card</td><td>Status (reviewed, closed) and rating</td><td>Red and black ink with rough edges</td></tr>
+  <tr><td>The newspaper clipping</td><td>The review from mwyndham.dev</td><td>Newsprint with tape</td></tr>
+  <tr><td>The yellow carbon nota</td><td>Edit and add</td><td>Canary carbonless paper, written in blue</td></tr>
+  <tr><td>The printed placemat</td><td>The map</td><td>Newsprint-grey paper, ochre roads, square ink stamps</td></tr>
+</table></div>
+
+<h3>The uncommon patterns</h3>
+<ol class="notes">
+  <li><strong>The rail: history you can see and touch.</strong> Every shop you open is a ticket clipped to a steel rail along the top of the screen. The open one hangs full length. The ones you opened before ride the rail as short stubs, newest nearest. Click a stub to hang it again, press × to take it down, and the oldest falls off the end when the rail is full (three stubs at 1440px, two at 1280px, one at 1024px, two on a phone). It replaces Back with something you can see, and it doubles as a compare tray: the hours and status of the last three shops stay on screen. <span class="cap">[</span> and <span class="cap">]</span> walk the rail; J and K still walk the list.</li>
+  <li><strong>The tether: a thread instead of a forced centre.</strong> The open ticket has a square eyelet, and a thread runs from it to its stamp on the map. The thread sags like string. When you pan, it follows; when the shop leaves the screen, it runs to the edge and keeps pointing. Nobody has to hunt for “which pin is this”, and the map no longer has to fly the shop into a gap beside the panel to make the link obvious.</li>
+  <li><strong>The till at the thumb.</strong> On phones the sheet is paper fed up out of a till that sits on the bottom edge. Search starts in the till’s display, where the thumb already is, and hands off to the paper when you type. The till’s keys change with the paper on top of it: search on the receipt, Back, Directions, Copy and Read review on a ticket, Cancel and Save on a nota. The main action of every view is always in the same place, at the bottom.</li>
+  <li><strong>The paper tells you the mode.</strong> White thermal paper is browsing, buff card is a shop, canary yellow is editing. You can tell edit mode from across the room, without reading a word.</li>
+</ol>
+
+<!-- ================================================================== -->
+<h2 id="desk-browse">3. Desktop: browse</h2>
+<p>All places, nearest first, with the visitor’s location known. The receipt runs off the bottom because there are 150 rows. Two earlier shops wait on the rail. The pointer is over Butler Coffee Boutique on the map.</p>
+<div class="fig"><div class="fit" data-min=".5"><div class="fit-in"><div class="n-frame" data-w="1440" data-h="900" style="width:1440px;height:900px">
+  <div class="n-map" data-center="-7.5680,110.8130" data-focus="912,500" data-z="1" data-me="-7.5680,110.8130" data-hover="Butler Coffee Boutique" data-hover-area="Banjarsari"></div>
+  <div class="n-rail" style="left:400px;right:16px;top:12px"></div>
+  <div class="n-stub" style="left:1080px"><span class="n-hold"></span><b class="nm">Sorak Sorai Coffee Solo</b><div class="ln"><span class="n-stamp sm" style="--r:-2deg">Reviewed 3.0</span></div></div>
+  <div class="n-stub" style="left:1256px"><span class="n-hold"></span><b class="nm">Loske Coffee Service Karangasem</b><div class="ln"><span class="n-stamp sm" style="--r:2deg">Reviewed 3.5</span></div></div>
+  <div class="n-till" style="left:16px;top:16px;width:368px">
+    <i class="bolt" style="left:4px;top:4px"></i><i class="bolt" style="right:4px;top:4px"></i>
+    <div class="n-vfd"><svg><use href="#i-search"/></svg><span class="ph">Search shops</span></div>
+    <div class="n-keys" role="tablist">
+      <button class="n-key grow" role="tab" aria-selected="false"><span class="led"></span>Latest reviews</button>
+      <button class="n-key grow" role="tab" aria-selected="true"><span class="led"></span>All places</button>
+      <button class="n-key sq" aria-label="Keyboard shortcuts">?</button>
+    </div>
+    <div class="n-slot"></div>
+  </div>
+  <div class="n-paperwrap" style="left:26px;top:138px;width:348px;bottom:-40px">
+    <div class="n-receipt" style="height:100%">
+      <p class="n-total">150 shops · 3 reviewed · <a href="#desk-browse">Sign in</a></p>
+      <ul class="n-rows">
+        <li><button class="n-row"><span class="n-thumb"><img src="t-marsi.jpg" alt=""></span><span><span class="nm">Marsi Coffee and Eatery</span><span class="ln"><span class="ar">Laweyan</span><i class="n-lead"></i><span class="d">330 m</span></span></span></button></li>
+        <li><button class="n-row"><span class="n-thumb"><img src="t-riwena.jpg" alt=""></span><span><span class="nm">Riwena coffee</span><span class="ln"><span class="ar">Banjarsari</span><i class="n-lead"></i><span class="d">370 m</span></span></span></button></li>
+        <li><button class="n-row"><span class="n-thumb"><img src="t-layana.jpg" alt=""></span><span><span class="nm">Layana Coffee</span><span class="ln"><span class="ar">Banjarsari</span><i class="n-lead"></i><span class="d">380 m</span></span></span></button></li>
+        <li><button class="n-row hover"><span class="n-thumb"><img src="t-butler.jpg" alt=""></span><span><span class="nm">Butler Coffee Boutique</span><span class="ln"><span class="ar">Banjarsari</span><i class="n-lead"></i><span class="d">390 m</span></span></span></button></li>
+        <li><button class="n-row"><span class="n-thumb"><img src="t-distrik.jpg" alt=""></span><span><span class="nm">DISTRIK COFFEE ROASTER SLAMET RIYADI</span><span class="ln"><span class="rt"><i class="mini-cup"></i>4.5</span><span class="ar">Laweyan</span><i class="n-lead"></i><span class="d">400 m</span></span></span></button></li>
+        <li><button class="n-row"><span class="n-thumb"><img src="t-margi.jpg" alt=""></span><span><span class="nm">Margi Coffee Slamet Riyadi</span><span class="ln"><span class="ar">Laweyan</span><i class="n-lead"></i><span class="d">450 m</span></span></span></button></li>
+        <li><button class="n-row"><span class="n-thumb"><img src="t-hella.jpg" alt=""></span><span><span class="nm">Hella Coffee</span><span class="ln"><span class="ar">Laweyan</span><i class="n-lead"></i><span class="d">470 m</span></span></span></button></li>
+        <li><button class="n-row"><span class="n-thumb"><img src="t-blackbird.jpg" alt=""></span><span><span class="nm">Blackbird Coffeeshop Honggowongso</span><span class="ln"><span class="ar">Laweyan</span><i class="n-lead"></i><span class="d">480 m</span></span></span></button></li>
+        <li><button class="n-row"><span class="n-thumb"><img src="t-kopine.jpg" alt=""></span><span><span class="nm">Kopine Tjap Nyah Lemu</span><span class="ln"><span class="ar">Laweyan</span><i class="n-lead"></i><span class="d">500 m</span></span></span></button></li>
+        <li><button class="n-row"><span class="n-thumb"><img src="t-28.jpg" alt=""></span><span><span class="nm">28 Coffee Solo</span><span class="ln"><span class="ar">Banjarsari</span><i class="n-lead"></i><span class="d">500 m</span></span></span></button></li>
+        <li><button class="n-row"><span class="n-thumb"><img src="t-odds.jpg" alt=""></span><span><span class="nm">ODDS Coffee Company</span><span class="ln"><span class="rt"><i class="mini-cup"></i>1.0</span><span class="ar">Serengan</span><i class="n-lead"></i><span class="d">500 m</span></span></span></button></li>
+        <li><button class="n-row"><span class="n-thumb"><img src="t-point.jpg" alt=""></span><span><span class="nm">POINT COFFEE</span><span class="ln"><span class="ar">Banjarsari</span><i class="n-lead"></i><span class="d">510 m</span></span></span></button></li>
+        <li><button class="n-row"><span class="n-thumb"><img src="t-headroom.jpg" alt=""></span><span><span class="nm">Head Room Coffee Slamet Riyadi</span><span class="ln"><span class="ar">Banjarsari</span><i class="n-lead"></i><span class="d">540 m</span></span></span></button></li>
+      </ul>
+    </div>
+  </div>
+</div></div></div></div>
+<ol class="notes">
+  <li><strong>The till</strong> holds search and the two list keys. The pressed key has a lit square LED and stays down, so the active tab reads as a latched switch, not a coloured underline.</li>
+  <li><strong>The receipt</strong> prints rows in Atkinson Hyperlegible Mono with dot leaders, so the distance sits where a price would. Thumbnails are printed as a halftone raster in the same ink as the text, so 13 photos stop competing with the map.</li>
+  <li><strong>Only exceptions are marked.</strong> DISTRIK and ODDS carry a rating, so they show a cup and a number. Plain known shops show nothing extra, and “Not reviewed” is gone from 126 rows.</li>
+  <li><strong>Districts are read properly.</strong> DISTRIK, Margi and ODDS now show Laweyan, Laweyan and Serengan, taken from the Google-format address, instead of “Slamet Riyadi St” and “CRJ8+9QG”.</li>
+  <li><strong>The visitor</strong> is the diamond registration mark at the centre of the map. Hovering a stamp prints a small receipt tag above it.</li>
+</ol>
+
+<!-- ================================================================== -->
+<h2 id="desk-shop">4. Desktop: a shop on the rail</h2>
+<p>Latest reviews is the open tab, so the receipt is three rows long and the map shows below it. Couvee Solo hangs open on the rail, tied to its stamp. Loske, Harso and Sorak Sorai were opened before it and wait as stubs.</p>
+<div class="fig"><div class="fit" data-min=".5"><div class="fit-in"><div class="n-frame" data-w="1440" data-h="900" style="width:1440px;height:900px">
+  <div class="n-map" data-center="-7.56091,110.81533" data-focus="700,520" data-z="1.15" data-me="-7.5680,110.8130" data-sel="Couvee Solo"></div>
+  <div class="n-rail" style="left:400px;right:16px;top:12px"></div>
+  <div class="n-stub" style="left:512px"><span class="n-hold"></span><b class="nm">Sorak Sorai Coffee Solo</b><div class="ln"><span class="n-stamp sm" style="--r:-2deg">Reviewed 3.0</span></div></div>
+  <div class="n-stub" style="left:688px"><span class="n-hold"></span><b class="nm">Harso Coffee</b><div class="ln"><span class="rt"><i class="mini-cup"></i>4.0</span><span class="ar">Laweyan</span></div><span class="x" aria-label="Take down">×</span></div>
+  <div class="n-stub" style="left:864px"><span class="n-hold"></span><b class="nm">Loske Coffee Service Karangasem</b><div class="ln"><span class="n-stamp sm" style="--r:2deg">Reviewed 3.5</span></div></div>
+  <article class="n-tk tk-scroll" style="left:1040px;top:28px;width:384px;bottom:16px">
+    <span class="n-hold"></span>
+    <span class="n-eye" data-eye style="left:-8px;top:124px"></span>
+    <div class="n-tk-body">
+      <header class="n-tk-head"><h4 class="n-name">Couvee Solo</h4><button class="n-key sq sm" aria-label="Take down">×</button></header>
+      <div class="n-status"><span class="n-stamp" style="--r:-3deg">Reviewed</span><span class="n-cups" role="img" aria-label="4 out of 5"><i class="n-cup f"></i><i class="n-cup f"></i><i class="n-cup f"></i><i class="n-cup f"></i><i class="n-cup"></i></span><b class="n-score">4.0</b></div>
+      <div class="n-photos"><span class="n-ph b2"></span><span class="n-ph b1"></span><figure class="n-ph top"><img src="p-couvee-1.jpg" alt="Couvee Solo, the work tables"><i class="pc tl"></i><i class="pc tr"></i><i class="pc bl"></i><i class="pc br"></i></figure><span class="n-count">1 / 3</span></div>
+      <dl class="n-facts">
+        <div><dt>Hours</dt><i class="n-lead"></i><dd>08:00 – 23:59</dd></div>
+        <div><dt>From you</dt><i class="n-lead"></i><dd>830 m</dd></div>
+        <div class="addr"><dt>Address</dt><dd>Jl. Prof. DR. Supomo No.68, Punggawan, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57139</dd></div>
+      </dl>
+      <div class="n-actions"><a class="n-key grow" href="#desk-shop"><svg><use href="#i-dir"/></svg>Directions</a><button class="n-key"><svg><use href="#i-copy"/></svg>Copy address</button><button class="n-key sq" aria-label="Share"><svg><use href="#i-share"/></svg></button></div>
+      <section class="n-clip"><span class="n-tape"></span>
+        <h5>Couvee - Nice Place to Have Work Done</h5>
+        <div class="txt"><p>Just this weekend, as I worked on the blog that you’re reading right now, I visited Couvee for the nth time this year.</p><p>Why? Well, because for whatever reason, either the vibe, the coffee, or the position of the table and chair always triggers my mood to be very productive.</p></div>
+        <a class="n-key ink" href="#desk-shop">Read full review<svg><use href="#i-out"/></svg></a>
+      </section>
+      <button class="n-fold">Comments<span class="ct">2</span><svg width="18" height="18"><use href="#i-down"/></svg></button>
+      <div class="n-near"><span class="n-staple" style="left:26px"></span><div class="n-receipt tear-b"><h5>Nearby</h5>
+        <div class="r"><b>D'GRAMM COFFEE SURAKARTA x AYAM BETUTU BLI YAN</b><i class="n-lead"></i><span class="d">150 m</span></div>
+        <div class="r"><b>Nakama Coffee &amp; Eatery | Solo</b><i class="n-lead"></i><span class="d">260 m</span></div>
+      </div></div>
+    </div>
+  </article>
+  <div class="n-till" style="left:16px;top:16px;width:368px">
+    <i class="bolt" style="left:4px;top:4px"></i><i class="bolt" style="right:4px;top:4px"></i>
+    <div class="n-vfd"><svg><use href="#i-search"/></svg><span class="ph">Search shops</span></div>
+    <div class="n-keys" role="tablist">
+      <button class="n-key grow" role="tab" aria-selected="true"><span class="led"></span>Latest reviews</button>
+      <button class="n-key grow" role="tab" aria-selected="false"><span class="led"></span>All places</button>
+      <button class="n-key sq" aria-label="Add a shop"><svg><use href="#i-plus"/></svg></button>
+    </div>
+    <div class="n-slot"></div>
+  </div>
+  <div class="n-paperwrap" style="left:26px;top:138px;width:348px">
+    <div class="n-receipt tear-b">
+      <p class="n-total">150 shops · 3 reviewed</p>
+      <ul class="n-rows">
+        <li><button class="n-row"><span class="n-thumb"><img src="t-loske.jpg" alt=""></span><span><span class="nm">Loske Coffee Service Karangasem</span><span class="ln"><span class="n-stamp sm" style="--r:-2deg">Reviewed 3.5</span><span class="ar">Laweyan</span><i class="n-lead"></i><span class="d">4.5 km</span></span></span></button></li>
+        <li><button class="n-row"><span class="n-thumb"><img src="t-soraksorai.jpg" alt=""></span><span><span class="nm">Sorak Sorai Coffee Solo</span><span class="ln"><span class="n-stamp sm" style="--r:1deg">Reviewed 3.0</span><span class="ar">Laweyan</span><i class="n-lead"></i><span class="d">3.0 km</span></span></span></button></li>
+        <li><button class="n-row sel"><span class="n-thumb"><img src="t-couvee.jpg" alt=""></span><span><span class="nm">Couvee Solo</span><span class="ln"><span class="n-stamp sm" style="--r:-1deg">Reviewed 4.0</span><span class="ar">Banjarsari</span><i class="n-lead"></i><span class="d">830 m</span></span></span></button></li>
+      </ul>
+    </div>
+  </div>
+</div></div></div></div>
+<ol class="notes">
+  <li><strong>The ticket</strong> is buff card hung from the rail by a steel slider. The name is set in Big Shoulders at 34px, and the status is a red rubber stamp plus the cup card. The review owns the main action, so <em>Read full review</em> is the one ink key on the ticket and Directions is steel.</li>
+  <li><strong>The thread</strong> starts at the square eyelet and ends at the crop marks around Couvee’s stamp. It sags in proportion to its length and follows the map on every move.</li>
+  <li><strong>The stubs</strong> show the name, the stamp or rating, and on hover a × that takes the ticket down. Hovering a stub also draws its own thread, faint, to its stamp.</li>
+  <li><strong>The receipt row</strong> of the open shop is marked with a marigold highlighter swipe. Marigold means “selected” everywhere: the swipe here, the square behind the stamp on the map.</li>
+  <li><strong>Photos</strong> are a stack of prints held by black photo corners. A click sends the top print to the back, and a swipe does the same on touch. The counter is a paper label, not a dark pill.</li>
+  <li><strong>Nearby</strong> is a short receipt stapled to the ticket, so the four closest shops read as a printout taken from this shop, measured from it.</li>
+  <li><strong>Narrower screens.</strong> Between 1024 and 1279px the receipt rolls up into the till while a ticket hangs, so the map keeps at least 400px; pressing a list key drops it again. The rail then holds one or two stubs. The map still flies the shop into the visible gap, as <code>panelOffset()</code> does today, but the offset becomes the centre of the gap between the receipt and the ticket.</li>
+</ol>
+
+<!-- ================================================================== -->
+<h2 id="desk-edit">5. Desktop: edit and add</h2>
+<p>Editing Arzi Coffee, the one shop with no hours. The ticket turns into a yellow nota in place. The receipt rolls back into the till so the map is free, and the shop’s stamp becomes a blue tack you can drag. Its imported cover is a logo, so the menu photo is a click away from becoming the cover.</p>
+<div class="fig"><div class="fit" data-min=".5"><div class="fit-in"><div class="n-frame" data-w="1440" data-h="900" style="width:1440px;height:900px">
+  <div class="n-map" data-center="-7.58640,110.82374" data-focus="700,470" data-z="1.35" data-draft="Arzi Coffee"></div>
+  <div class="n-rail" style="left:400px;right:16px;top:12px"></div>
+  <div class="n-stub" style="left:512px"><span class="n-hold"></span><b class="nm">Loske Coffee Service Karangasem</b><div class="ln"><span class="n-stamp sm" style="--r:2deg">Reviewed 3.5</span></div></div>
+  <div class="n-stub" style="left:688px"><span class="n-hold"></span><b class="nm">Harso Coffee</b><div class="ln"><span class="rt"><i class="mini-cup"></i>4.0</span><span class="ar">Laweyan</span></div></div>
+  <div class="n-stub" style="left:864px"><span class="n-hold"></span><b class="nm">Couvee Solo</b><div class="ln"><span class="n-stamp sm" style="--r:-2deg">Reviewed 4.0</span></div></div>
+  <form class="n-tk nota" style="left:1040px;top:28px;width:384px;bottom:16px" onsubmit="return false">
+    <span class="n-hold"></span>
+    <span class="n-eye" data-eye style="left:-8px;top:124px"></span>
+    <div class="n-tk-body" style="display:flex;flex-direction:column;padding-bottom:0">
+      <header class="n-tk-head"><h4 class="n-name">Edit Arzi Coffee</h4></header>
+      <div class="n-form" style="margin-top:18px">
+        <div class="n-contact">
+          <div class="n-fr cover"><img src="p-arzi-1.jpg" alt="Arzi Coffee logo"><button class="x" aria-label="Remove photo">×</button></div>
+          <div class="n-fr"><img src="p-arzi-2.jpg" alt="Arzi Coffee menu"><button class="x" aria-label="Remove photo">×</button></div>
+          <button class="n-fr add">+ Add<br>photo</button>
+          <span class="n-edge">COVER</span>
+        </div>
+        <div class="n-field"><label for="e-name">Name</label><input id="e-name" class="n-line" value="Arzi Coffee"></div>
+        <div class="n-field"><label for="e-addr">Address</label><textarea id="e-addr" class="n-line" rows="2">CR7F+CFQ, Danukusuman, Serengan, Surakarta City, Central Java 57156</textarea></div>
+        <div class="n-field"><span class="lb">Hours</span><div class="n-hours"><input class="n-time off" value="--:--" disabled aria-label="Opens"><span>–</span><input class="n-time off" value="--:--" disabled aria-label="Closes"><label class="n-chk"><input type="checkbox" class="n-box" checked>Unknown</label></div></div>
+        <div class="n-field"><label for="e-loc">Location</label><input id="e-loc" class="n-line focus" value="-7.586404, 110.823741"></div>
+        <div class="n-field"><span class="lb">My rating</span><div class="n-rate"><span class="n-cupin"><i class="n-cup"></i><i class="n-cup"></i><i class="n-cup"></i><i class="n-cup"></i><i class="n-cup"></i></span><button class="n-key sm" type="button">Clear</button></div></div>
+        <label class="n-stog">Closed permanently<input type="checkbox" role="switch"><span class="well"><span class="n-stamp ink">Closed</span></span></label>
+      </div>
+      <div class="n-foot" style="margin-top:auto;padding:12px 0 16px"><button class="n-key grow" type="button">Cancel</button><button class="n-key ink grow" type="button">Save</button></div>
+    </div>
+  </form>
+  <div class="n-till" style="left:16px;top:16px;width:368px">
+    <i class="bolt" style="left:4px;top:4px"></i><i class="bolt" style="right:4px;top:4px"></i>
+    <div class="n-vfd" style="opacity:.55"><svg><use href="#i-search"/></svg><span class="ph">Search shops</span></div>
+    <div class="n-keys">
+      <button class="n-key grow off" disabled><span class="led"></span>Latest reviews</button>
+      <button class="n-key grow off" disabled><span class="led"></span>All places</button>
+      <button class="n-key sq off" disabled aria-label="Add a shop"><svg><use href="#i-plus"/></svg></button>
+    </div>
+    <div class="n-slot"></div>
+  </div>
+  <div class="n-paperwrap" style="left:26px;top:138px;width:348px"><div class="n-receipt tear-b" style="height:22px;padding:0"></div></div>
+</div></div></div></div>
+<ol class="notes">
+  <li><strong>Yellow means editing.</strong> The nota keeps the ticket’s place on the rail, its eyelet and its thread. What you type is written in blue ballpoint (Atkinson Mono in <code>--biro</code>), and what is printed stays in ink.</li>
+  <li><strong>Photos are a contact sheet.</strong> The cover is ringed in yellow china marker and printed “COVER” on the film edge. Clicking another frame moves the ring there, which is the current tap-to-make-cover behaviour.</li>
+  <li><strong>Hours unknown</strong> is a ticked box with a blue X, and the two time windows go blank. Saving sends an empty string, as the relaxed schema already allows.</li>
+  <li><strong>Location</strong> is focused (3px rule) because the tack is being dragged: the tack lifts and casts a shadow, and the coordinates rewrite as it moves.</li>
+  <li><strong>Rating</strong> is the cup stamp card with half cups. <strong>Closed permanently</strong> is a dashed well that gets a black CLOSED stamp when switched on. It stays a real checkbox with <code>role="switch"</code>.</li>
+  <li><strong>Save</strong> is the only ink key. On success the yellow drains to buff from the top down, the nota becomes the ticket again, and the receipt drops back out of the till.</li>
+</ol>
+
+<h3>Adding a shop</h3>
+<p>The + key on the till starts it. The receipt prints a one-step slip, and the map cursor becomes plotter hairlines with a live coordinate readout. A tap hangs a blank yellow nota on the rail with the tack where you tapped. A pasted Google Maps link skips the tap, as it does today.</p>
+<div class="fig"><div class="fit" data-min=".5" style="max-width:780px"><div class="fit-in"><div class="n-frame" data-w="780" data-h="520" style="width:780px;height:520px">
+  <div class="n-map" data-center="-7.5705,110.8205" data-focus="560,300" data-z="1.2"></div>
+  <div class="n-cross" style="--x:560px;--y:300px"><span>-7.57050, 110.82050</span></div>
+  <div class="n-till" style="left:16px;top:16px;width:368px">
+    <i class="bolt" style="left:4px;top:4px"></i><i class="bolt" style="right:4px;top:4px"></i>
+    <div class="n-vfd" style="opacity:.55"><svg><use href="#i-search"/></svg><span class="ph">Search shops</span></div>
+    <div class="n-keys">
+      <button class="n-key grow off" disabled><span class="led"></span>Latest reviews</button>
+      <button class="n-key grow off" disabled><span class="led"></span>All places</button>
+      <button class="n-key sq" aria-pressed="true" aria-label="Add a shop"><svg><use href="#i-plus"/></svg></button>
+    </div>
+    <div class="n-slot"></div>
+  </div>
+  <div class="n-paperwrap" style="left:26px;top:138px;width:348px"><div class="n-receipt tear-b" style="padding:14px 14px 26px">
+    <p style="margin:0 0 12px;font:700 16px/1.35 var(--sans)">Tap the map where the shop is.</p>
+    <input class="n-line" style="color:var(--ink)" placeholder="Paste a Google Maps link" aria-label="Paste a Google Maps link">
+    <div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="n-key">Cancel</button></div>
+  </div></div>
+</div></div></div></div>
+
+<!-- ================================================================== -->
+<h2 id="mobile">6. Mobile: peek, half and full</h2>
+<p>390×844. The till sits on the bottom edge and never moves. The paper above it is the sheet: its torn top edge is the handle, and drag or tap feeds it between three heights. The rail appears at the top of the screen once you have opened a shop. Search is the one control that leaves the till: tapping the display feeds a slack slip of paper to the top of the screen, above the keyboard.</p>
+<div class="phones">
+  <div><h4>Peek: browse</h4><div class="fit"><div class="fit-in"><div class="n-frame phone" data-w="390" data-h="844" style="width:390px;height:844px">
+    <div class="n-map" data-center="-7.5680,110.8130" data-focus="195,360" data-z=".85" data-me="-7.5680,110.8130"></div>
+    <div class="m-wrap" style="top:688px"><div class="m-paper n-receipt tear-t" style="padding:0 12px"><div class="m-grab"><i></i></div><p class="n-total" style="border:0;padding-top:0">150 shops · 3 reviewed · <a href="#mobile">Sign in</a></p></div></div>
+    <div class="m-till"><div class="n-vfd"><svg><use href="#i-search"/></svg><span class="ph">Search shops</span></div></div>
+  </div></div></div></div>
+
+  <div><h4>Half: browse</h4><div class="fit"><div class="fit-in"><div class="n-frame phone" data-w="390" data-h="844" style="width:390px;height:844px">
+    <div class="n-map" data-center="-7.5680,110.8130" data-focus="195,210" data-z=".85" data-me="-7.5680,110.8130"></div>
+    <div class="m-wrap" style="top:422px"><div class="m-paper n-receipt tear-t" style="padding:0 12px">
+      <div class="m-grab"><i></i></div>
+      <div class="m-tabs" role="tablist"><button class="n-key" role="tab" aria-selected="false"><span class="led"></span>Latest reviews</button><button class="n-key" role="tab" aria-selected="true"><span class="led"></span>All places</button></div>
+      <ul class="n-rows">
+        <li><button class="n-row"><span class="n-thumb"><img src="t-marsi.jpg" alt=""></span><span><span class="nm">Marsi Coffee and Eatery</span><span class="ln"><span class="ar">Laweyan</span><i class="n-lead"></i><span class="d">330 m</span></span></span></button></li>
+        <li><button class="n-row"><span class="n-thumb"><img src="t-riwena.jpg" alt=""></span><span><span class="nm">Riwena coffee</span><span class="ln"><span class="ar">Banjarsari</span><i class="n-lead"></i><span class="d">370 m</span></span></span></button></li>
+        <li><button class="n-row"><span class="n-thumb"><img src="t-layana.jpg" alt=""></span><span><span class="nm">Layana Coffee</span><span class="ln"><span class="ar">Banjarsari</span><i class="n-lead"></i><span class="d">380 m</span></span></span></button></li>
+        <li><button class="n-row"><span class="n-thumb"><img src="t-butler.jpg" alt=""></span><span><span class="nm">Butler Coffee Boutique</span><span class="ln"><span class="ar">Banjarsari</span><i class="n-lead"></i><span class="d">390 m</span></span></span></button></li>
+      </ul>
+    </div></div>
+    <div class="m-till"><div class="n-vfd"><svg><use href="#i-search"/></svg><span class="ph">Search shops</span></div><button class="n-key sq" style="width:46px" aria-label="Add a shop"><svg><use href="#i-plus"/></svg></button></div>
+  </div></div></div></div>
+
+  <div><h4>Full: search</h4><div class="fit"><div class="fit-in"><div class="n-frame phone" data-w="390" data-h="844" style="width:390px;height:844px">
+    <div class="n-map" data-center="-7.5680,110.8130" data-focus="195,210" data-z=".85" data-me="-7.5680,110.8130"></div>
+    <div class="m-wrap" style="top:68px;bottom:0"><div class="m-paper n-receipt tear-t" style="padding:0 14px;height:100%">
+      <div class="m-grab"><i></i></div>
+      <div class="m-search"><svg><use href="#i-search"/></svg><span class="q">coffee</span><button class="x" type="button" aria-label="Clear the search">×</button></div>
+      <p class="n-total" style="text-align:left;padding:8px 2px 4px;border:0">110 shops · nearest first</p>
+      <ul class="n-rows">
+        <li><button class="n-row"><span class="n-thumb"><img src="t-marsi.jpg" alt=""></span><span><span class="nm">Marsi Coffee and Eatery</span><span class="ln"><span class="ar">Laweyan</span><i class="n-lead"></i><span class="d">330 m</span></span></span></button></li>
+        <li><button class="n-row"><span class="n-thumb"><img src="t-riwena.jpg" alt=""></span><span><span class="nm">Riwena coffee</span><span class="ln"><span class="ar">Banjarsari</span><i class="n-lead"></i><span class="d">370 m</span></span></span></button></li>
+        <li><button class="n-row"><span class="n-thumb"><img src="t-layana.jpg" alt=""></span><span><span class="nm">Layana Coffee</span><span class="ln"><span class="ar">Banjarsari</span><i class="n-lead"></i><span class="d">380 m</span></span></span></button></li>
+        <li><button class="n-row"><span class="n-thumb"><img src="t-butler.jpg" alt=""></span><span><span class="nm">Butler Coffee Boutique</span><span class="ln"><span class="ar">Banjarsari</span><i class="n-lead"></i><span class="d">390 m</span></span></span></button></li>
+        <li><button class="n-row"><span class="n-thumb"><img src="t-hella.jpg" alt=""></span><span><span class="nm">Hella Coffee</span><span class="ln"><span class="ar">Laweyan</span><i class="n-lead"></i><span class="d">470 m</span></span></span></button></li>
+        <li><button class="n-row"><span class="n-thumb"><img src="t-28.jpg" alt=""></span><span><span class="nm">28 Coffee Solo</span><span class="ln"><span class="ar">Banjarsari</span><i class="n-lead"></i><span class="d">500 m</span></span></span></button></li>
+        <li><button class="n-row"><span class="n-thumb"><img src="t-odds.jpg" alt=""></span><span><span class="nm">ODDS Coffee Company</span><span class="ln"><span class="ar">Serengan</span><i class="n-lead"></i><span class="d">500 m</span></span></span></button></li>
+        <li><button class="n-row"><span class="n-thumb"><img src="t-headroom.jpg" alt=""></span><span><span class="nm">Headroom Coffee Slamet Riyadi</span><span class="ln"><span class="ar">Laweyan</span><i class="n-lead"></i><span class="d">510 m</span></span></span></button></li>
+        <li><button class="n-row"><span class="n-thumb"><img src="t-soraksorai.jpg" alt=""></span><span><span class="nm">Sorak Sorai Coffee Solo</span><span class="ln"><span class="ar">Laweyan</span><i class="n-lead"></i><span class="d">3.0 km</span></span></span></button></li>
+        <li><button class="n-row"><span class="n-thumb"><img src="t-loske.jpg" alt=""></span><span><span class="nm">Loske Coffee Service Karangasem</span><span class="ln"><span class="ar">Laweyan</span><i class="n-lead"></i><span class="d">4.5 km</span></span></span></button></li>
+      </ul>
+    </div></div>
+  </div></div></div></div>
+
+  <div><h4>Half: a shop</h4><div class="fit"><div class="fit-in"><div class="n-frame phone" data-w="390" data-h="844" style="width:390px;height:844px">
+    <div class="n-map" data-center="-7.56091,110.81533" data-focus="230,250" data-z="1.1" data-me="-7.5680,110.8130" data-sel="Couvee Solo"></div>
+    <div class="m-rail"></div>
+    <div class="n-stub m" style="left:110px"><span class="n-hold"></span><b class="nm">Harso Coffee</b></div>
+    <div class="n-stub m" style="left:250px"><span class="n-hold"></span><b class="nm">Loske Coffee Service Karangasem</b></div>
+    <div class="m-wrap" style="top:422px"><div class="m-paper m-tk" style="padding:0 14px">
+      <span class="n-eye" data-eye style="left:12px;top:12px"></span>
+      <div class="m-grab"><i></i></div>
+      <h4 class="n-name">Couvee Solo</h4>
+      <div class="n-status" style="padding-left:0;margin:12px 0 14px"><span class="n-stamp" style="--r:-3deg">Reviewed</span><span class="n-cups" role="img" aria-label="4 out of 5"><i class="n-cup f"></i><i class="n-cup f"></i><i class="n-cup f"></i><i class="n-cup f"></i><i class="n-cup"></i></span><b class="n-score">4.0</b></div>
+      <div class="m-strip"><img src="p-couvee-1.jpg" alt="Couvee Solo, the work tables"><img src="p-couvee-2.jpg" alt="Couvee Solo, by the window"><img src="p-couvee-3.jpg" alt="Couvee Solo menu"></div>
+      <dl class="n-facts"><div><dt>Hours</dt><i class="n-lead"></i><dd>08:00 – 23:59</dd></div><div><dt>From you</dt><i class="n-lead"></i><dd>830 m</dd></div></dl>
+    </div></div>
+    <div class="m-till"><button class="n-key sq" style="width:46px" aria-label="Back to the list"><svg><use href="#i-back"/></svg></button><button class="n-key grow" aria-label="Directions"><svg><use href="#i-dir"/></svg>Directions</button><button class="n-key sq" style="width:46px" aria-label="Copy address"><svg><use href="#i-copy"/></svg></button><button class="n-key ink grow">Review<svg><use href="#i-out"/></svg></button></div>
+  </div></div></div></div>
+
+  <div><h4>Full: reading a review</h4><div class="fit"><div class="fit-in"><div class="n-frame phone" data-w="390" data-h="844" style="width:390px;height:844px">
+    <div class="n-map" data-center="-7.54943,110.77673" data-focus="195,40" data-z="1.1" data-sel="Loske Coffee Service Karangasem"></div>
+    <div class="m-rail"></div>
+    <div class="n-stub m" style="left:110px"><span class="n-hold"></span><b class="nm">Couvee Solo</b></div>
+    <div class="n-stub m" style="left:250px"><span class="n-hold"></span><b class="nm">Harso Coffee</b></div>
+    <div class="m-wrap" style="top:68px"><div class="m-paper m-tk" style="padding:0 14px">
+      <div class="m-grab"><i></i></div>
+      <h4 class="n-name">Loske Coffee Service Karangasem</h4>
+      <div class="n-status" style="padding-left:0;margin:12px 0 14px"><span class="n-stamp" style="--r:2deg">Reviewed</span><span class="n-cups" role="img" aria-label="3.5 out of 5"><i class="n-cup f"></i><i class="n-cup f"></i><i class="n-cup f"></i><i class="n-cup h"></i><i class="n-cup"></i></span><b class="n-score">3.5</b></div>
+      <dl class="n-facts"><div><dt>Hours</dt><i class="n-lead"></i><dd>07:00 – 23:00</dd></div><div><dt>From you</dt><i class="n-lead"></i><dd>4.5 km</dd></div><div class="addr"><dt>Address</dt><dd>Jl. Mojo No.23, Karangasem, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57145</dd></div></dl>
+      <section class="n-clip" style="margin-top:18px"><span class="n-tape"></span>
+        <h5>Loske: Good Idea In Theory, Short on Delivery.</h5>
+        <div class="txt" style="max-height:250px"><p>What makes the best coffee shops? For me: good coffee, good food, not too far, and a good vibe. So, in theory, Loske should be the best of all.</p><p>Good coffee? Check. Easy to access food? We have Gallus (Fried Chicken Chain) under the same roof, so check, and incidentally, also very close to my place, literally under 5 minutes.</p><p>So what gives it 3.5 stars? Well, it’s just a bit disjointed.</p></div>
+      </section>
+    </div></div>
+    <div class="m-till"><button class="n-key sq" style="width:46px" aria-label="Back to the list"><svg><use href="#i-back"/></svg></button><button class="n-key grow"><svg><use href="#i-dir"/></svg>Directions</button><button class="n-key sq" style="width:46px" aria-label="Copy address"><svg><use href="#i-copy"/></svg></button><button class="n-key ink grow">Review<svg><use href="#i-out"/></svg></button></div>
+  </div></div></div></div>
+
+  <div><h4>Full: editing</h4><div class="fit"><div class="fit-in"><div class="n-frame phone" data-w="390" data-h="844" style="width:390px;height:844px">
+    <div class="n-map" data-center="-7.58640,110.82374" data-focus="195,34" data-z="1.2" data-draft="Arzi Coffee"></div>
+    <div class="m-rail"></div>
+    <div class="n-stub m" style="left:110px"><span class="n-hold"></span><b class="nm">Couvee Solo</b></div>
+    <div class="n-stub m" style="left:250px"><span class="n-hold"></span><b class="nm">Harso Coffee</b></div>
+    <div class="m-wrap" style="top:68px"><div class="m-paper m-nota" style="padding:0 14px">
+      <div class="m-grab"><i></i></div>
+      <h4 class="n-name" style="font-size:30px">Edit Arzi Coffee</h4>
+      <div class="n-form" style="margin-top:14px;gap:14px">
+        <div class="n-contact"><div class="n-fr cover"><img src="p-arzi-1.jpg" alt="Arzi Coffee logo"><button class="x" aria-label="Remove photo">×</button></div><div class="n-fr"><img src="p-arzi-2.jpg" alt="Arzi Coffee menu"><button class="x" aria-label="Remove photo">×</button></div><button class="n-fr add">+ Add<br>photo</button><span class="n-edge">COVER</span></div>
+        <div class="n-field"><label for="m-name">Name</label><input id="m-name" class="n-line" value="Arzi Coffee"></div>
+        <div class="n-field"><label for="m-addr">Address</label><textarea id="m-addr" class="n-line" rows="2">CR7F+CFQ, Danukusuman, Serengan, Surakarta City, Central Java 57156</textarea></div>
+        <div class="n-field"><span class="lb">Hours</span><div class="n-hours"><input class="n-time" value="08:00" aria-label="Opens"><span>–</span><input class="n-time" value="22:00" aria-label="Closes"><label class="n-chk"><input type="checkbox" class="n-box">Unknown</label></div></div>
+        <div class="n-field err"><label for="m-loc">Location</label><input id="m-loc" class="n-line" value="-7.586404, 110.82374l"><p class="n-err">× That isn’t a latitude and longitude.</p></div>
+        <div class="n-field"><span class="lb">My rating</span><div class="n-rate"><span class="n-cupin"><i class="n-cup"></i><i class="n-cup"></i><i class="n-cup"></i><i class="n-cup"></i><i class="n-cup"></i></span><button class="n-key sm" type="button">Clear</button></div></div>
+        <label class="n-stog">Closed permanently<input type="checkbox" role="switch"><span class="well"><span class="n-stamp ink">Closed</span></span></label>
+      </div>
+    </div></div>
+    <div class="m-till"><button class="n-key grow">Cancel</button><button class="n-key ink grow">Save</button></div>
+  </div></div></div></div>
+</div>
+<ol class="notes">
+  <li><strong>Peek</strong> is the till plus 44px of paper: the count and Sign in. The whole map above is free to pan and tap.</li>
+  <li><strong>Half</strong> is the default. The list keys sit on the paper, because the till only holds what you need at every height.</li>
+  <li><strong>A shop at half</strong> keeps the thread: it leaves the ticket’s eyelet at the top-left and runs up to Couvee’s stamp. The till’s keys switch to Back, Directions, Copy and Review, and Review is the ink key because Couvee has one.</li>
+  <li><strong>Full</strong> is for reading and editing. The rail stays visible above the paper, so the previous shops are one tap away even mid-review.</li>
+  <li><strong>Search moves to the paper.</strong> The till’s display is a key, not a field. Tapping it raises the receipt to Full and puts the query on the paper’s top edge; the keyboard covers the till, never the field. × puts the till back. This is the change from the first pass.</li>
+  <li><strong>The error</strong> in the edit view is a red line under the field it belongs to, starting with ×. Save and Cancel stay on the till, above the keyboard.</li>
+</ol>
+
+<!-- ================================================================== -->
+<h2 id="map">7. Map: pins, clusters and selection</h2>
+<p>The map is printed, not lit. The base style is recoloured to a newsprint-grey ground with ochre main roads, and the shops are inked on it as square stamps. There are no teardrops and no circles.</p>
+<h3>City zoom: clusters</h3>
+<div class="fig"><div class="fit" data-min=".5"><div class="fit-in"><div class="n-frame" data-w="1180" data-h="480" style="width:1180px;height:480px">
+  <div class="n-map" data-center="-7.5640,110.7990" data-z=".42" data-r="44"></div>
+</div></div></div></div>
+<h3>Street zoom: Karangasem</h3>
+<div class="fig"><div class="fit" data-min=".5"><div class="fit-in"><div class="n-frame" data-w="1180" data-h="480" style="width:1180px;height:480px">
+  <div class="n-map" data-center="-7.5500,110.7760" data-z="2.1" data-r="22" data-sel="Loske Coffee Service Karangasem" data-hover="Manaka Coffee And Eatery" data-hover-area="Laweyan" data-me="-7.5532,110.7802"></div>
+</div></div></div></div>
+<div class="legend">
+  <div><span class="pinbox"><span class="n-pin k"></span></span><span><strong>Known.</strong> 13px paper square, 2px ink frame. Rated shops look the same on the map.</span></div>
+  <div><span class="pinbox"><span class="n-pin r" style="--r:-4deg"></span></span><span><strong>Reviewed.</strong> 21px red chop with the star cut out, rough ink, rotation seeded by the shop id.</span></div>
+  <div><span class="pinbox"><span class="n-pin c"></span></span><span><strong>Closed.</strong> Square at half ink, crossed out.</span></div>
+  <div><span class="pinbox"><span class="n-sel"><i></i><i></i><i></i><i></i><span class="n-pin r" style="--r:3deg"></span></span></span><span><strong>Selected.</strong> Crop marks and a marigold square, plus the thread to its ticket.</span></div>
+  <div><span class="pinbox"><span class="n-clu s2" style="position:absolute">6</span></span><span><strong>Cluster 2–9.</strong> A paper token with one sheet behind it.</span></div>
+  <div><span class="pinbox"><span class="n-clu s3" style="position:absolute">18</span></span><span><strong>Cluster 10–29.</strong> Two sheets behind.</span></div>
+  <div><span class="pinbox"><span class="n-clu s4 hasr" style="position:absolute">41</span></span><span><strong>Cluster 30+.</strong> Three sheets. The red corner chop means a reviewed shop is inside.</span></div>
+  <div><span class="pinbox"><span class="n-me"></span></span><span><strong>You.</strong> A diamond registration mark in ink.</span></div>
+  <div><span class="pinbox"><span class="n-sel"><i></i><i></i><i></i><i></i><span class="n-pin d"></span></span></span><span><strong>Being moved.</strong> A blue tack, lifted with a shadow, only while editing.</span></div>
+</div>
+<p>In MapLibre the stamps stay a symbol layer, as today. <code>addPinImages()</code> draws four images instead of two (known, reviewed, closed, draft), with the rough edge baked into the canvas once per theme. The paper tokens are drawn as one symbol image per sheet count, with the count as the text field. The selected and hovered shops stay HTML markers, which is where the crop marks, the tag and the thread’s end point live.</p>
+<p>The map is printed in two inks: land 4%, minor roads 10%, major roads 18%, water 8% blue-grey, and only the motorway keeps the ochre. The mockups approximate it with a 45% desaturation of the drawn placemat. Each stamp keeps its 13–21px drawing but sits in a 44px invisible square hit area, so a thumb can take a shop without inflating the ink.</p>
+
+<!-- ================================================================== -->
+<h2 id="specimens">8. Type, texture and control specimens</h2>
+<h3>Type</h3>
+<div class="card" style="padding:4px 18px">
+  <div class="type-row"><span style="font:900 48px/.95 var(--display);text-transform:uppercase">Loske Coffee Service</span><span class="s">Big Shoulders 900 · ticket names 34/32 desktop, 30/29 phone · uppercase</span></div>
+  <div class="type-row"><span style="font:800 22px/1 var(--display);text-transform:uppercase">Nearby · Comments · Sorak Sorai Coffee Solo</span><span class="s">Big Shoulders 800 · section heads and stubs 19–22 · uppercase</span></div>
+  <div class="type-row"><span><span class="n-stamp" style="--r:-2deg">Reviewed</span>&nbsp;&nbsp;&nbsp;<span class="n-stamp ink" style="--r:3deg">Closed</span></span><span class="s">Big Shoulders Stencil 800 · stamps 15, small stamps 12 · +0.09em tracking · subset to the 20 glyphs it uses</span></div>
+  <div class="type-row"><span style="font:600 15px/1.35 var(--sans)">Butler Coffee Boutique</span><span style="font:400 15px/1.5 var(--sans)">Jl. Ronggowarsito No.171, Timuran, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57131</span><span class="s">Atkinson Hyperlegible Next · body and list names 15/1.35 · 400 and 600 · kept from today</span></div>
+  <div class="type-row"><span class="ln" style="max-width:420px;font-size:14px"><span class="ar" style="color:var(--ink-2)">Hours</span><i class="n-lead"></i><span class="d">08:00 – 23:30</span></span><span style="font:500 16px/1.35 var(--mono);color:var(--biro)">-7.565560, 110.815536</span><span class="s">Atkinson Hyperlegible Mono · receipt lines, facts, distances 13–14 · edit values 16 in biro · search 17 on the VFD</span></div>
+</div>
+<p>Nothing is set below 12px. The display face is only for names and headings, never for sentences.</p>
+
+<h3>Texture</h3>
+<div class="tiles">
+  <figure class="tile"><div style="background:linear-gradient(90deg,rgba(0,0,0,.06),transparent 12%,transparent 88%,rgba(0,0,0,.06)),var(--grain),var(--thermal)"></div><figcaption>Thermal receipt</figcaption></figure>
+  <figure class="tile"><div style="background:var(--fiber),var(--grain),var(--ticket)"></div><figcaption>Buff ticket card</figcaption></figure>
+  <figure class="tile"><div style="background:var(--fiber),var(--grain),var(--nota)"></div><figcaption>Carbon nota</figcaption></figure>
+  <figure class="tile"><div style="background:var(--mottle),var(--grain),var(--news)"></div><figcaption>Newsprint clipping</figcaption></figure>
+  <figure class="tile"><div style="background:var(--brush),linear-gradient(180deg,#EEF0EF 0,#CBCFCF 32%,#9A9FA0 74%,#B5BABA 100%)"></div><figcaption>Brushed steel</figcaption></figure>
+  <figure class="tile"><div style="background:var(--grain),linear-gradient(180deg,#3B3834,#292724)"></div><figcaption>Till graphite</figcaption></figure>
+  <figure class="tile"><div class="n-vfd" style="height:118px;border-width:1px"><span class="txt">KOPI_</span></div><figcaption>VFD glass</figcaption></figure>
+  <figure class="tile"><div style="position:relative;overflow:hidden"><div class="n-map" data-center="-7.5670,110.8230" data-z="2.2" data-r="0"></div></div><figcaption>Placemat map</figcaption></figure>
+  <figure class="tile"><div style="display:grid;place-items:center;background:var(--grain),var(--thermal)"><span class="n-thumb" style="width:96px;height:96px"><img src="t-kopine.jpg" alt="Kopine Tjap Nyah Lemu, printed"></span></div><figcaption>Halftone thumbnail</figcaption></figure>
+  <figure class="tile"><div style="display:grid;place-items:center;background:var(--fiber),var(--grain),var(--ticket)"><span class="n-stamp" style="--r:-4deg;font-size:22px">Reviewed</span></div><figcaption>Rough ink</figcaption></figure>
+</div>
+
+<h3>Controls</h3>
+<p>These work. Type in the display, press the keys, stamp the card.</p>
+<div class="spec">
+  <div class="card dark">
+    <h4>Search on the till</h4>
+    <label class="n-vfd" id="live-vfd"><svg><use href="#i-search"/></svg><input id="live-q" placeholder="Search shops" aria-label="Search shops" autocomplete="off"></label>
+    <div class="n-slot" style="margin:12px -18px 0"></div>
+    <div class="n-paperwrap" style="position:relative;margin:0 4px"><div class="n-receipt tear-b"><p class="n-total" id="live-total">150 shops · 3 reviewed</p><ul class="n-rows" id="live-rows"></ul></div></div>
+  </div>
+  <div class="card">
+    <h4>Keys</h4>
+    <div class="row"><button class="n-key">Directions</button><button class="n-key ink">Save</button></div>
+    <div class="row"><button class="n-key focus">Focused</button><button class="n-key down">Pressed</button><button class="n-key off" disabled>Disabled</button></div>
+    <div class="row" role="tablist" id="live-tabs"><button class="n-key" role="tab" aria-selected="true"><span class="led"></span>Latest reviews</button><button class="n-key" role="tab" aria-selected="false"><span class="led"></span>All places</button></div>
+    <div class="row"><button class="n-key sq" aria-label="Back"><svg><use href="#i-back"/></svg></button><button class="n-key sq" aria-label="Copy address"><svg><use href="#i-copy"/></svg></button><button class="n-key sq" aria-label="Share"><svg><use href="#i-share"/></svg></button><button class="n-key sq" aria-label="Add a shop"><svg><use href="#i-plus"/></svg></button></div>
+  </div>
+  <div class="card nota">
+    <h4>Fields</h4>
+    <div class="n-form">
+      <div class="n-field"><label for="s-a">Name</label><input id="s-a" class="n-line" value="Kopi Lawe"></div>
+      <div class="n-field err"><label for="s-b">Name</label><input id="s-b" class="n-line" value="K"><p class="n-err">× The name needs at least 2 letters.</p></div>
+      <div class="n-field"><span class="lb">Hours</span><div class="n-hours"><input class="n-time" value="07:00" aria-label="Opens"><span>–</span><input class="n-time" value="00:00" aria-label="Closes"><label class="n-chk"><input type="checkbox" class="n-box">Unknown</label></div></div>
+    </div>
+  </div>
+  <div class="card nota">
+    <h4>Rating and Closed</h4>
+    <div class="n-rate" style="margin-bottom:16px"><span class="n-cupin" id="live-cups" role="radiogroup" aria-label="My rating"></span><b class="n-score" id="live-score">3.5</b><button class="n-key sm" id="live-clear">Clear</button></div>
+    <label class="n-stog">Closed permanently<input type="checkbox" role="switch"><span class="well"><span class="n-stamp ink">Closed</span></span></label>
+  </div>
+  <div class="card tk">
+    <h4>Stamps</h4>
+    <div class="row"><span class="n-stamp" style="--r:-3deg">Reviewed</span><span class="n-stamp dim" style="--r:2deg">Not reviewed</span></div>
+    <div class="row"><span class="n-stamp ink" style="--r:-2deg">Closed</span><span class="n-stamp sm" style="--r:1deg">Reviewed 4.0</span><span class="n-stamp sm ink" style="--r:-1deg">Author</span></div>
+    <div class="row"><span class="n-cups" role="img" aria-label="2.5 out of 5"><i class="n-cup f"></i><i class="n-cup f"></i><i class="n-cup h"></i><i class="n-cup"></i><i class="n-cup"></i></span><b class="n-score">2.5</b></div>
+  </div>
+  <div class="card">
+    <h4>Receipt rows</h4>
+    <ul class="n-rows">
+      <li><button class="n-row kb"><span class="n-thumb"><img src="t-sapa.jpg" alt=""></span><span><span class="nm">Sapa Kopi Laweyan</span><span class="ln"><span class="n-stamp sm ink" style="--r:-1deg">Closed</span><span class="ar">Laweyan</span><i class="n-lead"></i><span class="d">4.9 km</span></span></span></button></li>
+      <li><button class="n-row sel"><span class="n-thumb"><img src="t-couvee.jpg" alt=""></span><span><span class="nm">Couvee Solo</span><span class="ln"><span class="n-stamp sm" style="--r:1deg">Reviewed 4.0</span><span class="ar">Banjarsari</span><i class="n-lead"></i><span class="d">830 m</span></span></span></button></li>
+    </ul>
+    <p style="margin:12px 0 0;font:400 15px/1.4 var(--sans);text-align:center">No shop matches “kopi susu”.</p>
+  </div>
+  <div class="card" style="background:var(--grain),var(--ground)">
+    <h4>Copied, and the shortcuts card</h4>
+    <div class="toast"><div class="tear-b">Copied</div></div>
+    <div class="laminate" style="margin-top:18px">
+      <h4 style="margin:0 0 12px;font:800 22px/1 var(--display);text-transform:uppercase">Keyboard shortcuts</h4>
+      <dl>
+        <dt><span class="cap">Esc</span></dt><dd>Take the ticket down</dd>
+        <dt><span class="cap">⌘K</span><span class="cap">/</span></dt><dd>Search</dd>
+        <dt><span class="cap">J</span><span class="cap">K</span></dt><dd>Next / previous in the list</dd>
+        <dt><span class="cap">[</span><span class="cap">]</span></dt><dd>Along the rail</dd>
+        <dt><span class="cap">D</span></dt><dd>Directions</dd>
+        <dt><span class="cap">C</span></dt><dd>Copy address</dd>
+      </dl>
+    </div>
+  </div>
+  <div class="card nota">
+    <h4>Contact sheet</h4>
+    <div class="n-contact" id="live-contact">
+      <div class="n-fr cover"><img src="p-loske-2.jpg" alt="Loske, the building"><button class="x" aria-label="Remove photo">×</button></div>
+      <div class="n-fr"><img src="p-loske-1.jpg" alt="Loske, the bar"><button class="x" aria-label="Remove photo">×</button></div>
+      <span class="n-edge">COVER</span>
+    </div>
+  </div>
+</div>
+
+<h3>Motion</h3>
+<div class="spec">
+  <div class="card" style="background:var(--grain),var(--ground)"><h4>Print</h4><div class="demo" id="m-print" style="height:180px"><div class="n-paperwrap" style="left:20px;right:20px;top:0"><div class="n-receipt tear-b"><ul class="n-rows">
+    <li><div class="n-row" style="min-height:44px"><span class="n-thumb"><img src="t-loske.jpg" alt=""></span><span class="nm">Loske Coffee Service Karangasem</span></div></li>
+    <li><div class="n-row" style="min-height:44px"><span class="n-thumb"><img src="t-soraksorai.jpg" alt=""></span><span class="nm">Sorak Sorai Coffee Solo</span></div></li>
+    <li><div class="n-row" style="min-height:44px"><span class="n-thumb"><img src="t-couvee.jpg" alt=""></span><span class="nm">Couvee Solo</span></div></li></ul></div></div></div>
+    <div class="row" style="margin-top:12px"><button class="n-key sm" data-replay="m-print" data-anim="anim-print">Replay</button></div></div>
+  <div class="card" style="background:var(--grain),var(--ground)"><h4>Hang</h4><div class="demo" style="height:180px"><div class="n-rail" style="left:0;right:0;top:8px"></div><div class="n-tk" id="m-hang" style="left:50%;margin-left:-90px;top:22px;width:180px;height:200px"><span class="n-hold"></span><div class="n-tk-body" style="padding:18px 12px"><b style="font:900 24px/.95 var(--display);text-transform:uppercase;display:block">Harso Coffee</b></div></div></div>
+    <div class="row" style="margin-top:12px"><button class="n-key sm" data-replay="m-hang" data-anim="anim-hang">Replay</button></div></div>
+  <div class="card tk"><h4>Stamp</h4><div class="demo" style="height:180px;display:grid;place-items:center;background:var(--fiber),var(--grain),var(--ticket)"><span class="n-stamp" id="m-stamp" style="--r:-4deg;font-size:24px">Reviewed</span></div>
+    <div class="row" style="margin-top:12px"><button class="n-key sm" data-replay="m-stamp" data-anim="anim-stamp">Replay</button></div></div>
+  <div class="card" style="background:var(--grain),var(--ground)"><h4>Save</h4><div class="demo" style="height:180px"><div class="n-rail" style="left:0;right:0;top:8px"></div><div class="n-tk" id="m-tear" style="left:50%;margin-left:-90px;top:22px;width:180px;height:200px;background-color:var(--nota);background-image:var(--fiber),var(--grain)"><span class="n-hold"></span><div class="n-tk-body" style="padding:18px 12px"><b style="font:900 24px/.95 var(--display);text-transform:uppercase;display:block">Arzi Coffee</b></div></div></div>
+    <div class="row" style="margin-top:12px"><button class="n-key sm" data-replay="m-tear" data-anim="anim-tear">Replay</button></div></div>
+</div>
+
+<!-- ================================================================== -->
+<h2 id="system">9. The system</h2>
+<h3>Palette</h3>
+<p>Four inks on four papers, plus steel and glass for the hardware. Each ink has one job. Contrast is WCAG 2 on the flat paper colour; the grain sits at 10% and is not counted.</p>
+<div class="tbl"><table>
+  <tr><th>Token</th><th>Hex</th><th>Means</th><th>Contrast</th></tr>
+  <tr><td><span class="sw" style="background:#221F1B"></span>ink</td><td class="num">#221F1B</td><td>All text, frames, crop marks, the thread, the main key</td><td class="num">14.15 thermal · 12.40 ticket · 12.93 nota · 12.10 news · 11.36 map</td></tr>
+  <tr><td><span class="sw" style="background:#5A5148"></span>ink-2</td><td class="num">#5A5148</td><td>Fact labels (Hours, From you) and dot leaders. Never a line under a heading or a control.</td><td class="num">6.70 thermal · 5.87 ticket · 6.12 nota · 5.72 news</td></tr>
+  <tr><td><span class="sw" style="background:#B02A1C"></span>chop</td><td class="num">#B02A1C</td><td>Reviewed. On the edit nota only, also error lines.</td><td class="num">5.67 thermal · 4.97 ticket · 5.18 nota · 4.55 map (pins)</td></tr>
+  <tr><td><span class="sw" style="background:#1F4A9C"></span>biro</td><td class="num">#1F4A9C</td><td>What you write or can write: edit values, links, Sign in, the draft tack</td><td class="num">7.19 thermal · 6.30 ticket · 6.57 nota · 5.78 map</td></tr>
+  <tr><td><span class="sw" style="background:#6B3D1E"></span>kopi</td><td class="num">#6B3D1E</td><td>Rating: cups and the score</td><td class="num">6.86 ticket · 7.16 nota</td></tr>
+  <tr><td><span class="sw" style="background:#F0C53A"></span>marker</td><td class="num">#F0C53A</td><td>Selected. A fill behind ink, never text, never alone.</td><td class="num">ink on marker 9.96 · marker on map 1.14, so the crop marks carry the meaning</td></tr>
+  <tr><td><span class="sw" style="background:#F1EEE6"></span>thermal</td><td class="num">#F1EEE6</td><td>Receipt, tags, tokens, key legends on ink</td><td class="num">thermal on ink key 14.15</td></tr>
+  <tr><td><span class="sw" style="background:#EBDFC2"></span>ticket</td><td class="num">#EBDFC2</td><td>A shop, open or on the rail</td><td class="num">on map 1.09: separated by a 1px ink edge at 30% and the paper shadow</td></tr>
+  <tr><td><span class="sw" style="background:#F2E5A8"></span>nota</td><td class="num">#F2E5A8</td><td>Editing and adding</td><td class="num">see ink and biro</td></tr>
+  <tr><td><span class="sw" style="background:#E2DDD0"></span>news</td><td class="num">#E2DDD0</td><td>The review clipping</td><td class="num">see ink</td></tr>
+  <tr><td><span class="sw" style="background:#D9D7CC"></span>ground</td><td class="num">#D9D7CC</td><td>The map’s land</td><td class="num">ink stamps 11.36 · chop 4.55 · biro 5.78</td></tr>
+  <tr><td><span class="sw" style="background:#101A18"></span>glass / <span class="sw" style="background:#8FF0D2"></span>vfd</td><td class="num">#101A18 / #8FF0D2</td><td>The search display and its typed text; placeholder in #5FA592</td><td class="num">13.16 typed · 6.16 placeholder</td></tr>
+  <tr><td><span class="sw" style="background:#FFB21A"></span>led</td><td class="num">#FFB21A</td><td>The active list key</td><td class="num">7.82 on graphite</td></tr>
+</table></div>
+<p><strong>Night counter.</strong> Dark mode keeps paper as paper. The map goes dark, the papers dim by about 10% (thermal #D9D4C8, ticket #CFC4A8, nota #D6CB93), and two inks darken to hold contrast on the dimmed card: chop to #9A2316 (4.61 on night ticket) and ink-2 to #4F473F (5.25). Ink on night ticket is 9.47 and on night thermal 11.10. Nothing changes hue, so “reviewed” is red at noon and at midnight.</p>
+<div class="fig"><div class="fit" style="max-width:780px"><div class="fit-in"><div class="n-frame night" data-w="780" data-h="360" style="width:780px;height:360px">
+  <div class="n-map" data-center="-7.56091,110.81533" data-focus="300,220" data-z="1.15" data-sel="Couvee Solo"></div>
+  <div class="n-rail" style="left:0;right:0;top:0;border-width:0 0 1px"></div>
+  <article class="n-tk" style="left:470px;top:14px;width:290px;bottom:-20px"><span class="n-hold"></span><span class="n-eye" data-eye style="left:-8px;top:96px"></span><div class="n-tk-body"><header class="n-tk-head"><h4 class="n-name" style="font-size:30px">Couvee Solo</h4></header><div class="n-status"><span class="n-stamp" style="--r:-3deg">Reviewed</span><b class="n-score">4.0</b></div><dl class="n-facts"><div><dt>Hours</dt><i class="n-lead"></i><dd>08:00 – 23:59</dd></div><div><dt>From you</dt><i class="n-lead"></i><dd>830 m</dd></div></dl></div></article>
+</div></div></div></div>
+
+<h3>Type</h3>
+<div class="tbl"><table>
+  <tr><th>Role</th><th>Face</th><th>Size / line</th><th>Weight, case</th></tr>
+  <tr><td>Ticket name</td><td>Big Shoulders</td><td class="num">34/32 desktop · 30/29 phone</td><td>900, uppercase, balanced wrap, 3 lines max</td></tr>
+  <tr><td>Stub name, section head (Nearby, Comments)</td><td>Big Shoulders</td><td class="num">19–22/1</td><td>800, uppercase, stub 2 lines max</td></tr>
+  <tr><td>Stamp</td><td>Big Shoulders Stencil</td><td class="num">15 · small 12</td><td>800, uppercase, +0.09em</td></tr>
+  <tr><td>Body, list name, address, review</td><td>Atkinson Hyperlegible Next</td><td class="num">15/1.35 · review 14.5/1.55</td><td>400, names 600, titles 700</td></tr>
+  <tr><td>Receipt line, facts, distance, count</td><td>Atkinson Hyperlegible Mono</td><td class="num">13–14/1.3</td><td>400, values 700</td></tr>
+  <tr><td>Typed values on the nota</td><td>Atkinson Hyperlegible Mono</td><td class="num">16/1.35</td><td>500, biro</td></tr>
+  <tr><td>Search on the VFD</td><td>Atkinson Hyperlegible Mono</td><td class="num">17</td><td>500, glowing</td></tr>
+</table></div>
+
+<h3>Texture recipes</h3>
+<p>Every texture is a static image made once: an SVG noise tile as a data URI, layered under the paper colour. Nothing is animated and no filter runs per frame.</p>
+<pre><code>/* Grain: every paper. 200px tile, 10% grey noise over the flat colour. */
+--grain: url("data:image/svg+xml,&lt;svg … width='200' height='200'&gt;&lt;filter id='f'&gt;
+  &lt;feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/&gt;
+  &lt;feColorMatrix type='saturate' values='0'/&gt;&lt;/filter&gt;
+  &lt;rect width='200' height='200' filter='url(%23f)' opacity='.10'/&gt;&lt;/svg&gt;");
+
+/* Fibres: ticket and nota card. Same tile, stretched: baseFrequency='.011 .32'. */
+/* Mottle: newsprint. baseFrequency='.035', opacity .12. */
+/* Brushed steel: rail, keys, slider. baseFrequency='.004 .95' over a 4-stop grey gradient. */
+
+.receipt { background:
+  linear-gradient(90deg, #0000000e, #0000 5%, #0000 95%, #0000000e), /* roll curl */
+  var(--grain), var(--thermal); }
+
+/* Torn edge: 14px teeth, thermal paper only. A drop-shadow filter on the parent
+   draws the shadow, because a mask would clip a box-shadow. */
+.tear-b { mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg)
+                 50% / 14px 100%; }
+
+/* Halftone thumbnail: greyscale, multiplied onto the paper, then a 3px raster. */
+.thumb img   { filter: grayscale(1) contrast(1.5) brightness(1.06); mix-blend-mode: multiply; }
+.thumb::after { background:
+  repeating-linear-gradient(0deg,  var(--thermal) 0 1px, #0000 1px 3px),
+  repeating-linear-gradient(90deg, var(--thermal) 0 1px, #0000 1px 3px);
+  mix-blend-mode: lighten; }
+
+/* Rough ink: stamps and chops. One inline SVG filter, used on at most ~10 HTML
+   elements at a time. Map pins get the same roughness baked into their canvas images. */
+&lt;filter id="rough"&gt;
+  &lt;feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" result="n"/&gt;
+  &lt;feDisplacementMap in="SourceGraphic" in2="n" scale="2.2" xChannelSelector="R" yChannelSelector="G" result="d"/&gt;
+  &lt;feTurbulence type="fractalNoise" baseFrequency=".55" numOctaves="2" seed="11" result="m"/&gt;
+  &lt;feColorMatrix in="m" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -2.4 2.05" result="mask"/&gt;
+  &lt;feComposite in="d" in2="mask" operator="in"/&gt;
+&lt;/filter&gt;
+
+/* VFD: dark glass, glow by text-shadow, a 3px mesh on top. */
+.vfd { background: radial-gradient(120% 160% at 50% 0, #1C2C29, #0B1311 70%);
+       color: #8FF0D2; text-shadow: 0 0 3px #8FF0D2cc, 0 0 10px #8FF0D259; }
+.vfd::after { background:
+  repeating-linear-gradient(0deg,  #00000042 0 1px, #0000 1px 3px),
+  repeating-linear-gradient(90deg, #00000029 0 1px, #0000 1px 3px); }
+
+/* Map grain: a static overlay above the canvas, pointer-events none, no blend mode. */</code></pre>
+
+<h3>Shape rules</h3>
+<ol class="notes">
+  <li><strong>No radius, anywhere.</strong> One rule, <code>*, ::before, ::after { border-radius: 0 }</code>, plus overrides for MapLibre’s attribution and control CSS.</li>
+  <li><strong>No circles either.</strong> Pins, clusters, bolts, LEDs, eyelets and the you-are-here mark are squares, hexagons or diamonds. Curves only appear in type, photos and map geometry.</li>
+  <li><strong>Four edges.</strong> Straight cut for card. Torn, 14px teeth, for thermal paper only. Perforated, 4px dashes, between a stub and its tear line and under the receipt’s count. Double frame for stamps.</li>
+  <li><strong>Rotation is for ink.</strong> Stamps and chops turn between −4° and +4°, seeded from the shop id so a shop always looks the same. Paper hangs straight. The one exception is the clipping, at −0.6°.</li>
+  <li><strong>Border weights.</strong> 1px ink at 25–35% for paper edges and dividers. 1.5px ink for fields, boxes and tokens. 2px ink for focus, crop marks and the keyboard highlight. 3px only for the focused field’s rule.</li>
+  <li><strong>Two shadows.</strong> Paper: a 1px contact line and an 18px soft drop. Key: a 2px hard bottom and a 5px soft drop. Light comes from the top-left. Pressing a key removes its hard bottom and moves it down 2px.</li>
+  <li><strong>Targets.</strong> Keys are 40px on desktop and 44–46px on phones. Receipt rows are 58px. Fact rows are 36px on desktop and 44px on phones.</li>
+</ol>
+
+<h3>Motion</h3>
+<div class="tbl"><table>
+  <tr><th>Name</th><th>When</th><th>How</th><th>Reduced motion</th></tr>
+  <tr><td>Print</td><td>The list changes: tab, search, location</td><td>Rows feed in from the top in 4 steps each, 12ms apart, 180ms in total</td><td>Instant</td></tr>
+  <tr><td>Hang</td><td>A shop opens</td><td>The ticket drops 60px and swings 2.2° → −1.3° → 0.6° → 0 over 480ms, pivoting on its slider</td><td>120ms fade</td></tr>
+  <tr><td>Take down</td><td>Esc or ×</td><td>The ticket shortens into its stub in 200ms, ease-in</td><td>Instant</td></tr>
+  <tr><td>Thread</td><td>The map moves, a ticket opens</td><td>Redrawn every frame from <code>map.project()</code>. Sag is 16% of length, capped at 90px</td><td>Same: it carries meaning</td></tr>
+  <tr><td>Stamp</td><td>A status appears, Closed is switched on, a cup is stamped</td><td>Scale 1.3 → 0.96 → 1 with an ink-in, 160ms</td><td>Instant</td></tr>
+  <tr><td>Feed</td><td>The mobile sheet snaps</td><td>240ms, cubic-bezier(.2,.8,.2,1). The paper moves, the till doesn’t</td><td>Instant</td></tr>
+  <tr><td>Save</td><td>A save succeeds</td><td>The nota lifts 6px and the yellow drains to buff, 500ms</td><td>Colour swap</td></tr>
+  <tr><td>Key</td><td>Any press</td><td>Down 2px, 60ms</td><td>Same</td></tr>
+</table></div>
+
+<h3>Status and selection</h3>
+<div class="tbl"><table>
+  <tr><th>State</th><th>On the map</th><th>On the receipt</th><th>On the ticket</th></tr>
+  <tr><td>Known</td><td>Paper square, ink frame</td><td>Nothing extra</td><td>Grey stamp: NOT REVIEWED</td></tr>
+  <tr><td>Rated, not reviewed</td><td>Same as known</td><td>Cup + score in kopi</td><td>Cup card + score, no stamp</td></tr>
+  <tr><td>Reviewed</td><td>Red chop with a star cut out</td><td>Small red stamp: REVIEWED 4.0</td><td>Red double-frame stamp + cup card; Read full review is the ink key</td></tr>
+  <tr><td>Closed</td><td>Half-ink square, crossed</td><td>Name struck through + CLOSED stamp</td><td>Black CLOSED stamp</td></tr>
+  <tr><td>Selected (open)</td><td>Crop marks + marigold square + thread</td><td>Marigold highlighter swipe</td><td>It is the hanging ticket</td></tr>
+  <tr><td>On the rail</td><td>Nothing; hovering the stub draws a faint thread</td><td>Nothing</td><td>Stub with name and status</td></tr>
+  <tr><td>Hover</td><td>Receipt tag above the stamp</td><td>Row darkens 5%</td><td>× appears on a stub</td></tr>
+  <tr><td>Keyboard focus</td><td>The map keeps its own keys</td><td>2px ink outline inside the row</td><td>2px ink outline, 3px offset; on the till the outline is VFD green</td></tr>
+  <tr><td>Being edited</td><td>Blue tack, lifted, draggable, crop marks + thread</td><td>The receipt is rolled into the till</td><td>Yellow nota, blue values</td></tr>
+  <tr><td>You</td><td>Diamond registration mark</td><td>Distances appear</td><td>From you row</td></tr>
+</table></div>
+
+<!-- ================================================================== -->
+<h2 id="daisy">10. daisyUI goes</h2>
+<p>Keeping it would mean fighting it. Every component Nota needs is custom anyway: the keys have bevels and travel, the fields are ruled lines, the badges are rough stamps, and the rating is a cup card. daisyUI would only contribute radius tokens to zero out and a theme layer to map around. It also owns the colour tokens the map reads through <code>themeColor()</code>, which is the one part worth keeping in shape.</p>
+<div class="tbl"><table>
+  <tr><th>daisyUI today</th><th>Where</th><th>Replacement</th></tr>
+  <tr><td><code>btn</code>, <code>btn-primary</code>, <code>-ghost</code>, <code>-outline</code>, <code>-sm</code>, <code>-xs</code>, <code>-lg</code>, <code>-square</code>, <code>-circle</code> (14 buttons)</td><td>-panel, -coffeeDetail, -editor</td><td><code>&lt;Key tone="steel|ink" size square&gt;</code>, one component</td></tr>
+  <tr><td><code>input</code>, <code>textarea</code> (7 fields)</td><td>-browse, -panel, -editor</td><td><code>&lt;Vfd&gt;</code> for search; <code>.line</code> ruled field; <code>.time</code> for the two time inputs</td></tr>
+  <tr><td><code>tabs tabs-border</code>, <code>tab</code>, <code>tab-active</code></td><td>-browse</td><td><code>&lt;Key role="tab" aria-selected&gt;</code> with the LED</td></tr>
+  <tr><td><code>badge</code>, <code>badge-soft</code>, <code>-xs</code>, <code>-sm</code> (8: status, photo counter, Cover, New, Author, No photos yet)</td><td>-coffeeDetail, -editor</td><td><code>&lt;Stamp tone="chop|ink|dim"&gt;</code>; the counter becomes a paper label</td></tr>
+  <tr><td><code>rating</code>, <code>rating-half</code>, <code>mask</code>, <code>mask-star-2</code>, <code>mask-half-1/2</code></td><td>-rating, -editor</td><td><code>&lt;Cups value&gt;</code> and <code>&lt;CupsInput&gt;</code>: 10 radios with the same <code>name="rating"</code>, so <code>save()</code> is untouched</td></tr>
+  <tr><td><code>toggle toggle-sm toggle-error</code></td><td>-editor</td><td><code>&lt;StampToggle&gt;</code>: checkbox, <code>role="switch"</code>, same <code>name="closed"</code></td></tr>
+  <tr><td><code>checkbox checkbox-xs</code></td><td>-editor</td><td><code>.box</code>: native checkbox, <code>appearance: none</code></td></tr>
+  <tr><td><code>kbd kbd-sm</code></td><td>-browse, -shortcuts</td><td><code>.cap</code> mini key. The ⌘K hint leaves the search field</td></tr>
+  <tr><td><code>modal</code>, <code>modal-box</code>, <code>modal-backdrop</code></td><td>-shortcuts</td><td>Native <code>&lt;dialog&gt;</code> styled as the laminated card, with <code>::backdrop</code></td></tr>
+  <tr><td><code>loading loading-spinner</code></td><td>-editor (Save)</td><td>The Save key stays pressed and reads “Saving…”, with <code>aria-busy</code></td></tr>
+  <tr><td><code>link link-accent</code></td><td>-browse, -coffeeDetail</td><td>A plain biro link</td></tr>
+  <tr><td>Theme tokens: <code>base-100/200/300</code>, <code>base-content</code>, <code>primary</code>, <code>accent</code>, <code>error</code>, <code>warning</code> (about 80 uses)</td><td>12 files, plus the map colours read by <code>themeColor()</code></td><td>Tailwind v4 <code>@theme</code> tokens: <code>--color-thermal</code>, <code>-ticket</code>, <code>-nota</code>, <code>-news</code>, <code>-ground</code>, <code>-ink</code>, <code>-ink-2</code>, <code>-chop</code>, <code>-biro</code>, <code>-kopi</code>, <code>-marker</code>, <code>-steel</code>. <code>themeColor()</code> keeps working on the new names.</td></tr>
+</table></div>
+<p><code>@tailwindcss/typography</code> stays for the review HTML (<code>prose</code>); it is not part of daisyUI. The <code>daisyui</code> devDependency, the <code>@plugin "daisyui"</code> block and the two theme blocks in <code>index.css</code> are deleted last.</p>
+<p><strong>Cost.</strong> About 400–500 lines of new TSX and CSS for the components: Key, Vfd, Stamp, Cups, CupsInput, StampToggle, Line, Ticket, Stub, Receipt row, Clipping, Contact sheet and the thread. Writing them is folded into the build steps below. Removing daisyUI itself is under an hour once nothing uses it. Net CSS shipped goes down: daisyUI’s component layer leaves, and two fonts arrive, Big Shoulders and Atkinson Mono (≈60–80 KB woff2 together, the stencil subset is a few KB).</p>
+
+<!-- ================================================================== -->
+<h2 id="stays">11. What stays and what changes</h2>
+<div class="cols">
+  <div>
+    <h4>Stays</h4>
+    <ul class="notes">
+      <li>The data, the API, the server and the relaxed validation. No server change is required.</li>
+      <li>Routes and links: <code>?shop=</code>, <code>&amp;edit=1</code>, <code>?add=1</code>, and the redirects from the old pages.</li>
+      <li>The store’s <code>sheet</code>, <code>editing</code>, <code>placing</code>, <code>draft</code>, <code>query</code>, <code>tab</code> and <code>browseList</code>.</li>
+      <li>Edit in place, tap-to-place add, Google Maps link import, tap a photo to make it the cover, the draggable pin.</li>
+      <li>Local search, the 4 nearby shops, distance from you, the offset fly.</li>
+      <li>The single <code>keydown</code> listener and every shortcut.</li>
+      <li>MapLibre, maplibre-react-components, SWR, zustand, Tailwind v4, react-icons for the few icons left, and Atkinson Hyperlegible Next as the body face.</li>
+    </ul>
+  </div>
+  <div>
+    <h4>Changes</h4>
+    <ul class="notes">
+      <li>The look: four papers, four inks, steel and glass, grain, no radius and no circles.</li>
+      <li>Desktop layout: till and receipt on the left, rail and hanging ticket on the right. The floating card goes.</li>
+      <li>Mobile layout: the till on the bottom edge, paper above it as the sheet, the rail on top. The floating + moves into the till.</li>
+      <li>The store gains <code>rail: Coffee[]</code> with <code>hang</code>, <code>takeDown</code> and <code>unhook</code>. Esc takes the ticket down; <code>[</code> and <code>]</code> walk the rail.</li>
+      <li>The thread: one SVG overlay fed by <code>map.on('move')</code>.</li>
+      <li>The map: a recoloured style, square stamps, paper cluster tokens, crop-mark selection, a grain overlay.</li>
+      <li>The list marks only exceptions, and <code>area()</code> also reads Google-format addresses.</li>
+      <li>daisyUI is removed. Two font families are added.</li>
+      <li>Dark mode becomes the night counter.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ================================================================== -->
+<h2 id="build">12. Build order and cost</h2>
+<p>Each step ships on its own and leaves the app working. Estimates are for one developer who knows this code.</p>
+<p><strong>Step 0, before any design work:</strong> fix <code>area()</code> in <code>-util.ts:19-20</code> so the 29 English-format addresses yield “Laweyan”, not “Slamet Riyadi St No.241”. It is a few lines, every list surface uses it, and it ships on its own.</p>
+<div class="tbl"><table>
+  <tr><th>#</th><th>Step</th><th>Ships</th><th>Est.</th></tr>
+  <tr><td class="num">1</td><td><strong>Tokens and materials</strong></td><td>The new palette mapped onto daisyUI’s variables for now (<code>base-100</code> → thermal, <code>primary</code> → chop, <code>accent</code> → biro), the radius tokens at 0, grain on the panel, the two new fonts. The current layout instantly reads as paper.</td><td class="num">0.5–1 d</td></tr>
+  <tr><td class="num">2</td><td><strong>Printed map</strong></td><td>The recoloured style (forked JSON), the four stamp images, paper cluster tokens, crop marks, the registration mark, the map grain. Independent of the panel.</td><td class="num">1.5–2 d</td></tr>
+  <tr><td class="num">3</td><td><strong>Till and receipt</strong></td><td>Browse as the till plus receipt: VFD search, list keys with LEDs, receipt rows with halftone thumbs and leaders, paper as long as its content. Key, Vfd and Stamp are written here.</td><td class="num">2 d</td></tr>
+  <tr><td class="num">4</td><td><strong>Rail, ticket and thread</strong> (desktop)</td><td>The shop view as a hanging ticket, the rail with stubs, <code>[</code> <code>]</code>, take-down, the thread overlay, the clipping, the stapled Nearby, Cups.</td><td class="num">2.5–3 d</td></tr>
+  <tr><td class="num">5</td><td><strong>Mobile till</strong></td><td>The till on the bottom edge with context keys, the paper sheet at three heights, the rail on top, keyboard handling with <code>visualViewport</code>.</td><td class="num">2 d</td></tr>
+  <tr><td class="num">6</td><td><strong>Nota</strong></td><td>Edit and add on yellow paper: ruled fields, the contact sheet, CupsInput, StampToggle, the blue tack, the plotter hairlines for add, the save animation.</td><td class="num">2 d</td></tr>
+  <tr><td class="num">7</td><td><strong>daisyUI out, night counter</strong></td><td>The shortcuts card, the last daisyUI classes, the plugin removed; night papers and the dark map style; an accessibility and performance pass on a mid-range Android phone.</td><td class="num">1.5–2 d</td></tr>
+  <tr><td></td><td><strong>Total</strong></td><td></td><td class="num">12–14 d</td></tr>
+</table></div>
+
+<!-- ================================================================== -->
+<h2 id="risks">13. Risks</h2>
+<ol class="notes">
+  <li><strong>Kitsch.</strong> Skeuomorphism turns into a theme park fast. The guard is one source of objects (the counter), materials instead of fake 3D, no wood, leather or perspective, and grain capped at 10%. Judge it on a real phone at 1×, with real shop names, before polishing anything.</li>
+  <li><strong>Legibility on texture.</strong> Grain lowers effective contrast a little. Text always sits on a flat paper colour with at least 4.5:1 before grain, and the tightest pair, chop on ticket at 4.97, is only used for bold stamps.</li>
+  <li><strong>Performance.</strong> Drop-shadow filters on torn paper, the rough-ink filter and the map grain all cost GPU time. Mitigations: static noise tiles, the rough filter on at most ~10 HTML elements, pin roughness baked into images, and no blend mode over the WebGL canvas.</li>
+  <li><strong>The thread.</strong> It has to track the map at 60fps and must never block a tap. It uses one SVG path updated in <code>requestAnimationFrame</code> with <code>pointer-events: none</code>, and when the shop is off screen it clamps to the edge with an arrowhead.</li>
+  <li><strong>Search on phones.</strong> The query lives on the paper, not in the till, so the keyboard cannot cover it. The remaining trap is the till’s key row: it still has to ride <code>visualViewport</code> when a form field is focused. Test on iOS 17/18 Safari and Android Chrome.</li>
+  <li><strong>Map style coupling.</strong> Recolouring Stadia’s alidade layers by id at runtime breaks if the upstream style changes. Forking it to <code>resource.mwyndham.dev/sono/</code> as its own JSON avoids that.</li>
+  <li><strong>Two kinds of next.</strong> J/K walk the list and <code>[</code> <code>]</code> walk the rail. That is clear on the shortcuts card, but it is one more idea to learn.</li>
+  <li><strong>One outlier.</strong> Deca Dessert and Coffee is in Banjarnegara, about 120 km west (110.70°E). Any “fit all shops” view or distance sort will stretch for it. It is a data fix, flagged here, not designed around.</li>
+</ol>
+
+<!-- ================================================================== -->
+<h2 id="decisions">14. Decisions I need from you</h2>
+<ol class="notes">
+  <li><strong>The rail.</strong> Keep it as visible history (3 stubs on desktop, 2 on phones)? Should it survive a reload through <code>localStorage</code>? My recommendation: yes to both.</li>
+  <li><strong>Search on phones.</strong> The display stays at the bottom for the thumb and hands off to the paper when tapped. Confirm the handoff, or keep the query in the till.</li>
+  <li><strong>Dark mode.</strong> The night counter (paper stays paper, the map goes dark), or light only? I recommend the night counter, built last.</li>
+  <li><strong>Marking only exceptions.</strong> Plain known shops get no mark in the list. Is that right for you as the reviewer?</li>
+  <li><strong>The map style.</strong> Fork the style JSON (recommended), or recolour at runtime?</li>
+  <li><strong>Fonts.</strong> Big Shoulders, its stencil cut for stamps, and Atkinson Hyperlegible Mono next to the Atkinson Next you already use. Yes?</li>
+  <li><strong>The thread.</strong> Always on while a ticket is open (recommended), or only while the shop is off-centre?</li>
+  <li><strong>The <code>area()</code> fix.</strong> It now ships as step 0, before any design work. Confirm that order.</li>
+</ol>
+
+<footer class="end">
+  <p><strong>No application code changed.</strong> This proposal is the static file <code>docs/redesign/opus-v2/index.html</code>, with <code>map.svg</code> and the shop photos beside it in <code>docs/redesign/opus-v2/</code>. It needs no build step.</p>
+  <p>Map data © OpenStreetMap contributors (ODbL), read through the Overpass API on 29 October 2026. Shop data and photos from kopimap.mwyndham.dev.</p>
+</footer>
+</main>
+
+<script>
+const SHOPS = [["Sapa Kopi Laweyan",-7.55101,110.77237,"c",0],["FORE Solo Paragon Mall",-7.56186,110.81043,"k",3],["Couvee Solo",-7.56091,110.81533,"r",4],["Loske Coffee Service Karangasem",-7.54943,110.77673,"r",3.5],["DFoso Coffee",-7.54869,110.77686,"k",2.5],["Eighteen Grounds Coffee",-7.56081,110.76375,"k",2],["TETRA Coffee & Eatery - Solo",-7.5588,110.78673,"k",2.5],["Kopi Konnichiwa Slamet Riyadi",-7.57109,110.8252,"k",2],["Sorak Sorai Coffee Solo",-7.55086,110.79161,"r",3],["Sekutu Rumah Karya",-7.53846,110.75958,"k",5],["Sekutu Kopi",-7.57046,110.8227,"k",5],["Space NjRo Coffee",-7.53946,110.81851,"k",0],["28 Coffee Widuran Solo",-7.56547,110.8309,"k",0],["Riwena coffee",-7.56471,110.81306,"k",0],["Kiara Roastery (Kiara Coffee Goods)",-7.60936,110.80132,"k",0],["Letravail Coffee",-7.56921,110.81784,"k",0],["28 Coffee Solo",-7.56854,110.81748,"k",0],["DISTRIK COFFEE ROASTER SLAMET RIYADI",-7.56876,110.81651,"k",4.5],["Sourta Coffee",-7.56482,110.80329,"k",0],["Lukku Coffee",-7.53669,110.80189,"k",0],["Kopi Nako Solo",-7.56546,110.80851,"k",0],["Layana Coffee",-7.56456,110.81336,"k",0],["Di Beranda Coffee Specialty",-7.58556,110.82767,"k",0],["The Hidden Swargi Coffee Roastery",-7.56318,110.8212,"k",4.5],["Blue Doors Solo",-7.56982,110.83259,"k",0],["Sociallatte coffee & eatery",-7.56267,110.80876,"k",0],["Blackbird Coffeeshop Honggowongso",-7.56979,110.81697,"k",0],["Southern Coffee House",-7.56332,110.81496,"k",0],["Kopi Mekar Solo",-7.56012,110.79739,"k",0],["Ndalem Kartowikoro 1835 Coffee & Eatery",-7.57426,110.82511,"k",0],["Natahati Coffee & Eatery",-7.563,110.81826,"k",0],["Red Shoes Coffee Roaster",-7.55863,110.80573,"k",0],["Prasetyo Home Brew",-7.58484,110.83357,"k",0],["Rejo Coffe Surakarta",-7.55347,110.81706,"k",0],["Butler Coffee Boutique",-7.56556,110.81554,"k",0],["Blu Coffee",-7.56366,110.79978,"k",0],["White Desk Coffee Roastery",-7.56216,110.80602,"k",0],["Nauka Coffee & Space",-7.56454,110.7989,"k",0],["TheNord Coffee",-7.57195,110.83044,"k",0],["Slari Coffee",-7.57103,110.82392,"k",0],["Cold 'N Brew - Solo Balapan",-7.55841,110.8201,"k",3],["Nakama Coffee & Eatery | Solo",-7.56089,110.81767,"k",3.5],["Green House Coffee & Eatery",-7.55659,110.79085,"k",0],["ODDS Coffee Company",-7.56918,110.81736,"k",1],["Arzi Coffee",-7.5864,110.82374,"k",0],["Nalla Coffee",-7.5592,110.81997,"k",0],["Koffiera Coffee & Moment",-7.55838,110.8099,"k",0],["D'GRAMM COFFEE SURAKARTA x AYAM BETUTU BLI YAN",-7.55967,110.81583,"k",0],["Kopi Aloo Solo",-7.55749,110.79598,"k",0],["Antarakata Coffee, Solo",-7.56262,110.82848,"k",0],["Cold 'N Brew - Fajar Indah",-7.54953,110.78747,"k",2.5],["Rustic Coffee & Roastery",-7.55573,110.78698,"k",0],["SL-13 Coffee",-7.56508,110.79901,"k",0],["Zarcoon",-7.56974,110.82094,"k",3],["Pagi Sore Coffee",-7.56552,110.8183,"k",0],["Kalagyan Coffee",-7.57215,110.8278,"k",0],["Hip Coffee Artisans",-7.54737,110.81982,"k",0],["MAJAPAHIT COFEE & EATERY",-7.549,110.82236,"k",0],["Cold 'n Brew Veteran",-7.58212,110.82091,"k",0],["Hanz Coffee & Eatery",-7.54015,110.83355,"k",0],["Pinara Coffee Roaster",-7.56923,110.80725,"k",0],["Meurdue Chocolate & Coffee",-7.56866,110.83138,"k",0],["Cold 'N Brew - Wahidin",-7.56786,110.8054,"k",0],["Pixel Coffee & Kitchen",-7.56532,110.80207,"k",0],["Eighteen Grounds Coffee",-7.57372,110.81614,"k",0],["OXYCO Coffee Shop",-7.59913,110.81326,"k",0],["Unknown Coffee HQ",-7.54707,110.78892,"k",0],["Kopinangkau solo",-7.58491,110.82382,"k",0],["Wahidin Coffee",-7.5661,110.80602,"k",0],["Tomuan Coffee & Eatery",-7.55497,110.80905,"k",3],["Harso Coffee",-7.5652,110.79888,"k",4],["Thamrin Coffee",-7.55622,110.79901,"k",0],["Threea Coffee and Eatery",-7.5802,110.80415,"k",0],["Koeslan Coffee Company",-7.57052,110.79966,"k",3],["Stieti Coffee",-7.55109,110.7905,"k",0],["About This by Suaka Coffee",-7.55309,110.79229,"k",3.5],["Ratulangi Coffee",-7.55907,110.80653,"k",0],["C&L Coffee",-7.56963,110.79605,"k",0],["Puncak Kopi 4000Mdpl",-7.57365,110.82086,"k",0],["POINT COFFEE",-7.56628,110.8173,"k",0],["UD Djaya Coffee - Slamet Riyadi",-7.57119,110.82447,"k",0],["B-coffee",-7.5596,110.82634,"k",0],["Hella Coffee",-7.57183,110.81129,"k",0],["BLOOMS Coffee & Eatery",-7.59739,110.81483,"k",0],["Trah Tumerah coffee",-7.55746,110.8293,"k",0],["Geger Geni Coffee & Roastery",-7.57073,110.79789,"k",0],["Cendhono Coffee",-7.56907,110.8313,"k",0],["Cafe at eden coffee & Kitchen",-7.60442,110.81628,"k",0],["Communion Coffee Brewer",-7.57162,110.82608,"k",0],["SALA Coffee & Eatery",-7.56323,110.82226,"k",0],["Cubical Coffee and Space",-7.53494,110.79205,"k",0],["Goat Father Coffee House",-7.58466,110.82617,"k",0],["Copy Coffee House",-7.57338,110.81971,"k",0],["Loma Coffee and Kitchen",-7.53579,110.83775,"k",0],["LIGHTSPACE COFFEE & EATERY",-7.55515,110.77706,"k",0],["Anak Panah Kopi Solo Keprabon",-7.56927,110.8257,"k",0],["Dahayu Coffee & Space",-7.57315,110.81638,"k",0],["Gemati Coffee and Eatery",-7.55081,110.77165,"k",0],["Kopi Titik Koma Solo Baru",-7.59974,110.81408,"k",0],["Solo Kopi",-7.54548,110.77472,"k",0],["BlackWhite House Coffee & Space",-7.53494,110.77717,"k",0],["Value Coffee",-7.56971,110.82732,"k",0],["Loske Coffee Service",-7.56878,110.82377,"k",0],["Cuphi Street Coffee Bar",-7.54647,110.77826,"k",0],["Srivijava Coffee Roastery",-7.53954,110.74568,"k",0],["BENTENG GADING Cofeeshop",-7.53449,110.80224,"k",0],["House of Cendana",-7.5588,110.80534,"k",0],["Kopi Parang",-7.56808,110.79711,"k",0],["Head Room Coffee Slamet Riyadi",-7.56869,110.81788,"k",0],["Margi Coffee Slamet Riyadi",-7.569,110.81692,"k",0],["Madbottle Coffee",-7.56994,110.83481,"k",0],["SEJALAN KOPI",-7.57185,110.82688,"k",0],["Floith Coffee",-7.58473,110.8226,"k",0],["Manaka Coffee And Eatery",-7.551,110.77266,"k",0],["PINNKO Coffee & Space",-7.55049,110.77118,"k",0],["Kopine Tjap Nyah Lemu",-7.56457,110.8101,"k",0],["Otsmani Coffee",-7.58345,110.80808,"k",0],["Kopi Omah Lojiwetan",-7.57286,110.83468,"k",0],["Sedayu Kopi Solo",-7.58215,110.83001,"k",0],["The Gade Coffee & Gold Solo",-7.56416,110.8006,"k",0],["Aming Coffee Solo Square",-7.56115,110.78796,"k",0],["Atmojo Coffee,Solo",-7.58909,110.82101,"k",0],["Joxs Coffee",-7.56908,110.82621,"k",0],["Kedai Kopi Pak Agus",-7.56886,110.83143,"k",0],["Kelana Coffee and Eatery",-7.55468,110.80739,"k",4],["AM-PM Cafe",-7.55163,110.79204,"k",0],["DNA SPOT CAFE",-7.53206,110.82898,"k",0],["Kopi Lawe",-7.56715,110.79844,"k",0],["Coffca- Coffee & Co Working Space",-7.55574,110.76542,"k",0],["Kayu Manis Coffee & Steak",-7.56959,110.82106,"k",0],["Podjok Coffee Store",-7.56878,110.83178,"k",0],["Seperdua Kopi Kratonan",-7.58055,110.82122,"k",0],["Ekuive Cafe & Lounge",-7.55976,110.81889,"k",0],["Janaco Resto & Coffee",-7.53695,110.8026,"k",0],["Son Rise Coffee",-7.55589,110.79923,"k",0],["Ganesha Coffee Bar",-7.53814,110.76002,"k",0],["Tanuki Coffee & Eatery",-7.56773,110.83755,"k",0],["Bhara Coffee 1991 Banaran",-7.5328,110.74839,"k",0],["Marsi Coffee and Eatery",-7.57091,110.81334,"k",0],["Linggih Food & Coffee Bar",-7.56512,110.80248,"k",0],["R3 Coffee House",-7.53046,110.8279,"k",0],["Ve Coffee",-7.56331,110.81099,"k",0],["Filcof Coffee Sekip",-7.53246,110.82138,"k",0],["Antara kopi",-7.5537,110.77635,"k",0],["Mekarsa Shoe Clean & Coffee Bar",-7.55778,110.76605,"k",0],["Namu Korean Cafe & Resto Solo",-7.59587,110.82256,"k",0],["Bless Coffee",-7.56486,110.82979,"k",0],["Kopi Berarti",-7.60917,110.81579,"k",0],["Pelipur Kopi",-7.57289,110.8255,"k",0],["Deca Dessert and Coffee",-7.39765,109.69859,"k",3.5]];
+const K = 21618, C = Math.cos(-7.565 * Math.PI / 180), LNG0 = 110.735, LAT0 = -7.515, WW = 3000;
+const wx = (lng) => (lng - LNG0) * K * C;
+const wy = (lat) => (LAT0 - lat) * K;
+const byName = (n) => SHOPS.find((s) => s[0] === n);
+const hash = (s) => [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7);
+const rot = (s) => (Math.abs(hash(s)) % 9) - 4 + 'deg';
+const el = (tag, cls, css) => { const e = document.createElement(tag); if (cls) e.className = cls; if (css) Object.assign(e.style, css); return e; };
+const metres = ([a, b], [c, d]) => { const r = Math.PI / 180, x = Math.sin((c - a) * r / 2) ** 2 + Math.cos(a * r) * Math.cos(c * r) * Math.sin((d - b) * r / 2) ** 2; return 2 * 6371000 * Math.asin(Math.sqrt(x)); };
+const fmt = (m) => m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1)} km`;
+
+function pin(s, x, y) {
+  const p = el('span', 'n-pin ' + s[3], { left: x + 'px', top: y + 'px' });
+  if (s[3] === 'r') p.style.setProperty('--r', rot(s[0]));
+  p.title = s[0];
+  return p;
+}
+
+function drawMap(m) {
+  const W = m.offsetWidth, H = m.offsetHeight;
+  const [clat, clng] = m.dataset.center.split(',').map(Number), z = +(m.dataset.z || 1);
+  const [fx, fy] = (m.dataset.focus || `${W / 2},${H / 2}`).split(',').map(Number);
+  const tx = fx - wx(clng) * z, ty = fy - wy(clat) * z;
+  const img = el('img', 'n-world', { width: WW * z + 'px', transform: `translate(${tx}px,${ty}px)` });
+  img.src = 'map.svg'; img.alt = '';
+  const layer = el('div', 'n-pins');
+  m.append(img, layer);
+  const P = (lat, lng) => [wx(lng) * z + tx, wy(lat) * z + ty];
+  const { sel, hover, draft } = m.dataset, R = +(m.dataset.r ?? 36);
+  const pts = [];
+  for (const s of SHOPS) {
+    if (s[0] === sel || s[0] === draft) continue;
+    const [x, y] = P(s[1], s[2]);
+    if (x > -30 && y > -30 && x < W + 30 && y < H + 30) pts.push({ s, x, y });
+  }
+  // Reviewed shops seed clusters first, as the reviewed ring did before.
+  pts.sort((a, b) => (b.s[3] === 'r') - (a.s[3] === 'r'));
+  const groups = [];
+  for (const p of pts) {
+    const g = R > 0 && groups.find((g) => Math.hypot(g.x - p.x, g.y - p.y) < R && !(hover && (g.items[0].s[0] === hover || p.s[0] === hover)));
+    if (g) g.items.push(p); else groups.push({ x: p.x, y: p.y, items: [p] });
+  }
+  for (const g of groups) {
+    if (g.items.length === 1) { const p = g.items[0]; layer.append(pin(p.s, p.x, p.y)); continue; }
+    const n = g.items.length;
+    const c = el('span', 'n-clu ' + (n < 10 ? 's2' : n < 30 ? 's3' : 's4') + (g.items.some((p) => p.s[3] === 'r') ? ' hasr' : ''), {
+      left: g.items.reduce((a, p) => a + p.x, 0) / n + 'px', top: g.items.reduce((a, p) => a + p.y, 0) / n + 'px' });
+    c.textContent = n;
+    layer.append(c);
+  }
+  if (m.dataset.me) {
+    const me = m.dataset.me.split(',').map(Number), [x, y] = P(...me);
+    layer.append(el('span', 'n-me', { left: x + 'px', top: y + 'px' }));
+    m._me = me;
+  }
+  const mark = (name, cls) => {
+    const s = byName(name), [x, y] = P(s[1], s[2]);
+    const box = el('span', 'n-sel', { left: x + 'px', top: y + 'px' });
+    box.innerHTML = '<i></i><i></i><i></i><i></i>';
+    const p = el('span', 'n-pin ' + cls);
+    if (cls === 'r') p.style.setProperty('--r', rot(s[0]));
+    box.append(p); layer.append(box);
+    m._sel = [x, y];
+  };
+  if (sel) mark(sel, byName(sel)[3]);
+  if (draft) mark(draft, 'd');
+  if (hover) {
+    const s = byName(hover), [x, y] = P(s[1], s[2]);
+    const tag = el('div', 'n-tag', { left: x + 'px', top: y + 'px' });
+    const d = m._me ? fmt(metres(m._me, [s[1], s[2]])) : '';
+    tag.innerHTML = `<div class="tear-b"><b></b><span class="ln"><span class="ar"></span><i class="n-lead"></i><span class="d">${d}</span></span></div>`;
+    tag.querySelector('b').textContent = s[0];
+    tag.querySelector('.ar').textContent = m.dataset.hoverArea || '';
+    if (s[4] > 0) tag.querySelector('.ar').insertAdjacentHTML('beforebegin', `<span class="rt"><i class="mini-cup"></i>${s[4].toFixed(1)}</span>`);
+    layer.append(tag);
+  }
+}
+
+function rel(node, frame) {
+  let x = 0, y = 0;
+  while (node && node !== frame) { x += node.offsetLeft; y += node.offsetTop; node = node.offsetParent; }
+  return { x, y };
+}
+
+function tether(frame) {
+  const m = frame.querySelector('.n-map'), eye = frame.querySelector('[data-eye]');
+  if (!m || !eye || !m._sel) return;
+  const a = rel(eye, frame), ax = a.x + eye.offsetWidth / 2, ay = a.y + eye.offsetHeight / 2;
+  let [bx, by] = m._sel;
+  // End on the crop-mark corner that faces the ticket.
+  bx += Math.sign(ax - bx) * 19; by += Math.sign(ay - by) * 19;
+  const len = Math.hypot(bx - ax, by - ay), sag = Math.min(90, len * 0.16);
+  const d = `M${ax} ${ay} Q${(ax + bx) / 2} ${(ay + by) / 2 + sag} ${bx} ${by}`;
+  const NS = 'http://www.w3.org/2000/svg', svg = document.createElementNS(NS, 'svg');
+  svg.setAttribute('class', 'n-teth');
+  for (const [stroke, w, dash, op] of [['#F1EEE6', 5, '', .75], ['#221F1B', 2.2, '', 1], ['#9A8E7C', 1, '1.5 3', 1]]) {
+    const p = document.createElementNS(NS, 'path');
+    p.setAttribute('d', d); p.setAttribute('fill', 'none'); p.setAttribute('stroke', stroke);
+    p.setAttribute('stroke-width', w); p.setAttribute('opacity', op);
+    if (dash) p.setAttribute('stroke-dasharray', dash);
+    svg.append(p);
+  }
+  const knot = document.createElementNS(NS, 'rect');
+  Object.entries({ x: bx - 3.5, y: by - 3.5, width: 7, height: 7, fill: '#221F1B' }).forEach(([k, v]) => knot.setAttribute(k, v));
+  svg.append(knot);
+  frame.append(svg);
+}
+
+function fit() {
+  for (const f of document.querySelectorAll('.fit')) {
+    const fr = f.querySelector('.n-frame'), W = +fr.dataset.w, H = +fr.dataset.h;
+    const k = Math.max(+(f.dataset.min || 0), Math.min(1, f.clientWidth / W));
+    fr.style.transform = `scale(${k})`;
+    Object.assign(f.firstElementChild.style, { width: W * k + 'px', height: H * k + 'px' });
+  }
+}
+
+document.querySelectorAll('.n-map').forEach(drawMap);
+document.querySelectorAll('.n-frame').forEach(tether);
+fit();
+addEventListener('resize', fit);
+
+// Live search: the real 150 shops, filtered as you type, the way Browse does it.
+const q = document.getElementById('live-q'), rowsEl = document.getElementById('live-rows'), total = document.getElementById('live-total');
+function renderSearch() {
+  const t = q.value.trim().toLowerCase();
+  const list = t ? SHOPS.filter((s) => s[0].toLowerCase().includes(t)) : SHOPS.filter((s) => s[3] === 'r');
+  total.textContent = t ? `${list.length} ${list.length === 1 ? 'shop' : 'shops'}` : '150 shops · 3 reviewed';
+  rowsEl.innerHTML = '';
+  if (t && !list.length) {
+    const li = el('li'); li.innerHTML = '<p style="margin:10px 0 4px;text-align:center;font:400 15px/1.4 var(--sans)"></p>';
+    li.firstChild.textContent = `No shop matches “${q.value.trim()}”.`;
+    rowsEl.append(li); return;
+  }
+  for (const s of list.slice(0, 5)) {
+    const li = el('li');
+    li.innerHTML = '<div class="n-row" style="grid-template-columns:minmax(0,1fr);min-height:48px"><span><span class="nm"></span><span class="ln"></span></span></div>';
+    li.querySelector('.nm').textContent = s[0];
+    const ln = li.querySelector('.ln');
+    if (s[3] === 'r') ln.insertAdjacentHTML('beforeend', `<span class="n-stamp sm" style="--r:${rot(s[0])}">Reviewed ${s[4].toFixed(1)}</span>`);
+    else if (s[3] === 'c') ln.insertAdjacentHTML('beforeend', '<span class="n-stamp sm ink">Closed</span>');
+    else if (s[4] > 0) ln.insertAdjacentHTML('beforeend', `<span class="rt"><i class="mini-cup"></i>${s[4].toFixed(1)}</span>`);
+    ln.insertAdjacentHTML('beforeend', `<i class="n-lead"></i><span class="d">${fmt(metres([-7.568, 110.813], [s[1], s[2]]))}</span>`);
+    if (s[3] === 'c') li.firstChild.classList.add('closed');
+    rowsEl.append(li);
+  }
+  if (list.length > 5) { const li = el('li'); li.innerHTML = `<p class="n-total" style="border:0">+ ${list.length - 5} more</p>`; rowsEl.append(li); }
+}
+q.addEventListener('input', renderSearch);
+renderSearch();
+
+document.querySelectorAll('[role=tablist]#live-tabs').forEach((tl) => tl.addEventListener('click', (e) => {
+  const b = e.target.closest('[role=tab]'); if (!b) return;
+  tl.querySelectorAll('[role=tab]').forEach((t) => t.setAttribute('aria-selected', t === b));
+}));
+
+// The cup card: the left half of a cup is .5, the right half a whole cup.
+const cups = document.getElementById('live-cups'), score = document.getElementById('live-score');
+let rating = 3.5;
+function renderCups() {
+  cups.innerHTML = '';
+  for (let i = 1; i <= 5; i++) {
+    const c = el('button', 'n-cup' + (rating >= i ? ' f' : rating >= i - .5 ? ' h' : ''));
+    c.type = 'button'; c.setAttribute('aria-label', `${i} cups`);
+    c.addEventListener('click', (e) => { const r = c.getBoundingClientRect(); rating = e.clientX - r.left < r.width / 2 ? i - .5 : i; renderCups(); });
+    cups.append(c);
+  }
+  score.textContent = rating ? rating.toFixed(1) : '–';
+}
+document.getElementById('live-clear').addEventListener('click', () => { rating = 0; renderCups(); });
+renderCups();
+
+// Contact sheet: clicking a frame makes it the cover.
+const contact = document.getElementById('live-contact');
+contact.addEventListener('click', (e) => {
+  const fr = e.target.closest('.n-fr'); if (!fr || e.target.closest('.x')) return;
+  contact.querySelectorAll('.n-fr').forEach((f) => f.classList.toggle('cover', f === fr));
+  contact.querySelector('.n-edge').style.left = fr.offsetLeft + 'px';
+});
+
+document.querySelectorAll('[data-replay]').forEach((b) => b.addEventListener('click', () => {
+  const t = document.getElementById(b.dataset.replay), a = b.dataset.anim;
+  t.classList.remove(a); void t.offsetWidth; t.classList.add(a);
+}));
+</script>
+</body>
+</html>
