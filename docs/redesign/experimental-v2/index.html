@@ -1,0 +1,1291 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="data:," />
+<title>Kopimap — Field Atlas, second pass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..700,0..100,0..1;1,9..144,300..700,0..100,0..1&family=Atkinson+Hyperlegible+Next:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* Field Atlas, second pass. Radius 0 everywhere; curves only in drawn marks (SVG). No blend modes. */
+:root{
+  --paper:#efe6d2;--sheet:#f7f0de;--sheet-2:#e9dec6;--print:#fbf6e8;
+  --ink:#2a241c;--ink-soft:#5d513f;--rule:#c9b795;--rule-soft:rgba(110,90,60,.22);
+  --red:#a8341d;--on-red:#f7f0de;--red-edge:#6e200f;--red-wash:rgba(168,52,29,.07);
+  --moss:#4d5c3a;--ochre:#a17a2b;
+  --grain:url(assets/grain-light.png);
+  --shadow:0 22px 44px -26px rgba(58,40,14,.55),0 2px 4px rgba(58,40,14,.12);
+  --cast:drop-shadow(0 2px 1.5px rgba(50,34,10,.32));
+  --display:'Fraunces',Georgia,'Times New Roman',serif;
+  --body:'Atkinson Hyperlegible Next',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  color-scheme:light;
+}
+[data-theme="dark"]{
+  --paper:#171410;--sheet:#241f17;--sheet-2:#2b251b;--print:#d9cdb2;
+  --ink:#e8dfc8;--ink-soft:#b4a88f;--rule:#4a4030;--rule-soft:rgba(214,192,150,.16);
+  --red:#e0745a;--on-red:#171410;--red-edge:#e0745a;--red-wash:rgba(224,116,90,.10);
+  --moss:#93a97a;--ochre:#c9a55d;
+  --grain:url(assets/grain-dark.png);
+  --shadow:0 22px 44px -22px rgba(0,0,0,.8),0 2px 6px rgba(0,0,0,.45);
+  --cast:drop-shadow(0 2px 1.5px rgba(0,0,0,.65));
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--grain) 0 0/128px,var(--paper);color:var(--ink);font:400 17px/1.6 var(--body);-webkit-font-smoothing:antialiased}
+::selection{background:var(--red);color:var(--on-red)}
+a{color:var(--red);text-underline-offset:3px;text-decoration-thickness:1px}
+h1,h2,h3,h4{font-family:var(--display);font-weight:500;margin:0;font-variation-settings:'SOFT' 30,'WONK' 1;letter-spacing:-.015em}
+p{margin:0 0 16px;max-width:68ch}
+code{font:400 .86em var(--mono);background:var(--sheet-2);padding:1px 4px;border:1px solid var(--rule-soft);overflow-wrap:anywhere}
+img{max-width:100%}
+button{font:inherit;color:inherit}
+.wrap{max-width:1180px;margin:0 auto;padding:0 32px}
+.plate.d,[data-theme="dark"] .plate.l{display:none}
+[data-theme="dark"] .plate.d{display:block}
+
+/* ---------- cover ---------- */
+.cover{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:40px;align-items:end;padding:64px 0 36px}
+.cover h1{font-size:clamp(60px,9vw,120px);line-height:.9;letter-spacing:-.035em;margin:0 0 22px;font-variation-settings:'SOFT' 60,'WONK' 1}
+.cover h1 em{font-weight:300}
+.cover p{font-size:19px;max-width:56ch;margin:0}
+.ctl{appearance:none;display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:0 16px;border:1px solid var(--ink);background:transparent;color:var(--ink);font:500 13px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.ctl::before{content:'';width:10px;height:10px;border:1px solid var(--ink)}
+.ctl[aria-pressed="true"]::before{background:var(--red);border-color:var(--red)}
+.strip{position:relative;height:210px;border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);overflow:hidden}
+.strip img{width:100%;height:100%;object-fit:cover;object-position:64% 40%}
+.strip::after{content:'';position:absolute;inset:10px;border:1px solid var(--ink);opacity:.35;pointer-events:none}
+.contents{display:flex;flex-wrap:wrap;gap:6px 22px;padding:16px 0;font:500 13px/1.6 var(--mono)}
+.contents a{color:var(--ink);text-decoration:none}
+.contents a:hover{color:var(--red);text-decoration:underline}
+
+/* ---------- sections ---------- */
+main{counter-reset:sec}
+.sec{padding:56px 0 60px;border-top:1px solid var(--ink)}
+.sec > h2{counter-increment:sec;font-size:clamp(32px,3.6vw,46px);line-height:1.05;margin-bottom:24px;display:flex;gap:18px;align-items:baseline}
+.sec > h2::before{content:counter(sec,decimal-leading-zero);font:500 15px/1 var(--mono);color:var(--red);letter-spacing:.04em}
+.sec h3{font-size:24px;margin:40px 0 12px}
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:32px}
+ul.plain{margin:0 0 18px;padding-left:20px}
+ul.plain li{margin:0 0 9px;max-width:66ch}
+ul.plain li::marker{color:var(--red)}
+.tw{overflow-x:auto;margin:20px 0}
+table.grid{width:100%;border-collapse:collapse;font-size:15px;line-height:1.5}
+table.grid th{font:600 13px/1.4 var(--mono);text-align:left;border-bottom:1px solid var(--ink);padding:0 14px 8px 0;vertical-align:bottom}
+table.grid td{border-bottom:1px solid var(--rule-soft);padding:10px 14px 10px 0;vertical-align:top}
+table.grid td:first-child{font-weight:700;min-width:190px}
+table.grid td.num{font-family:var(--mono);font-size:14px;white-space:nowrap}
+figure{margin:0}
+.fig{margin:30px 0 8px}
+figcaption.cap{font-size:14px;line-height:1.55;margin-top:12px;max-width:none}
+figcaption.cap b{font:600 13px/1 var(--mono);margin-right:8px}
+.hs{overflow-x:auto;overflow-y:hidden;padding:0 0 14px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:18px 0}
+.pair img{display:block;width:100%;height:auto;border:1px solid var(--rule)}
+.pair figcaption{font:500 13px/1.4 var(--mono);padding-top:8px}
+.verdicts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--ink);border:1px solid var(--ink);margin:22px 0}
+.verdicts > div{background:var(--grain) 0 0/128px,var(--sheet);padding:16px 18px}
+.verdicts h4{font-size:19px;margin-bottom:8px}
+.verdicts p{font-size:15px;margin:0}
+
+/* ============================================================
+   Mockup primitives
+   ============================================================ */
+.paper{background:var(--grain) 0 0/128px,var(--sheet)}
+.sprite{position:absolute;width:0;height:0;overflow:hidden}
+.k{--head:#b9903f;--edge:#4d3a1c;--stem:#5a4526;--glint:#f0d69a}
+.v{--head:#b23a1f;--edge:#68200f;--stem:#6d2a17;--glint:#f1b7a2}
+.x{--head:#5f574a;--edge:#2e2921;--stem:#403a30;--glint:#e2d8c4}
+[data-theme="dark"] .k,[data-theme="dark"] .v,[data-theme="dark"] .x{--edge:#efe4c9;--stem:#cbbd9f}
+
+/* plate */
+.desk{position:relative;width:1116px;height:700px;overflow:hidden;border:1px solid var(--ink);box-shadow:var(--shadow);background:var(--paper)}
+.desk > .plate,.scr > .plate{position:absolute;inset:0;width:100%;height:100%;max-width:none}
+.marks{position:absolute;inset:0;z-index:1}
+.tack{position:absolute;width:40px;height:40px;margin:-38px 0 0 -20px;display:flex;align-items:flex-end;justify-content:center;cursor:pointer;background:none;border:0;padding:0}
+.tack svg{width:22px;height:28px;display:block;filter:var(--cast)}
+.tag{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:6px;padding:4px 8px 4px 6px;background:var(--grain) 0 0/128px,var(--sheet);border:1px solid var(--rule);box-shadow:2px 2px 0 var(--rule-soft);font:600 13px/1 var(--mono);color:var(--ink);cursor:default;white-space:nowrap}
+.tag svg{width:10px;height:10px;display:block}
+.hover{position:absolute;z-index:2;width:0;height:0;pointer-events:none}
+.hover svg.t{position:absolute;left:-11px;top:-28px;width:22px;height:28px;filter:var(--cast)}
+.ticks{position:absolute;left:-18px;top:-39px;width:36px;height:36px}
+.ticks i{position:absolute;width:9px;height:9px;border:0 solid var(--red)}
+.ticks i:nth-child(1){left:0;top:0;border-left-width:1.5px;border-top-width:1.5px}
+.ticks i:nth-child(2){right:0;top:0;border-right-width:1.5px;border-top-width:1.5px}
+.ticks i:nth-child(3){right:0;bottom:0;border-right-width:1.5px;border-bottom-width:1.5px}
+.ticks i:nth-child(4){left:0;bottom:0;border-left-width:1.5px;border-bottom-width:1.5px}
+.lbl{position:absolute;left:24px;top:-37px;white-space:nowrap;background:var(--grain) 0 0/128px,var(--sheet);border:1px solid var(--rule);padding:6px 9px;font:400 15px/1 var(--display);color:var(--ink);box-shadow:2px 2px 0 var(--rule-soft)}
+.lbl b{font:600 13px/1 var(--mono);margin-left:8px;color:var(--red)}
+.hover.flip .lbl{left:auto;right:24px}
+.slipcard{position:absolute;z-index:3;min-width:220px;transform:translate(-50%,calc(-100% - 18px));background:var(--grain) 0 0/128px,var(--sheet);border:1px solid var(--ink);box-shadow:var(--shadow);padding:4px 12px;font-size:14px;pointer-events:none}
+.slipcard div{display:flex;gap:8px;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--rule-soft)}
+.slipcard div:last-child{border-bottom:0}
+.slipcard .n{font:400 15px/1.2 var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+.slipcard .dots{flex:1;min-width:10px;border-bottom:1px dotted var(--ink-soft);opacity:.7}
+.slipcard b{font:600 13px/1 var(--mono)}
+.slipcard .more{font:500 13px/1.4 var(--mono);color:var(--ink-soft)}
+
+/* margins */
+.band{position:absolute;z-index:4;background:var(--grain) 0 0/128px,var(--sheet);color:var(--ink-soft);font:500 12px/1 var(--mono)}
+.band.t{left:0;right:0;top:0;height:26px;border-bottom:1px solid var(--ink)}
+.band.r{top:0;right:0;bottom:0;width:30px;border-left:1px solid var(--ink)}
+.band.b{left:0;right:0;bottom:0;height:30px;border-top:1px solid var(--ink)}
+.band.t span{position:absolute;top:8px;transform:translateX(-50%)}
+.band.r span{position:absolute;left:0;right:0;text-align:center;transform:translateY(-50%)}
+.band span.on{color:var(--red);font-weight:700}
+.band.t i{position:absolute;bottom:0;width:1px;height:6px;background:var(--ink)}
+.band.r i{position:absolute;left:0;height:1px;width:6px;background:var(--ink)}
+.band.b .line{position:absolute;right:48px;top:0;bottom:0;display:flex;align-items:center;gap:16px;color:var(--ink);letter-spacing:.04em}
+.scale{display:inline-flex;align-items:center;gap:8px}
+.scale i{display:block;height:6px;border:1px solid var(--ink);background:linear-gradient(90deg,var(--ink) 0 25%,transparent 0 50%,var(--ink) 0 75%,transparent 0)}
+.north{position:absolute;right:0;bottom:0;width:30px;height:30px;display:grid;place-items:center;color:var(--ink);z-index:5}
+.band .read{color:var(--red);font-weight:600;background:var(--grain) 0 0/128px,var(--sheet);padding:0 4px;z-index:2}
+.band.r .read{writing-mode:vertical-rl;transform:translateY(-50%) rotate(180deg);left:7px;right:auto;padding:4px 0}
+
+/* desktop sheet */
+.dsheet{position:absolute;left:16px;top:14px;bottom:16px;width:384px;display:flex;flex-direction:column;z-index:5}
+.dsheet.slipmode{bottom:auto}
+.tabrow{display:flex;align-items:flex-end;height:42px;padding-left:12px;position:relative;z-index:2;flex:none}
+.ftab{appearance:none;height:40px;padding:0 15px;border:1px solid var(--rule);border-bottom:0;background:var(--grain) 0 0/128px,var(--sheet-2);color:var(--ink-soft);font:500 13px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:8px;margin-bottom:-1px}
+.ftab + .ftab{margin-left:-1px}
+.ftab[aria-selected="true"]{height:42px;background:var(--grain) 0 0/128px,var(--sheet);color:var(--ink);box-shadow:inset 0 2px 0 var(--red);position:relative;z-index:2}
+.ftab .c{font-weight:400;color:var(--ink-soft)}
+.addtab{margin-left:auto;height:40px;margin-bottom:-1px;padding:0 14px;background:var(--red);color:var(--on-red);border:1px solid var(--red-edge);font:600 13px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
+.sbody{flex:1;min-height:0;display:flex;flex-direction:column;border:1px solid var(--rule);background:var(--grain) 0 0/128px,var(--sheet);box-shadow:var(--shadow);position:relative}
+.sbody::before{content:'';position:absolute;inset:0;transform:translate(4px,5px);background:var(--sheet-2);border:1px solid var(--rule);z-index:-1}
+.shead{padding:12px 16px 0;flex:none}
+.wordmark{font:600 20px/1.2 var(--display);letter-spacing:-.01em}
+.search{display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--ink);margin-top:6px;height:46px;color:var(--ink-soft)}
+.search:focus-within{border-color:var(--red);box-shadow:0 1px 0 var(--red)}
+.search input,.rule-in{flex:1;min-width:0;border:0;background:transparent;font:400 16px/1.3 var(--body);color:var(--ink);outline:none;padding:0;border-radius:0;-webkit-appearance:none;appearance:none}
+.search input::placeholder,.rule-in::placeholder{color:var(--ink-soft);opacity:1}
+.search input::-webkit-search-cancel-button{display:none}
+.kcap{font:500 12px/1 var(--mono);border:1px solid var(--ink-soft);border-bottom-width:2px;padding:4px 6px 3px;color:var(--ink);white-space:nowrap;background:var(--sheet)}
+.list{list-style:none;margin:10px 0 0;padding:0;flex:1;min-height:0;overflow-y:auto;border-top:1px solid var(--ink);scrollbar-width:thin;scrollbar-color:var(--rule) transparent}
+.row{appearance:none;border:0;background:none;text-align:left;display:grid;grid-template-columns:46px minmax(0,1fr);gap:12px;align-items:center;width:100%;min-height:58px;padding:5px 16px;border-bottom:1px solid var(--rule-soft);cursor:pointer;position:relative;color:var(--ink)}
+.row:hover,.row.lit{background:var(--red-wash)}
+.row:hover::before,.row.lit::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--red)}
+.row.lit .ref{color:var(--red)}
+.row:focus-visible{outline:2px solid var(--red);outline-offset:-2px}
+.thumb{width:46px;height:46px;border:3px solid var(--print);outline:1px solid var(--rule);background:url(assets/thumbs.jpg) 0 0/600px 400px;filter:sepia(.12) saturate(.9)}
+.l1{display:flex;align-items:baseline;gap:6px;min-width:0}
+.nm{font:400 17px/1.25 var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.dots{flex:1;min-width:14px;border-bottom:1px dotted var(--ink-soft);opacity:.75;transform:translateY(-4px)}
+.ref{font:500 13px/1 var(--mono);white-space:nowrap}
+.meta{display:block;font:400 13px/1.4 var(--body);color:var(--ink-soft);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-v{color:var(--moss);font-weight:700}
+.st-x{color:var(--red);font-weight:700}
+.empty{padding:28px 16px;font-size:15px;color:var(--ink)}
+.sfoot{flex:none;display:flex;justify-content:space-between;align-items:center;min-height:46px;padding:0 8px 0 16px;border-top:1px solid var(--rule);font:500 12px/1 var(--mono);letter-spacing:.03em;color:var(--ink-soft)}
+.textbtn{appearance:none;border:0;background:none;cursor:pointer;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 8px;font:500 12px/1 var(--mono);letter-spacing:.03em;color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+
+/* stamped buttons, ruled fields */
+.stampbtn{appearance:none;border:1px solid var(--ink);background:transparent;color:var(--ink);min-height:44px;padding:0 12px;font:600 12px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;text-decoration:none;white-space:nowrap}
+.stampbtn.primary{background:var(--red);border-color:var(--red-edge);color:var(--on-red)}
+.stampbtn .key{font-weight:400;opacity:.7}
+.stampbtn:focus-visible,.ftab:focus-visible,.addtab:focus-visible,.textbtn:focus-visible,.tack:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.field{display:flex;flex-direction:column;gap:2px;min-width:0;border:0;margin:0;padding:0}
+.field > label,.field > legend{font:500 12px/1.4 var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);padding:0}
+.rule-in{display:block;width:100%;flex:none;border-bottom:1px solid var(--ink);padding:9px 0 8px;min-height:44px}
+.rule-in:focus{border-color:var(--red);box-shadow:0 1px 0 var(--red)}
+.rule-in.mono{font-family:var(--mono)}
+.lined{resize:none;line-height:32px;padding:0;min-height:0;height:64px;border-bottom:0;overflow:hidden;background:repeating-linear-gradient(transparent 0 31px,var(--ink) 31px 32px)}
+.lined:focus{background:repeating-linear-gradient(transparent 0 31px,var(--red) 31px 32px);box-shadow:none}
+.hours{display:flex;align-items:flex-end;gap:12px}
+.hours .rule-in{width:128px;flex:none;font-family:var(--mono)}
+.hours .rule-in:disabled{color:var(--ink-soft);text-decoration:line-through;border-bottom-style:dashed;opacity:.8}
+.tickrow{display:flex;align-items:center;gap:10px;min-height:44px;font-size:15px;cursor:pointer;align-self:flex-start}
+.tickrow input{appearance:none;-webkit-appearance:none;width:20px;height:20px;margin:0;border:1px solid var(--ink);background:var(--sheet);display:grid;place-content:center;cursor:pointer}
+.tickrow input:checked::after{content:'';width:10px;height:5px;border-left:2px solid var(--red);border-bottom:2px solid var(--red);transform:rotate(-45deg) translate(1px,-1px)}
+.tickrow input:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.press{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px;padding:8px 14px;border:1px dashed var(--ink-soft);cursor:pointer;font-size:15px}
+.press input{position:absolute;opacity:0;width:1px;height:1px}
+.press:has(input:checked){border-style:solid;border-color:var(--red)}
+.press:has(input:focus-visible){outline:2px solid var(--red);outline-offset:2px}
+.press .stamp{opacity:0;transform:rotate(-3deg) scale(1.12);transition:opacity .15s,transform .15s}
+.press:has(input:checked) .stamp{opacity:1;transform:rotate(-3deg) scale(1)}
+.stamp{position:relative;display:inline-block;border:1.5px solid currentColor;padding:6px 9px 5px;font:600 12px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;transform:rotate(-2deg);white-space:nowrap}
+.stamp::after{content:'';position:absolute;inset:2px;border:1px solid currentColor;opacity:.45}
+.stamp.moss{color:var(--moss)}
+.stamp.red{color:var(--red)}
+.stamp.faded{color:var(--ink-soft)}
+.stars{position:relative;display:inline-block;font:400 18px/1 Georgia,'Times New Roman',serif;letter-spacing:2px;color:transparent;-webkit-text-stroke:.9px var(--ochre);white-space:nowrap;vertical-align:-2px}
+.stars .on{position:absolute;left:0;top:0;overflow:hidden;color:var(--ochre);-webkit-text-stroke:0}
+.stars.big{font-size:30px;letter-spacing:4px;cursor:pointer;padding:6px 0}
+.stars.big .on{top:6px}
+.stars.big:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.rate{display:inline-flex;align-items:center;gap:8px;font:500 14px/1 var(--mono)}
+.err{color:var(--red);font-size:15px;line-height:1.4;margin:0}
+
+/* record card */
+.cards{display:grid;grid-template-columns:384px 384px minmax(0,1fr);gap:32px;align-items:start}
+.card{width:384px;max-width:100%;background:var(--grain) 0 0/128px,var(--sheet);border:1px solid var(--rule);box-shadow:var(--shadow);display:flex;flex-direction:column;color:var(--ink)}
+.chead{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:2px 6px;align-items:start;padding:8px 14px 12px 6px;border-bottom:1px solid var(--rule);flex:none}
+.back{appearance:none;border:0;background:none;width:44px;height:44px;display:grid;place-items:center;cursor:pointer;color:var(--ink);font:400 22px/1 var(--mono)}
+.chead h3{font-size:26px;line-height:1.1;padding-top:7px;overflow-wrap:anywhere}
+.desk h3,.card h3{margin:0}
+.chead .sub{grid-column:2/4;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding-top:6px}
+.gref{font:600 13px/1 var(--mono);border:1px solid var(--ink);padding:5px 6px 4px;margin-top:11px;white-space:nowrap}
+.cbody{padding:18px 16px;display:flex;flex-direction:column;gap:20px;min-width:0}
+.print{position:relative;background:var(--print);padding:7px 7px 0;border:1px solid #d7c7a6;transform:rotate(-.4deg);box-shadow:0 5px 14px -8px rgba(50,34,10,.55);margin:2px 3px 0}
+.print .frame{position:relative;overflow:hidden}
+.print img{display:block;width:100%;height:auto;aspect-ratio:3/2;object-fit:cover;filter:sepia(.14) contrast(1.03) saturate(.88)}
+.print .dotscreen{position:absolute;inset:0;background-image:radial-gradient(circle,rgba(30,22,12,.85) .55px,transparent .65px);background-size:3px 3px;opacity:.12;pointer-events:none}
+.print .pfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:30px;font:500 12px/1 var(--mono);color:#4f4535}
+.pcorner{position:absolute;width:18px;height:18px;color:#a98f60;z-index:2}
+.pcorner.tl{left:-6px;top:-6px}.pcorner.tr{right:-6px;top:-6px;transform:rotate(90deg)}
+.pcorner.br{right:-6px;bottom:-6px;transform:rotate(180deg)}.pcorner.bl{left:-6px;bottom:-6px;transform:rotate(270deg)}
+.ledger{margin:0;border-top:1px solid var(--ink)}
+.ledger > div{display:grid;grid-template-columns:82px minmax(0,1fr);gap:10px;padding:10px 0;border-bottom:1px solid var(--rule-soft);align-items:baseline}
+.ledger dt{font:500 12px/1.5 var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft)}
+.ledger dd{margin:0;font-size:15px;line-height:1.45;overflow-wrap:anywhere}
+.addline{appearance:none;border:0;border-bottom:1px dashed var(--red);background:none;color:var(--red);font:400 15px/1.45 var(--body);padding:0 0 1px;cursor:pointer;display:inline-flex;gap:8px;min-height:24px}
+.actions{display:grid;grid-template-columns:1fr auto auto;gap:8px}
+.review h4{font-size:20px;line-height:1.2;margin-bottom:10px}
+.excerpt{position:relative;max-height:132px;overflow:hidden;font-size:15px;line-height:1.6;margin:0 0 14px;-webkit-mask-image:linear-gradient(#000 55%,transparent);mask-image:linear-gradient(#000 55%,transparent)}
+.excerpt p{margin:0 0 10px}
+.dropcap{float:left;font:500 46px/.8 var(--display);margin:6px 8px 0 0}
+.review .stampbtn{width:100%}
+.comments{border-top:1px solid var(--rule);margin-top:14px}
+.comments summary{list-style:none;display:flex;align-items:center;justify-content:space-between;min-height:46px;cursor:pointer;font-size:15px;font-weight:700}
+.comments summary::-webkit-details-marker{display:none}
+.comments summary::after{content:'+';font:400 20px/1 var(--mono)}
+.comments[open] summary::after{content:'−'}
+.cmt{display:grid;grid-template-columns:30px minmax(0,1fr);gap:10px;padding:10px 0;border-top:1px solid var(--rule-soft);font-size:14px;line-height:1.5}
+.cmt.reply{margin-left:28px}
+.cmt .av{width:30px;height:30px;border:1px solid var(--rule);display:grid;place-items:center;font:600 12px/1 var(--mono);background:var(--sheet-2)}
+.cmt .who{font-weight:700}
+.cmt .when{color:var(--ink-soft);font-size:13px}
+.nearby h4{font-size:20px;margin-bottom:6px}
+.nearby ul{list-style:none;margin:0 -16px;padding:0;border-top:1px solid var(--ink)}
+.cfoot{display:flex;border-top:1px solid var(--rule);flex:none}
+.cfoot a,.cfoot button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;min-height:48px;font:600 12px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;color:var(--ink);text-decoration:none;background:none;border:0;cursor:pointer}
+.cfoot > * + *{border-left:1px solid var(--rule)}
+.notes p,.notes li{font-size:15px}
+.specimens{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;align-items:start;margin-top:28px}
+.specimen{min-width:0}
+.specimen figcaption{font-size:14px;margin-top:10px}
+.miniplate{position:relative;padding-bottom:7px}
+.miniplate .frame{aspect-ratio:3/2}
+.miniplate .frame img{position:absolute;inset:0;width:100%;height:100%;filter:none;aspect-ratio:auto}
+.miniplate .pin{position:absolute;left:50%;top:50%;width:22px;height:28px;margin:-28px 0 0 -11px;filter:var(--cast)}
+.miniplate .stampbtn{position:absolute;right:8px;bottom:8px;background:var(--sheet);min-height:40px}
+
+/* form */
+.strip-photos{display:flex;gap:14px;overflow-x:auto;padding:8px 8px 14px 4px;margin:0 -8px 0 -4px}
+.ph{position:relative;flex:none;width:80px;height:80px}
+.ph > button.img{appearance:none;width:80px;height:80px;padding:3px;border:1px solid #d7c7a6;background:var(--print);cursor:pointer;display:block}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph.is-cover > button.img{outline:2px solid var(--red);outline-offset:2px}
+.ph .covertag{position:absolute;left:4px;bottom:-9px;background:var(--red);color:var(--on-red);font:600 12px/1 var(--mono);letter-spacing:.04em;padding:3px 5px;text-transform:uppercase}
+.ph .rm{position:absolute;right:-10px;top:-10px;width:28px;height:28px;border:1px solid var(--ink);background:var(--sheet);display:grid;place-items:center;font:400 16px/1 var(--mono);cursor:pointer;padding:0}
+.ph .rm::before{content:'';position:absolute;inset:-8px}
+.ph .rm:hover{background:var(--red);color:var(--on-red);border-color:var(--red-edge)}
+.addph{flex:none;width:80px;height:80px;border:1px dashed var(--ink-soft);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font:500 12px/1 var(--mono);text-transform:uppercase;letter-spacing:.05em;cursor:pointer}
+.addph b{font:400 22px/1 var(--mono)}
+.fgrid{display:grid;grid-template-columns:minmax(0,1fr);gap:20px}
+.ffoot{display:flex;flex-direction:column;gap:10px;padding:12px 14px 14px;border-top:1px solid var(--rule);flex:none}
+.ffoot .btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+
+/* phones */
+.phones{display:flex;gap:18px;flex-wrap:wrap;--ps:.67}
+.phone{flex:none}
+.pframe{width:calc(390px * var(--ps));height:calc(844px * var(--ps));overflow:hidden;border:1px solid var(--ink);box-shadow:var(--shadow);background:var(--paper)}
+.scr{position:relative;width:390px;height:844px;overflow:hidden;transform:scale(var(--ps));transform-origin:0 0}
+.phone figcaption{font:500 13px/1.4 var(--mono);padding-top:9px}
+.scr .band.t{height:22px}
+.scr .band.t span{top:6px}
+.scr .band.r{width:22px}
+.psheet{position:absolute;left:0;right:0;bottom:0;z-index:5;display:flex;flex-direction:column;background:var(--grain) 0 0/128px,var(--sheet);border-top:1px solid var(--ink);box-shadow:0 -14px 30px -16px rgba(50,34,10,.5)}
+.psheet.half{height:422px}.psheet.full{height:776px}.psheet.peek{height:96px}
+.fold{position:relative;flex:none;height:28px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 14px;background:var(--grain) 0 0/128px,var(--sheet-2);border-bottom:1px solid var(--rule);box-shadow:inset 0 -1px 0 rgba(255,255,255,.35);cursor:grab;appearance:none;border-top:0;border-left:0;border-right:0;width:100%}
+.fold::before{content:'';position:absolute;left:0;right:0;top:-16px;height:16px}
+.fold .grip{grid-column:2;width:40px;height:6px;border-top:1px solid var(--ink-soft);border-bottom:1px solid var(--ink-soft)}
+.fold .notch{grid-column:3;justify-self:end;display:flex;gap:4px}
+.fold .notch i{width:8px;height:8px;border:1px solid var(--ink-soft)}
+.fold .notch i.on{background:var(--ink);border-color:var(--ink)}
+.psheet .tabrow{height:48px;padding-left:12px;border-bottom:1px solid var(--rule);margin-top:2px}
+.psheet .ftab{height:44px;margin-bottom:-1px}
+.psheet .ftab[aria-selected="true"]{height:48px;box-shadow:inset 0 2px 0 var(--red)}
+.psheet .list{margin-top:6px}
+.padd{position:absolute;right:14px;width:52px;height:52px;z-index:6;background:var(--red);color:var(--on-red);border:1px solid var(--red-edge);font:400 26px/1 var(--mono);display:grid;place-items:center;box-shadow:0 8px 16px -10px rgba(50,34,10,.7)}
+.card.inphone{width:100%;border:0;box-shadow:none;background:none;flex:1;min-height:0;overflow:hidden}
+.card.inphone .cbody{overflow:hidden}
+.xh,.xv{position:absolute;z-index:3;pointer-events:none;background:var(--red);opacity:.75}
+.xh{left:0;right:0;height:1px}.xv{top:0;bottom:0;width:1px}
+.xring{position:absolute;z-index:3;width:30px;height:30px;margin:-15px 0 0 -15px;pointer-events:none}
+.capture{position:absolute;inset:0;z-index:3;cursor:crosshair}
+.linkrow{display:flex;align-items:flex-end;gap:10px;padding:10px 16px 12px}
+.linkrow .rule-in{flex:1}
+
+/* key legend */
+.legend{width:340px;padding:0;margin:0;border:1px solid var(--ink);background:var(--grain) 0 0/128px,var(--sheet);color:var(--ink);box-shadow:var(--shadow)}
+dialog.legend{position:absolute;inset:auto 46px 46px auto;z-index:7}
+.legend .lh{display:flex;justify-content:space-between;align-items:center;padding:4px 4px 4px 14px;border-bottom:1px solid var(--ink)}
+.legend h4{font-size:20px}
+.legend dl{display:grid;grid-template-columns:auto minmax(0,1fr);margin:0;padding:4px 14px 10px;column-gap:14px}
+.legend dt,.legend dd{margin:0;padding:7px 0;border-bottom:1px solid var(--rule-soft);font-size:14px;line-height:1.35}
+.legend dt{display:flex;gap:4px;align-items:center}
+.legend dl > :nth-last-child(-n+2){border-bottom:0}
+
+/* material */
+.palette{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:1px;background:var(--ink);border:1px solid var(--ink)}
+.sw{background:var(--grain) 0 0/128px,var(--sheet)}
+.sw .chip{height:64px;border-bottom:1px solid var(--ink)}
+.sw .m{padding:9px 10px 11px;font:400 13px/1.55 var(--mono)}
+.sw .m b{display:block;font-weight:600}
+.type{display:grid;grid-template-columns:1.2fr 1fr .9fr;gap:1px;background:var(--ink);border:1px solid var(--ink)}
+.type > div{background:var(--grain) 0 0/128px,var(--sheet);padding:18px}
+.type .big{font:400 46px/.95 var(--display);letter-spacing:-.02em;margin-bottom:12px}
+.type .data{font:500 14px/1.9 var(--mono)}
+.type p{font-size:15px;margin:10px 0 0}
+.marksrow{display:flex;flex-wrap:wrap;gap:22px;align-items:center;padding:22px;border:1px solid var(--ink);margin-top:18px}
+.marksrow .one{display:flex;flex-direction:column;align-items:center;gap:8px;font:500 13px/1 var(--mono)}
+.marksrow .stage{position:relative;width:60px;height:56px}
+.textures{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin-top:18px}
+.tex{height:130px;border:1px solid var(--ink);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.tex.grain{background:var(--grain) 0 0/128px,var(--sheet)}
+.tex img{width:100%;height:100%;object-fit:cover;filter:sepia(.14) saturate(.88)}
+.tex .dotscreen{position:absolute;inset:0;background-image:radial-gradient(circle,rgba(30,22,12,.85) .55px,transparent .65px);background-size:3px 3px;opacity:.12}
+.texcap{font:500 13px/1.4 var(--mono);margin-top:8px}
+
+/* build list */
+.steps{list-style:none;margin:20px 0;padding:0;counter-reset:st;border-top:1px solid var(--ink)}
+.steps li{counter-increment:st;display:grid;grid-template-columns:40px 220px minmax(0,1fr) 64px;gap:16px;padding:16px 0;border-bottom:1px solid var(--rule-soft);align-items:baseline}
+.steps li::before{content:counter(st);font:600 14px/1.5 var(--mono);color:var(--red)}
+.steps b{font:500 19px/1.3 var(--display)}
+.steps span{font-size:15px}
+.steps em{font:600 13px/1 var(--mono);font-style:normal;text-align:right}
+.risks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--ink);border:1px solid var(--ink);margin:20px 0}
+.risks > div{background:var(--grain) 0 0/128px,var(--sheet);padding:16px 18px}
+.risks h4{font-size:19px;margin-bottom:6px}
+.risks p{font-size:15px;margin:0}
+footer.colophon{border-top:1px solid var(--ink);padding:30px 0 56px;display:grid;grid-template-columns:1fr 1fr;gap:40px;font-size:14px}
+footer.colophon p{margin:0 0 10px}
+
+/* responsive */
+.cards.two{grid-template-columns:384px minmax(0,1fr)}
+@media (max-width:1180px){.cards{grid-template-columns:384px minmax(0,1fr)}.cards:not(.two) .notes{grid-column:1/-1}}
+@media (max-width:1000px){
+  .cover{grid-template-columns:1fr;gap:24px;padding-top:44px}
+  .cols,.pair,.verdicts,.palette,.type,.textures,.risks,footer.colophon,.specimens{grid-template-columns:1fr}
+  .palette{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .phones{--ps:.86}
+  .steps li{grid-template-columns:30px minmax(0,1fr) 54px}
+  .steps li span{grid-column:2/4}
+}
+@media (max-width:860px){.cards,.cards.two{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:700px){
+  .wrap{padding:0 20px}
+  table.grid thead{display:none}
+  table.grid tr{display:block;padding:12px 0;border-bottom:1px solid var(--rule-soft)}
+  table.grid td{display:block;border:0;padding:2px 0}
+  table.grid td:first-child{min-width:0}
+  body{font-size:16px}
+  .phones{--ps:.86;justify-content:center}
+  .sec{padding:40px 0 44px}
+  .strip{height:150px}
+}
+@media (max-width:420px){.phones{--ps:.8}}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+@media (prefers-contrast:more){
+  body,.paper,.sbody,.band,.ftab,.tag,.lbl,.card,.legend,.psheet,.fold,.verdicts > div,.risks > div,.sw,.type > div,.slipcard{background-image:none!important}
+  .dotscreen{display:none}
+}
+</style>
+</head>
+<body>
+
+<svg class="sprite" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <symbol id="tack" viewBox="0 0 24 30">
+      <ellipse cx="12.6" cy="28.2" rx="4.6" ry="1.6" fill="#2a1d0a" opacity=".28"/>
+      <path d="M12 8v19.5" stroke="var(--stem)" stroke-width="1.4"/>
+      <circle cx="12" cy="7" r="6.2" fill="var(--head)" stroke="var(--edge)" stroke-width="1.2"/>
+      <circle cx="9.8" cy="4.8" r="1.4" fill="var(--glint)" opacity=".8"/>
+    </symbol>
+    <symbol id="tack-x" viewBox="0 0 24 30">
+      <ellipse cx="12.6" cy="28.2" rx="4.6" ry="1.6" fill="#2a1d0a" opacity=".28"/>
+      <path d="M12 8v19.5" stroke="var(--stem)" stroke-width="1.4"/>
+      <circle cx="12" cy="7" r="6.2" fill="var(--head)" stroke="var(--edge)" stroke-width="1.2"/>
+      <path d="M9 4l6 6M15 4l-6 6" stroke="var(--glint)" stroke-width="1.4"/>
+    </symbol>
+    <symbol id="head" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4.2" fill="var(--head)" stroke="var(--edge)" stroke-width="1"/></symbol>
+    <symbol id="corner" viewBox="0 0 20 20"><path d="M0 0h20L0 20z" fill="currentColor"/></symbol>
+    <symbol id="north" viewBox="0 0 16 24"><path d="M8 1v22" stroke="currentColor" stroke-width=".9"/><path d="M8 2l5 12-5-3.4L3 14z" fill="currentColor"/></symbol>
+  </defs>
+</svg>
+
+<header class="wrap">
+  <div class="cover">
+    <div>
+      <h1>Field <em>Atlas</em></h1>
+      <p>Kopimap's 150 coffee shops in Solo as a printed field atlas: a recoloured map plate with a lettered grid, an index sheet, record cards and ruled forms. This is the second pass of the same direction, rebuilt on live data and checked against the app's own rules. No application code was changed.</p>
+    </div>
+    <button class="ctl" id="theme" type="button" aria-pressed="false">Night desk</button>
+  </div>
+</header>
+<div class="strip">
+  <img class="plate l" src="assets/plate-light.jpg" alt="" />
+  <img class="plate d" src="assets/plate-dark.jpg" alt="" />
+</div>
+<nav class="wrap" aria-label="Contents"><div class="contents">
+  <a href="#changes">01 Changes</a><a href="#object">02 Object</a><a href="#plate">03 Plate and index</a><a href="#adding">04 Adding, keys</a><a href="#record">05 Record card</a><a href="#form">06 Form</a><a href="#mobile">07 Phone</a><a href="#material">08 Material</a><a href="#daisy">09 daisyUI</a><a href="#build">10 Build order</a><a href="#risks">11 Risks</a>
+</div></nav>
+
+<main class="wrap">
+
+<!-- ============================================================ 01 -->
+<section class="sec" id="changes">
+  <h2>Changes in this pass</h2>
+  <p>The direction stays: one physical object, a printed field atlas, with every screen a part of it. What changed is everything the first pass got wrong when held against the code, the live data and the app's own rules in <code>docs/redesign.md</code>.</p>
+  <div class="tw">
+  <table class="grid">
+    <thead><tr><th>Change</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>Grain moved into the map style</td><td>The first pass laid a full-screen <code>mix-blend-mode: multiply</code> layer over the WebGL canvas, so the compositor re-blends every frame while you pan. It named that risk and kept it. Now the plate's grain is a MapLibre <code>fill-pattern</code> layer drawn in the map's own pass, and sheets carry grain as a plain background image. There are no blend modes left.</td></tr>
+      <tr><td>A real grid replaces invented numbers</td><td>"No. 014" and "Card 014" do not exist in the data and would change with every sort. Each shop now gets a grid reference computed from its coordinates (Couvee Solo is H4), printed in the plate's margins.</td></tr>
+      <tr><td>Thumbnails are back</td><td>The first pass dropped them so missing photos would not leave holes. In fact all 150 shops have a cover, and most show the storefront or the room, which is what you look for on the street. Each index row now carries a 40px print.</td></tr>
+      <tr><td>12px floor, 44px targets</td><td>Labels were 7–9.5px and tabs 26–28px tall, against the app's own rules: nothing under 12px, touch targets at least 44px. Every text size in the mockups is now 12px or more, and tabs, rows, the fold and the Add stamp are 44px or more on touch.</td></tr>
+      <tr><td>Live data, with stated origins</td><td>Hours and areas for Harso and Sorak Sorai did not match production, "Visited" is not a status the data has, distances had no origin, and the review excerpt was invented. Everything is now generated from <code>/api/coffees</code> on 29 Oct 2026. Distances are measured from Solo Balapan station, standing in for "you". Tacks and clusters sit where MapLibre puts them with the app's cluster settings, and the excerpt is from the published review.</td></tr>
+      <tr><td>The record card follows the one-primary rule</td><td>On a reviewed shop, the app makes "Read full review" the main action. The first pass filled Directions red instead. The name now sits in the fixed header rather than appearing three times, and the comments are shown.</td></tr>
+      <tr><td>The form works on a phone</td><td>14px ruled inputs make iOS zoom on focus. The address was a one-line field, too short for Couvee's 89-character address, and photos could not be removed. "My rating" was also shown on a reviewed shop, where the app hides it. Now inputs are 16px, the address is a lined two-row field, and prints have remove tabs. The form is drawn on Arzi Coffee, a shop without a review.</td></tr>
+      <tr><td>The fold shows its three heights</td><td>A 38×5px grip at 50% opacity hid the peek, half and full heights. The fold is now a full-width strip with three notches, and the filled notch is the current height.</td></tr>
+      <tr><td>Night desk without glow</td><td>The first pass ruled out glow, then put one on every dark tack. Dark tacks now get a cream rim. Measured contrast already passed AA (secondary ink 5.6:1, red 4.6:1); the real problem was the 8.5px type.</td></tr>
+      <tr><td>The missing states are drawn</td><td>Hover between index and plate, clusters, search with no match, the Reviews tab, adding a shop (crosshair, link field, link error), the shortcut legend, a shop with unknown hours, a shop with no photo and a closed tack. The first pass described most of these without drawing them.</td></tr>
+      <tr><td>daisyUI cost measured</td><td>"8 files, mostly class swaps" missed the theme colour utilities and the fact that <code>-coffeeMarkers.tsx</code> reads four daisyUI CSS variables at runtime to paint the pins. The plan now keeps those variable names and removes the plugin last.</td></tr>
+      <tr><td>The report follows the house rules</td><td>Eyebrow tags, muted lead lines and small uppercase labels inside cards are gone. So is the comparison with other directions.</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="verdicts">
+    <div><h4>Kept on purpose</h4><p>Brass tacks, rubber stamps, ink stars, ruled fields, the press-to-stamp checkbox, folder tabs, the recoloured style, the palette and Atkinson for body text.</p></div>
+    <div><h4>Criticism I did not accept</h4><p>That folder tabs are the wrong pattern. Their size was wrong; the pattern is the most legible part of the sheet.</p></div>
+    <div><h4>Partly fair</h4><p>That the record card is too dense. Its content is the app's own list and stays. The density came from tiny type and a clipped card; it now scrolls at full size.</p></div>
+  </div>
+</section>
+
+<!-- ============================================================ 02 -->
+<section class="sec" id="object">
+  <h2>The object</h2>
+  <p>A field atlas is a map plate, an index and a set of record cards, printed on paper, carried to the shop and marked up by hand. Kopimap already has all three: the map, the list and the shop view. The design makes them that object instead of a floating panel over a map.</p>
+  <ul class="plain">
+    <li><b>Paper and ink.</b> Radius 0. Depth comes from one sheet lying on another and one cast shadow. Rules are 1px, focus is 2px red. The only curves are drawn marks: tack heads, stars, the north arrow.</li>
+    <li><b>The map is a plate.</b> It has a neatline and margins. The margins carry the grid letters and numbers, the scale bar and north. The sheet lies on the plate, not in front of a background.</li>
+    <li><b>Marks are annotation.</b> Brass tack: known. Red tack: reviewed. Dark crossed tack: closed. Each view has one filled red control.</li>
+    <li><b>One sheet at a time.</b> Browse is the index, a shop is its record card, and editing is the same card as a ruled form.</li>
+    <li><b>Not costume.</b> No coffee stains, torn edges, sepia text, paper sounds or page curls. The material decides shape, hierarchy and controls, then stops.</li>
+  </ul>
+</section>
+
+<!-- ============================================================ 03 -->
+<section class="sec" id="plate">
+  <h2>The plate and the index</h2>
+  <p>Hover a row and its tack is marked on the plate with registration ticks while its grid letter and number light up in the margins. Hover a tack and its row lights up. The search field filters all 150 shops, the tabs switch between the 3 reviews and the full index, ↑ ↓ Enter work in the search field, and the Keys button or ? opens the key legend.</p>
+  <figure class="fig">
+    <div class="hs">
+      <div class="desk" id="desk-browse" tabindex="-1">
+        <img class="plate l" src="assets/plate-light.jpg" alt="Recoloured map of central Solo with a lettered grid" width="1116" height="700" />
+        <img class="plate d" src="assets/plate-dark.jpg" alt="" width="1116" height="700" />
+        <div class="marks"></div>
+        <div class="hover" hidden><span class="ticks"><i></i><i></i><i></i><i></i></span><svg class="t" viewBox="0 0 24 30"><use href="#tack"/></svg><span class="lbl"></span></div>
+        <div class="band t"></div><div class="band r"></div>
+        <div class="band b"><span class="line">SURAKARTA · GRID 0.01° ≈ 1.1 KM <span class="scale"><i></i>500 m</span></span></div>
+        <span class="north"><svg width="14" height="21"><use href="#north"/></svg></span>
+        <div class="dsheet">
+          <div class="tabrow" role="tablist" aria-label="Browse">
+            <button class="ftab" role="tab" type="button" data-tab="reviews" aria-selected="false">Reviews <span class="c">3</span></button>
+            <button class="ftab" role="tab" type="button" data-tab="index" aria-selected="true">Index <span class="c">150</span></button>
+            <button class="addtab" type="button">+ Add shop</button>
+          </div>
+          <div class="sbody">
+            <div class="shead">
+              <div class="wordmark">Kopimap</div>
+              <label class="search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="6.6" cy="6.6" r="4.7" stroke="currentColor" stroke-width="1.3"/><path d="M10.2 10.2L14 14" stroke="currentColor" stroke-width="1.3"/></svg><input type="search" placeholder="Search coffee shops" aria-label="Search coffee shops" autocomplete="off" /><span class="kcap">⌘K</span></label>
+            </div>
+            <ul class="list"></ul>
+            <div class="sfoot"><span>150 shops · 3 reviewed</span><button class="textbtn keys" type="button">Keys <span class="kcap">?</span></button></div>
+          </div>
+        </div>
+        <dialog class="legend" aria-label="Keyboard shortcuts"></dialog>
+      </div>
+    </div>
+    <figcaption class="cap"><b>Fig. 1</b>Desktop, Index tab, live. The plate was rendered by MapLibre 5.6 at zoom 13.8 with the recoloured style, the grain layer and the grid layer. Tacks and tags sit where the app's clustering (radius 40, max zoom 16) puts them at that view. Distances are from Solo Balapan station.</figcaption>
+  </figure>
+
+  <h3>The plate</h3>
+  <p>The recolour stays as the first pass proposed it: fetch <code>alidade_smooth_light.json</code>, overwrite the paint of all 53 layers (29 by id, and the 24 label layers by type), then hand the object to MapLibre. There are no new tiles, no new provider and no new key.</p>
+  <div class="pair">
+    <figure><img src="assets/map-before.jpg" alt="The current Alidade Smooth map style" width="900" height="560" /><figcaption>Today</figcaption></figure>
+    <figure><img src="assets/map-after.jpg" alt="The same map recoloured as a paper plate" width="900" height="560" /><figcaption>Recoloured</figcaption></figure>
+  </div>
+  <p>The grain is new. It is one PNG tile added with <code>map.addImage</code>, one GeoJSON polygon covering the world, and one <code>fill</code> layer with <code>fill-pattern</code>, inserted under the first label layer. It is drawn in the same GPU pass as the roads, it pans with the map like printed paper, and the labels stay crisp. Under <code>prefers-contrast: more</code>, or if a phone drops frames, one call hides it: <code>setLayoutProperty('paper-grain', 'visibility', 'none')</code>.</p>
+
+  <h3>The grid</h3>
+  <p>The plate carries a grid of 0.01° squares, about 1.1 km on a side. It starts at 110.74°E, 7.53°S, with columns A–K (no I, as in printed atlases) and rows 1–8. 149 of the 150 shops fall on it. Deca Dessert and Coffee, in Banjarnegara 120 km west, reads "Off plate". A reference is a pure function of latitude and longitude, so it never changes with sort or search.</p>
+  <ul class="plain">
+    <li><b>Why a grid.</b> Every shop gets a short, stable address you can say aloud ("Couvee's in H4"). The index can point at the plate without moving the map. The margins become the readout when you add a shop (section 04).</li>
+    <li><b>How.</b> The lines are a GeoJSON line layer at 20% ink. The margin letters and numbers are DOM labels placed with <code>map.project()</code> on <code>move</code>. The margins cost 26px at the top and 30px on the right and bottom of the map.</li>
+  </ul>
+
+  <h3>Marks</h3>
+  <ul class="plain">
+    <li><b>Tacks.</b> Brass for known, red for reviewed, dark and crossed for closed. The head is 22px; the hit area stays 40px, like today's pins. Tacks are map images drawn from the tokens, as today's pins are.</li>
+    <li><b>Tags.</b> A cluster is a paper tag with a count. Its head turns red when one of its shops is reviewed, as today's red ring does. Hovering a tag lists its first three shops with their references, the same content as today's hover card.</li>
+    <li><b>Marking.</b> Four red registration ticks around the head and a paper slip with the name and reference. Hovering a row draws the shop's own tack over its cluster, so a clustered shop can still be found.</li>
+  </ul>
+
+  <h3>The index sheet</h3>
+  <ul class="plain">
+    <li><b>Rows.</b> A 40px print, the name in Fraunces, dot leaders to the grid reference, then the app's own meta line: status or rating, area, distance. Rows are 58px, so eight fit on a 700px plate.</li>
+    <li><b>Tabs.</b> Folder tabs with their counts, 40px tall on desktop and 44px on a phone. Reviews is still the default tab, and it holds 3 shops. While a query is typed, results come from all shops and Index shows as active. The app hides the tabs during a search; here they are the sheet's edge, so they stay.</li>
+    <li><b>Add.</b> A red tab cut into the same edge. It is the only filled red control on the screen.</li>
+    <li><b>Footer.</b> The tally, and a Keys button. Today the shortcut list has no visible way in.</li>
+    <li><b>Seen in the data.</b> 126 rows say "Not reviewed", as the app does today. Arzi Coffee's area shows as its plus code, <code>CR7F+CFQ</code>, because the app's <code>area()</code> falls back to the first part of the address. That is a data fix, not a design one.</li>
+  </ul>
+</section>
+
+<!-- ============================================================ 04 -->
+<section class="sec" id="adding">
+  <h2>Adding a shop, and the keys</h2>
+  <p>Move the pointer over the plate: a surveyor's crosshair runs to the margins, where the longitude and latitude are read off. Click to drop a draft tack and open the new-shop form. Or paste a Google Maps link into the field and press Enter.</p>
+  <figure class="fig">
+    <div class="hs">
+      <div class="desk" id="desk-add">
+        <img class="plate l" src="assets/plate-light.jpg" alt="The plate in adding mode with a crosshair" width="1116" height="700" />
+        <img class="plate d" src="assets/plate-dark.jpg" alt="" width="1116" height="700" />
+        <div class="marks"></div>
+        <div class="hover" hidden><span class="ticks"><i></i><i></i><i></i><i></i></span><svg class="t" viewBox="0 0 24 30"><use href="#tack"/></svg><span class="lbl"></span></div>
+        <div class="capture"></div>
+        <span class="xh"></span><span class="xv"></span>
+        <div class="band t"></div><div class="band r"></div>
+        <div class="band b"><span class="line">SURAKARTA · GRID 0.01° ≈ 1.1 KM <span class="scale"><i></i>500 m</span></span></div>
+        <span class="north"><svg width="14" height="21"><use href="#north"/></svg></span>
+        <div class="dsheet slipmode">
+          <div class="tabrow"></div>
+          <div class="sbody">
+            <div class="shead"><div class="wordmark">Kopimap</div></div>
+            <div class="addslip">
+              <div class="linkrow"><input class="rule-in" type="url" placeholder="Paste a link, or tap the map" aria-label="Paste a Google Maps link" /><button class="stampbtn cancel" type="button">Cancel</button></div>
+              <p class="err" role="alert" style="padding:0 16px 14px" hidden>That link has no shop location.</p>
+            </div>
+            <form class="newform" hidden>
+              <div class="cbody" style="gap:18px">
+                <h3 style="font-size:26px">Add a shop</h3>
+                <div class="field"><label for="nf-name">Name</label><input class="rule-in" id="nf-name" name="name" /></div>
+                <div class="field"><label for="nf-loc">Location</label><input class="rule-in mono" id="nf-loc" name="loc" /></div>
+              </div>
+              <div class="ffoot"><div class="btns"><button class="stampbtn cancel" type="button">Cancel</button><button class="stampbtn primary" type="button">Save</button></div></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption class="cap"><b>Fig. 2</b>Desktop, adding. The sheet shrinks to a slip so the plate is free to click. In this mockup, a full Google Maps URL that contains coordinates places the draft tack. A short <code>maps.app.goo.gl</code> link needs the app's worker to resolve, so here it shows the link error.</figcaption>
+  </figure>
+  <div class="cols" style="margin-top:28px">
+    <div>
+      <h3 style="margin-top:0">Adding</h3>
+      <ul class="plain">
+        <li>The Add tab collapses the sheet to its head and the link row. The app sets the same "placing" state and shrinks the phone sheet to peek.</li>
+        <li>The crosshair replaces the bare <code>crosshair</code> cursor. Its lines end in the margins, where the coordinates are printed: the longitude in the top band, the latitude turned on its side in the right band.</li>
+        <li>A click drops a red draft tack with ticks and opens the form with the location filled in. The tack stays draggable while editing, as today.</li>
+        <li>A link with no location gets the app's own message under the rule: "That link has no shop location." A link to a saved shop opens that shop, as today.</li>
+      </ul>
+    </div>
+    <div>
+      <h3 style="margin-top:0">The key legend</h3>
+      <div class="legend" id="legend-spec"></div>
+      <p style="margin-top:14px;font-size:15px">A printed map carries its legend in a corner of the plate, so the shortcut list opens there, not as a centred modal with a backdrop. It lists the ten entries in <code>-shortcuts.tsx</code>. ? or Esc closes it.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 05 -->
+<section class="sec" id="record">
+  <h2>The record card</h2>
+  <p>A shop is a card in the atlas: the name and grid reference in a fixed header, a print, a ledger of facts, stamped actions, the review, the comments and the nearby shops. Both cards are at full length; in the app the card body scrolls under the header.</p>
+  <div class="cards fig">
+    <article class="card" aria-label="Couvee Solo">
+      <header class="chead">
+        <button class="back" type="button" aria-label="Back">←</button>
+        <h3>Couvee Solo</h3>
+        <span class="gref">H4</span>
+        <div class="sub"><span class="stamp moss">Reviewed</span><span class="rate" data-stars="4"></span></div>
+      </header>
+      <div class="cbody">
+        <figure class="print">
+          <svg class="pcorner tl"><use href="#corner"/></svg><svg class="pcorner tr"><use href="#corner"/></svg><svg class="pcorner br"><use href="#corner"/></svg><svg class="pcorner bl"><use href="#corner"/></svg>
+          <div class="frame"><img src="assets/couvee.jpg" alt="Inside Couvee Solo: long tables, people working on laptops" width="800" height="800" /><span class="dotscreen"></span></div>
+          <figcaption class="pfoot"><span>1 / 3</span><span>⟷</span></figcaption>
+        </figure>
+        <dl class="ledger">
+          <div><dt>Hours</dt><dd>08:00 – 23:59</dd></div>
+          <div><dt>Address</dt><dd>Jl. Prof. DR. Supomo No.68, Punggawan, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57139</dd></div>
+          <div><dt>Distance</dt><dd>750 m from you</dd></div>
+        </dl>
+        <div class="actions">
+          <a class="stampbtn" href="https://www.google.com/maps/dir/?api=1&amp;destination=-7.560911,110.815333" target="_blank" rel="noopener">Directions <span class="key">D</span></a>
+          <button class="stampbtn" type="button">Copy address</button>
+          <button class="stampbtn" type="button">Share</button>
+        </div>
+        <section class="review">
+          <h4>Couvee - Nice Place to Have Work Done</h4>
+          <div class="excerpt"><p><span class="dropcap">J</span>ust this weekend, as I worked on the blog that you’re reading right now, I visited Couvee for the nth time this year.</p><p><b>Why?</b> Well, because for whatever reason, either the vibe, the coffee, or the position of the table and chair always triggers my mood to be <em>very productive.</em></p></div>
+          <a class="stampbtn primary" href="https://mwyndham.dev/articles/couvee-nice-place-to-have-work-done" target="_blank" rel="noopener">Read the full review ↗ <span class="key">R</span></a>
+          <details class="comments">
+            <summary>Comments (2)</summary>
+            <div class="cmt"><span class="av">OL</span><div><span class="who">Optic Lead</span> <span class="when">20 Sep 2026</span><br />Is this blog made by hand? It looks amazing, also those donuts look amazing....</div></div>
+            <div class="cmt reply"><span class="av">W</span><div><span class="who">Wyndham</span> <span class="when">author · 23 Sep 2026</span><br />Author here. Yes! everything here is by hand. Not a framework or anything.</div></div>
+            <p style="margin:6px 0 0;font-size:14px"><a href="https://mwyndham.dev/articles/couvee-nice-place-to-have-work-done#comments" target="_blank" rel="noopener">Join the discussion ↗</a></p>
+          </details>
+        </section>
+        <section class="nearby"><h4>Nearby</h4><ul data-nearby="Couvee Solo"></ul></section>
+      </div>
+      <footer class="cfoot"><button type="button">Edit</button><a href="#record">Edit review ↗</a></footer>
+    </article>
+
+    <article class="card" aria-label="Arzi Coffee">
+      <header class="chead">
+        <button class="back" type="button" aria-label="Back">←</button>
+        <h3>Arzi Coffee</h3>
+        <span class="gref">J6</span>
+        <div class="sub"><span class="stamp faded">Not reviewed yet</span></div>
+      </header>
+      <div class="cbody">
+        <figure class="print">
+          <svg class="pcorner tl"><use href="#corner"/></svg><svg class="pcorner tr"><use href="#corner"/></svg><svg class="pcorner br"><use href="#corner"/></svg><svg class="pcorner bl"><use href="#corner"/></svg>
+          <div class="frame"><img src="assets/arzi-1.jpg" alt="Arzi Coffee: a green letter R placeholder from the import" width="400" height="300" /><span class="dotscreen"></span></div>
+          <figcaption class="pfoot"><span>1 / 2</span><span>⟷</span></figcaption>
+        </figure>
+        <dl class="ledger">
+          <div><dt>Hours</dt><dd>Hours unknown</dd></div>
+          <div><dt>Address</dt><dd>CR7F+CFQ, Danukusuman, Serengan, Surakarta City, Central Java 57156</dd></div>
+          <div><dt>Distance</dt><dd>3.3 km from you</dd></div>
+        </dl>
+        <div class="actions">
+          <a class="stampbtn primary" href="https://www.google.com/maps/dir/?api=1&amp;destination=-7.586404,110.823741" target="_blank" rel="noopener">Directions <span class="key">D</span></a>
+          <button class="stampbtn" type="button">Copy address</button>
+          <button class="stampbtn" type="button">Share</button>
+        </div>
+        <section class="nearby"><h4>Nearby</h4><ul data-nearby="Arzi Coffee"></ul></section>
+      </div>
+    </article>
+
+    <div class="notes">
+      <ul class="plain">
+        <li><b>Order</b> follows the app: header, photo, facts, actions, review, comments, nearby, owner footer. The name sits once, in the fixed header, next to its grid reference.</li>
+        <li><b>One red stamp per card.</b> "Read the full review" on a reviewed shop; Directions otherwise. The status is the only stamp.</li>
+        <li><b>The print.</b> One photo on a paper border with photo corners and a counter. Swiping works as today. A light dot screen sits on this print only.</li>
+        <li><b>The ledger.</b> Hours, address, distance. The address row loses its copy icon, because Copy address sits two lines below.</li>
+        <li><b>Arzi Coffee</b> is the one shop with unknown hours. Its address is a plus code, and its cover is a green letter placeholder from the import. The card shows that plainly; a better cover is one tap away in the form (section 06).</li>
+      </ul>
+    </div>
+  </div>
+  <p style="margin-top:10px;font-size:14px">The review title, excerpt and two comments are real, from the published review on mwyndham.dev. Nearby distances are measured from each shop.</p>
+
+  <div class="specimens">
+    <figure class="specimen">
+      <div class="card" style="width:100%"><div class="cbody" style="padding:6px 16px">
+        <dl class="ledger" style="border-top:0"><div><dt>Hours</dt><dd><button class="addline" type="button">Add hours <span>+</span></button></dd></div></dl>
+      </div></div>
+      <figcaption>Signed in, a missing fact is a red-pencil line that opens the form at that field.</figcaption>
+    </figure>
+    <figure class="specimen">
+      <div class="print miniplate">
+        <svg class="pcorner tl"><use href="#corner"/></svg><svg class="pcorner tr"><use href="#corner"/></svg><svg class="pcorner br"><use href="#corner"/></svg><svg class="pcorner bl"><use href="#corner"/></svg>
+        <div class="frame">
+          <img class="plate l" src="assets/mini-plate-light.jpg" alt="A small plate of the streets around the shop" width="336" height="224" />
+          <img class="plate d" src="assets/mini-plate-dark.jpg" alt="" width="336" height="224" />
+          <svg class="pin v" viewBox="0 0 24 30"><use href="#tack"/></svg>
+          <button class="stampbtn" type="button">+ Add photo</button>
+        </div>
+      </div>
+      <figcaption>No photo: the print holds a mini plate of the street at zoom 16, and the owner gets an Add photo stamp. No shop lacks a photo today; this is what a shop saved without one shows.</figcaption>
+    </figure>
+    <figure class="specimen">
+      <div class="marksrow" style="margin:0;justify-content:center">
+        <span class="one"><span class="stage"><span class="hover" style="left:30px;top:48px"><span class="ticks"><i></i><i></i><i></i><i></i></span><svg class="t x" viewBox="0 0 24 30"><use href="#tack-x"/></svg></span></span>Closed</span>
+        <span class="stamp red" style="font-size:13px">Closed</span>
+      </div>
+      <figcaption>Sapa Kopi Laweyan, the one closed shop: a dark crossed tack, and a red Closed stamp on its card.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============================================================ 06 -->
+<section class="sec" id="form">
+  <h2>The form</h2>
+  <p>Editing is the same card with the print replaced by a contact strip and the facts by ruled lines. Try it: tap a print to make it the cover, × removes it, tap the stars (left half gives a half), untick Unknown and press Save to see the app's validation message.</p>
+  <div class="cards two fig">
+    <form class="card" id="editform" novalidate>
+      <header class="chead" style="padding-bottom:8px">
+        <button class="back" type="button" aria-label="Cancel">←</button>
+        <h3>Edit Arzi Coffee</h3>
+        <span class="gref">J6</span>
+      </header>
+      <fieldset class="cbody" style="border:0;margin:0;min-width:0">
+        <div class="strip-photos" id="photos">
+          <div class="ph is-cover"><button class="img" type="button" aria-label="Cover photo"><img src="assets/arzi-1.jpg" alt="Letter R placeholder" /></button><span class="covertag">Cover</span><button class="rm" type="button" aria-label="Remove photo">×</button></div>
+          <div class="ph"><button class="img" type="button" aria-label="Make cover"><img src="assets/arzi-2.jpg" alt="Arzi Coffee menu" /></button><button class="rm" type="button" aria-label="Remove photo">×</button></div>
+          <label class="addph"><b>+</b>Add<input type="file" accept="image/*" hidden /></label>
+        </div>
+        <div class="fgrid">
+          <div class="field"><label for="f-name">Name</label><input class="rule-in" id="f-name" name="name" value="Arzi Coffee" /></div>
+          <div class="field"><label for="f-addr">Address</label><textarea class="rule-in lined" id="f-addr" name="address" rows="2">CR7F+CFQ, Danukusuman, Serengan, Surakarta City, Central Java 57156</textarea></div>
+          <fieldset class="field"><legend>Hours</legend>
+            <div class="hours"><input class="rule-in" type="time" name="open" aria-label="Opens" disabled /><span>–</span><input class="rule-in" type="time" name="close" aria-label="Closes" disabled /></div>
+            <label class="tickrow"><input type="checkbox" name="unknown" checked /> Unknown</label>
+          </fieldset>
+          <div class="field"><label for="f-loc">Location</label><input class="rule-in mono" id="f-loc" name="loc" value="-7.586404, 110.823741" /></div>
+          <div class="field"><label id="rate-l">My rating</label>
+            <div style="display:flex;align-items:center;gap:14px"><span class="stars big" id="rater" role="slider" tabindex="0" aria-labelledby="rate-l" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0" aria-valuetext="Not rated"><span class="on" style="width:0">★★★★★</span>★★★★★</span><button class="textbtn" type="button" id="rate-clear">Clear</button></div>
+          </div>
+          <label class="press"><input type="checkbox" name="closed" /><span>Closed permanently</span><span class="stamp red">Closed</span></label>
+        </div>
+      </fieldset>
+      <div class="ffoot">
+        <p class="err" role="alert" id="form-err" hidden></p>
+        <div class="btns"><button class="stampbtn" type="button">Cancel</button><button class="stampbtn primary" type="submit" id="save">Save</button></div>
+      </div>
+    </form>
+    <div class="notes">
+      <ul class="plain">
+        <li><b>Ruled fields.</b> Inputs are 16px, because iOS zooms the page when a smaller field takes focus. Each sits on a 1px rule that becomes 2px red on focus. There is no box and no placeholder text.</li>
+        <li><b>A lined address.</b> The rules are a background drawn at the line height, so a long address wraps onto ruled lines instead of being cut off.</li>
+        <li><b>Hours.</b> Two native time fields. Unknown ticks them off and strikes them, and saves empty hours, as today.</li>
+        <li><b>Prints.</b> The first is the cover, outlined in red with a Cover tag. Tap another to make it the cover. The × tab is 28px drawn, with a 44px hit area. Arzi Coffee's real cover is the letter placeholder, and its second photo is the menu.</li>
+        <li><b>My rating.</b> Ink stars with half steps; the arrow keys move by half a star. Hidden on a reviewed shop, as today, because the review owns the rating.</li>
+        <li><b>Closed permanently.</b> A real checkbox drawn as a press area. Checking it presses the Closed stamp.</li>
+        <li><b>Errors.</b> The app validates on Save and shows the first message above the buttons. The mockup does the same. Leaving with changes keeps the native "Discard changes?" confirm.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 07 -->
+<section class="sec" id="mobile">
+  <h2>The phone</h2>
+  <p>On a phone the sheet is a folded map over the plate, with the same three heights as today: peek (96px), half (50dvh) and full (92dvh). The plates below are 390×844 MapLibre renders; tacks and tags come from the same clustering.</p>
+  <div class="phones fig">
+    <figure class="phone">
+      <div class="pframe"><div class="scr" id="ph-index">
+        <img class="plate l" src="assets/phone-light.jpg" alt="Phone: the plate above a half-height index sheet" width="390" height="844" />
+        <img class="plate d" src="assets/phone-dark.jpg" alt="" width="390" height="844" />
+        <div class="marks"></div>
+        <div class="hover" hidden><span class="ticks"><i></i><i></i><i></i><i></i></span><svg class="t" viewBox="0 0 24 30"><use href="#tack"/></svg><span class="lbl"></span></div>
+        <div class="band t"></div><div class="band r"></div>
+        <button class="padd" type="button" style="bottom:436px" aria-label="Add a shop">+</button>
+        <section class="psheet half">
+          <button class="fold" type="button" aria-label="Resize panel"><span class="grip"></span><span class="notch"><i></i><i class="on"></i><i></i></span></button>
+          <div class="tabrow" role="tablist"><button class="ftab" role="tab" type="button" aria-selected="false">Reviews <span class="c">3</span></button><button class="ftab" role="tab" type="button" aria-selected="true">Index <span class="c">150</span></button></div>
+          <div class="shead" style="padding-top:2px"><label class="search" style="margin-top:0"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="6.6" cy="6.6" r="4.7" stroke="currentColor" stroke-width="1.3"/><path d="M10.2 10.2L14 14" stroke="currentColor" stroke-width="1.3"/></svg><input type="search" placeholder="Search coffee shops" aria-label="Search coffee shops" /></label></div>
+          <ul class="list"></ul>
+        </section>
+      </div></div>
+      <figcaption>Half · Index</figcaption>
+    </figure>
+
+    <figure class="phone">
+      <div class="pframe"><div class="scr" id="ph-record">
+        <img class="plate l" src="assets/phone-couvee-light.jpg" alt="Phone: Couvee Solo selected, the plate at street level" width="390" height="844" />
+        <img class="plate d" src="assets/phone-couvee-dark.jpg" alt="" width="390" height="844" />
+        <div class="marks"></div>
+        <div class="hover" hidden><span class="ticks"><i></i><i></i><i></i><i></i></span><svg class="t" viewBox="0 0 24 30"><use href="#tack"/></svg><span class="lbl"></span></div>
+        <div class="band t"></div><div class="band r"></div>
+        <section class="psheet half">
+          <button class="fold" type="button" aria-label="Resize panel"><span class="grip"></span><span class="notch"><i></i><i class="on"></i><i></i></span></button>
+          <div class="card inphone">
+            <header class="chead">
+              <button class="back" type="button" aria-label="Back">←</button>
+              <h3>Couvee Solo</h3>
+              <span class="gref">H4</span>
+              <div class="sub"><span class="stamp moss">Reviewed</span><span class="rate" data-stars="4"></span></div>
+            </header>
+            <div class="cbody">
+              <figure class="print"><div class="frame"><img src="assets/couvee.jpg" alt="" /><span class="dotscreen"></span></div><figcaption class="pfoot"><span>1 / 3</span><span>⟷</span></figcaption></figure>
+              <dl class="ledger"><div><dt>Hours</dt><dd>08:00 – 23:59</dd></div></dl>
+            </div>
+          </div>
+        </section>
+      </div></div>
+      <figcaption>Half · Record</figcaption>
+    </figure>
+
+    <figure class="phone">
+      <div class="pframe"><div class="scr" id="ph-edit">
+        <img class="plate l" src="assets/phone-light.jpg" alt="Phone: the edit form at full height" width="390" height="844" />
+        <img class="plate d" src="assets/phone-dark.jpg" alt="" width="390" height="844" />
+        <div class="band t"></div><div class="band r"></div>
+        <section class="psheet full">
+          <button class="fold" type="button" aria-label="Resize panel"><span class="grip"></span><span class="notch"><i></i><i></i><i class="on"></i></span></button>
+          <div class="card inphone">
+            <header class="chead" style="padding-bottom:8px"><button class="back" type="button" aria-label="Cancel">←</button><h3>Edit Arzi Coffee</h3><span class="gref">J6</span></header>
+            <div class="cbody" style="gap:18px">
+              <div class="strip-photos">
+                <div class="ph is-cover"><button class="img" type="button" aria-label="Cover photo"><img src="assets/arzi-1.jpg" alt="" /></button><span class="covertag">Cover</span><span class="rm" aria-hidden="true">×</span></div>
+                <div class="ph"><button class="img" type="button" aria-label="Make cover"><img src="assets/arzi-2.jpg" alt="" /></button><span class="rm" aria-hidden="true">×</span></div>
+                <span class="addph"><b>+</b>Add</span>
+              </div>
+              <div class="field"><label>Name</label><input class="rule-in" value="Arzi Coffee" aria-label="Name" /></div>
+              <div class="field"><label>Address</label><textarea class="rule-in lined" rows="2" aria-label="Address">CR7F+CFQ, Danukusuman, Serengan, Surakarta City, Central Java 57156</textarea></div>
+              <div class="field"><label>Hours</label><div class="hours"><input class="rule-in" type="time" disabled aria-label="Opens" /><span>–</span><input class="rule-in" type="time" disabled aria-label="Closes" /></div><label class="tickrow"><input type="checkbox" checked /> Unknown</label></div>
+              <div class="field"><label>Location</label><input class="rule-in mono" value="-7.586404, 110.823741" aria-label="Location" /></div>
+            </div>
+          </div>
+          <div class="ffoot"><div class="btns"><button class="stampbtn" type="button">Cancel</button><button class="stampbtn primary" type="button">Save</button></div></div>
+        </section>
+      </div></div>
+      <figcaption>Full · Edit</figcaption>
+    </figure>
+
+    <figure class="phone">
+      <div class="pframe"><div class="scr" id="ph-add">
+        <img class="plate l" src="assets/phone-light.jpg" alt="Phone: adding a shop, a crosshair over the plate" width="390" height="844" />
+        <img class="plate d" src="assets/phone-dark.jpg" alt="" width="390" height="844" />
+        <div class="marks"></div>
+        <span class="xh"></span><span class="xv"></span>
+        <div class="band t"></div><div class="band r"></div>
+        <section class="psheet peek">
+          <button class="fold" type="button" aria-label="Resize panel"><span class="grip"></span><span class="notch"><i class="on"></i><i></i><i></i></span></button>
+          <div class="linkrow" style="padding-top:4px"><input class="rule-in" type="url" placeholder="Paste a link, or tap the map" aria-label="Paste a Google Maps link" /><button class="stampbtn" type="button">Cancel</button></div>
+        </section>
+      </div></div>
+      <figcaption>Peek · Adding</figcaption>
+    </figure>
+  </div>
+  <div class="cols" style="margin-top:26px">
+    <div>
+      <h3 style="margin-top:0">The fold</h3>
+      <p>The top of the sheet is a 28px strip of the outer fold, darker paper with a debossed grip. Its hit area reaches 16px above the edge, so it is 44px to the thumb. Three notches show the three heights, and the filled one is where the sheet is now. Drag and tap behave exactly as today: a tap steps up, or back to half from full.</p>
+    </div>
+    <div>
+      <h3 style="margin-top:0">On a small screen</h3>
+      <p>The margins shrink to 22px: letters along the top, numbers down the right. The Add stamp is 52px and rides above the sheet as today's round button does. A selected shop sits where the app's fly-to offset puts it, centred above the half sheet at zoom 17, with its ticks. Adding shrinks the sheet to peek and centres the crosshair; its readout is in the margins.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 08 -->
+<section class="sec" id="material">
+  <h2>Material</h2>
+  <p>One paper, one ink, two annotation colours and a grain. The palette is small, so the map stays the loudest thing on screen. The contrast ratios are measured against the sheet colour, for text at 12px and up.</p>
+  <div class="palette">
+    <div class="sw"><div class="chip" style="background:var(--ink)"></div><div class="m"><b>Ink</b>#2A241C · 13.5:1<br />night #E8DFC8 · 12.3:1</div></div>
+    <div class="sw"><div class="chip" style="background:var(--ink-soft)"></div><div class="m"><b>Faded ink</b>#5D513F · 6.8:1<br />night #B4A88F · 7.0:1</div></div>
+    <div class="sw"><div class="chip" style="background:var(--red)"></div><div class="m"><b>Stamp red</b>#A8341D · 5.8:1<br />night #E0745A · 5.3:1</div></div>
+    <div class="sw"><div class="chip" style="background:var(--moss)"></div><div class="m"><b>Ledger moss</b>#4D5C3A · 6.3:1<br />night #93A97A · 6.4:1</div></div>
+    <div class="sw"><div class="chip" style="background:var(--ochre)"></div><div class="m"><b>Ochre</b>#A17A2B · 3.5:1<br />night #C9A55D · 7.0:1; stars only</div></div>
+    <div class="sw"><div class="chip" style="background:var(--sheet)"></div><div class="m"><b>Sheet</b>#F7F0DE<br />night #241F17</div></div>
+  </div>
+  <p style="margin-top:14px;font-size:15px">Text on a red stamp: 5.8:1 by day, 6.0:1 at night, where the stamp turns light and the text dark. Faded ink on the darker tab paper (#E9DEC6) is 5.8:1.</p>
+
+  <h3>Type</h3>
+  <div class="type">
+    <div><div class="big">Couvee Solo</div><p><b>Fraunces</b> for names, titles and the wordmark, at 17px and up only. Soft 30, Wonk 1.</p></div>
+    <div><p style="margin-top:0;font-size:17px"><b>Atkinson Hyperlegible Next</b> for facts, addresses, form values and review text, at 13–17px. It stays because it was chosen for reading.</p></div>
+    <div><div class="data">H4 · 750 m<br />08:00 – 23:59<br />-7.586404, 110.823741</div><p><b>IBM Plex Mono</b> for references, keys, labels and coordinates, at 12–14px.</p></div>
+  </div>
+
+  <h3>Texture</h3>
+  <div class="textures">
+    <div><div class="tex grain"></div><div class="texcap">Paper grain · 128px PNG tile</div></div>
+    <div><div class="tex"><img src="assets/couvee.jpg" alt="" /><span class="dotscreen"></span></div><div class="texcap">Print · dot screen 12%, record print only</div></div>
+    <div><div class="tex grain"><span class="stamp red" style="font-size:15px;padding:9px 12px 8px">Closed</span></div><div class="texcap">Stamp · double rule, 2–3° turn</div></div>
+  </div>
+
+  <h3>Marks</h3>
+  <div class="marksrow">
+    <span class="one"><span class="stage"><span class="hover" style="left:30px;top:50px"><svg class="t k" viewBox="0 0 24 30"><use href="#tack"/></svg></span></span>Known</span>
+    <span class="one"><span class="stage"><span class="hover" style="left:30px;top:50px"><svg class="t v" viewBox="0 0 24 30"><use href="#tack"/></svg></span></span>Reviewed</span>
+    <span class="one"><span class="stage"><span class="hover" style="left:30px;top:50px"><svg class="t x" viewBox="0 0 24 30"><use href="#tack-x"/></svg></span></span>Closed</span>
+    <span class="one"><span class="stage"><span class="tag k" style="left:30px;top:28px"><svg viewBox="0 0 10 10"><use href="#head"/></svg>13</span></span>Cluster</span>
+    <span class="one"><span class="stage"><span class="tag v" style="left:30px;top:28px"><svg viewBox="0 0 10 10"><use href="#head"/></svg>4</span></span>With a review</span>
+    <span class="one"><span class="stage"><span class="hover" style="left:30px;top:50px"><span class="ticks"><i></i><i></i><i></i><i></i></span><svg class="t v" viewBox="0 0 24 30"><use href="#tack"/></svg></span></span>Marked</span>
+    <span class="one"><span class="stamp moss">Reviewed</span>Stamp</span>
+    <span class="one"><span class="kcap">⌘K</span>Key cap</span>
+  </div>
+  <p style="margin-top:16px;font-size:15px">Rules: radius 0; hairlines 1px, focus 2px; one cast shadow, under sheets only; no blend modes, glass, blur or glow. The grain is a background image. The dot screen sits on the record print only. Stamps are kept for status and Closed.</p>
+</section>
+
+<!-- ============================================================ 09 -->
+<section class="sec" id="daisy">
+  <h2>Leaving daisyUI</h2>
+  <p>daisyUI draws exactly what this direction removes: rounded fields, pills, badges, a toggle and star masks. It is also wired deeper than the first pass counted. The table is a count of class names in <code>client/src/routes</code>, 29 Oct 2026.</p>
+  <div class="tw">
+  <table class="grid">
+    <thead><tr><th>daisyUI</th><th>Class names (files)</th><th>Becomes</th></tr></thead>
+    <tbody>
+      <tr><td>btn, btn-*</td><td class="num">35 on 14 buttons (3)</td><td>StampButton: filled red, outlined ink, or underlined text</td></tr>
+      <tr><td>input, textarea, label</td><td class="num">8 (3)</td><td>RuledField, LinedField, the ruled tick box</td></tr>
+      <tr><td>badge, badge-*</td><td class="num">25 (2)</td><td>StampMark for status; plain text elsewhere</td></tr>
+      <tr><td>tabs, tab</td><td class="num">4 (1)</td><td>FolderTabs</td></tr>
+      <tr><td>checkbox, toggle</td><td class="num">5 (1)</td><td>The ruled tick box; PressStamp for Closed</td></tr>
+      <tr><td>rating, mask-*</td><td class="num">15 (2)</td><td>InkStars, read-only and slider</td></tr>
+      <tr><td>loading</td><td class="num">3 (1)</td><td>"Saving…" on the Save stamp</td></tr>
+      <tr><td>kbd, link, modal</td><td class="num">9 (3)</td><td>Key cap, underlined link, the legend dialog</td></tr>
+      <tr><td>rounded-box, rounded-field</td><td class="num">15 (6)</td><td>Nothing: the radius tokens go to 0, then the classes are deleted</td></tr>
+      <tr><td>Theme colours: bg-base-100, text-primary…</td><td class="num">66 (11)</td><td>Kept by name. The values become the atlas palette.</td></tr>
+      <tr><td>Runtime reads in <code>-coffeeMarkers.tsx</code></td><td class="num">4 variables</td><td><code>themeColor()</code> reads <code>--color-base-100</code>, <code>-base-content</code>, <code>-accent</code> and <code>-primary</code> to paint pins and clusters. They must exist under those names until the tacks replace the pins.</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <h3>The order that keeps every deploy working</h3>
+  <ul class="plain">
+    <li><b>First, change values only.</b> Set the two daisyUI themes to the atlas palette, with <code>--radius-box</code>, <code>--radius-field</code> and <code>--radius-selector</code> at 0. That is one file, <code>index.css</code>. Every component goes square and paper-coloured, and the pins repaint themselves through <code>themeColor()</code>. Nothing else is touched.</li>
+    <li><b>Then swap components file by file.</b> There are 11 files, with the editor and the shop view as the bulk. Each swap is a visual check at 390px and 1440px.</li>
+    <li><b>Last, remove the plugin.</b> Move the colour variables into a plain <code>@theme</code> block under the same names, so the 66 utilities and the runtime reads keep working. Delete <code>@plugin "daisyui"</code> when a grep for the component class names comes back empty.</li>
+  </ul>
+</section>
+
+<!-- ============================================================ 10 -->
+<section class="sec" id="build">
+  <h2>Build order</h2>
+  <p>Eight steps, each one deployable and visible on its own. S is about a session, M two or three. No server, schema or API work.</p>
+  <ol class="steps">
+    <li><b>Theme values</b><span>Atlas palette and radius 0 in the daisyUI themes, Fraunces and Plex Mono loaded, and grain on the panel as a background image. <code>index.css</code> only.</span><em>S</em></li>
+    <li><b>The plate</b><span>Recolour the style at load, then add the grain pattern layer, the grid line layer and the margin bands. Test panning on a mid-range Android phone before step 3.</span><em>M</em></li>
+    <li><b>Marks</b><span>Tack images replace the pin images in <code>addPinImages</code>, and a cluster tag symbol layer replaces the circle layer. Ticks go on the selected marker. Move <code>hovered</code> into the store so index rows can set it.</span><em>M</em></li>
+    <li><b>The sheet</b><span>Folder tabs and the Add tab, ruled search, index rows with prints, leaders and references, the footer with Keys, and the fold strip on phones.</span><em>M</em></li>
+    <li><b>The record card</b><span>Header with reference, print, ledger, actions with the one-primary rule, review, comments, nearby, the red-pencil missing lines and the mini plate.</span><em>M</em></li>
+    <li><b>The form and adding</b><span>Ruled and lined fields at 16px, time fields, contact strip with remove tabs, ink stars, the press stamp, the slip sheet and the crosshair with its margin readout.</span><em>M</em></li>
+    <li><b>Remove daisyUI</b><span>Legend dialog, key caps, links, "Saving…". Move the variables to <code>@theme</code>, delete the plugin, then run the grep check.</span><em>S</em></li>
+    <li><b>Night desk and checks</b><span>Dark style recolour, cream tack rims, contrast pass, reduced motion, and <code>prefers-contrast</code> hiding both grains.</span><em>S</em></li>
+  </ol>
+  <h3>What stays</h3>
+  <p>Routes, store, SWR, API and schema. One panel on desktop and one sheet on phones, with peek, half and full and the same drag logic. Tap-to-place, Google Maps import and duplicate matching. Every keyboard shortcut. Photos, review, comments, nearby, directions, copy and share. MapLibre, the tiles and all map behaviour, including the cluster settings. The colour meaning (known, reviewed, closed) stays; only how it is drawn changes.</p>
+  <p>Three things are added: the grid reference, the hover link from index rows to tacks, and the Keys button. Three small layout changes come with them: the tabs stay visible while searching, the desktop sheet shrinks to a slip while adding, and the address row's copy icon goes.</p>
+</section>
+
+<!-- ============================================================ 11 -->
+<section class="sec" id="risks">
+  <h2>Risks, and what I need from you</h2>
+  <div class="risks">
+    <div><h4>Grain on the plate</h4><p>The pattern layer adds one fill draw per frame, far less than a CSS blend, but MapLibre crossfades patterns between whole zoom levels, and that may show while pinching. Check on a mid-range Android phone in step 2. The fallback is hiding the layer and keeping the recolour.</p></div>
+    <div><h4>Margins on a phone</h4><p>The bands take 22px off the top and the right edge of a 390px screen, and the top band sits under the status bar on notched phones. It needs <code>env(safe-area-inset-top)</code>. If it feels cramped, keep the letters and drop the right band.</p></div>
+    <div><h4>The grid's origin is permanent</h4><p>References stay fixed only while the origin does. Growing east or south adds letters or numbers. Growing west or north would renumber every shop, so the origin should be settled before launch. Today 149 of 150 shops fit.</p></div>
+    <div><h4>Covers get more visible</h4><p>A print makes a bad cover obvious. By eye, two covers are letter placeholders and roughly 25 are menus. Choosing better covers is a data task, and the form makes it one tap per shop.</p></div>
+    <div><h4>Costume creep</h4><p>Stamps are for status and Closed only, there is one filled red control per view, and Fraunces is used at 17px and up. If every label gets a stamp, the atlas turns into a theme park.</p></div>
+    <div><h4>Density</h4><p>With the 12px floor and 58px rows, a 700px desktop sheet shows 8 shops, about the same as today's 64px rows. On a phone at half height, 4 rows are visible.</p></div>
+  </div>
+  <h3>Decide</h3>
+  <ul class="plain">
+    <li><b>Thumbnails in the index.</b> I recommend yes. All 150 shops have one, and most show the storefront or the room.</li>
+    <li><b>The grid and margins.</b> I recommend yes. Without the margins a reference has nothing to point at, so the alternative is distance only.</li>
+    <li><b>Night desk in the same release, or later.</b> I recommend later: step 8 is independent.</li>
+    <li><b>Step 1 as the first deploy.</b> Theme values only, in one file. It shows the direction on the real app in a day and can be reverted in a minute.</li>
+  </ul>
+</section>
+</main>
+
+<footer class="colophon wrap">
+  <div>
+    <p><b>Kopimap — Field Atlas, second pass.</b> 29 October 2026. Static HTML; no application code changed.</p>
+    <p>Data: <code>/api/coffees</code> on 29 Oct 2026: 150 shops, 3 reviewed, 1 closed, 1 with no hours, 0 with no address. Plates: the app's Alidade Smooth style, recoloured, rendered with MapLibre 5.6 in headless Chromium. Tack and cluster positions come from those renders. Thumbnails: the app's own 96px list images. Review and comments: mwyndham.dev.</p>
+  </div>
+  <div>
+    <p><b>Files.</b> <code>docs/redesign/experimental-v2/index.html</code> and <code>assets/</code>. The first pass is unchanged at <code>docs/redesign/experimental/</code>.</p>
+    <p>Distances in the index are from Solo Balapan station (−7.5567, 110.8206), standing in for the visitor's location.</p>
+  </div>
+</footer>
+
+<script type="application/json" id="data">{"shops":[{"n":"Sapa Kopi Laweyan","s":"closed","r":0,"a":"Laweyan","ad":"Jl. Matoa Raya I, Karangasem, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57145","h":"09:00-23:59","g":"D3","d":5354,"p":[-266.3,53.4],"q":[-374.8,34.7],"ll":[-7.551005,110.772367]},{"n":"FORE Solo Paragon Mall","s":"known","r":3,"a":"Banjarsari","ad":"Solo Paragon, Jl. Yosodipuro No.133, Mangkubumen, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57139","h":"10:00-22:00","g":"H4","d":1260,"p":[505.8,275.5],"q":[100.4,171.5],"ll":[-7.561862,110.810428]},{"n":"Couvee Solo","s":"reviewed","r":4,"a":"Banjarsari","ad":"Jl. Prof. DR. Supomo No.68, Punggawan, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57139","h":"08:00-23:59","g":"H4","d":746,"p":[605.3,256.1],"q":[161.7,159.5],"ll":[-7.560911,110.815333]},{"n":"Loske Coffee Service Karangasem","s":"reviewed","r":3.5,"a":"Laweyan","ad":"Jl. Mojo No.23, Karangasem, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57145","h":"07:00-23:00","g":"D2","d":4903,"p":[-177.8,21.2],"q":[-320.4,14.9],"ll":[-7.54943,110.776728]},{"n":"DFoso Coffee","s":"known","r":2.5,"a":"Laweyan","ad":"Jl. Mojo No.10, Karangasem, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57145","h":"10:00-23:00","g":"D2","d":4903,"p":[-175,6],"q":[-318.7,5.6],"ll":[-7.548691,110.776863]},{"n":"Eighteen Grounds Coffee","s":"known","r":2,"a":"Kartasura","ad":"Jl. A. Yani, Banaran, Pabelan, Kec. Kartasura, Kabupaten Sukoharjo, Jawa Tengah 57169","h":"08:00-01:00","g":"C4","d":6283,"p":[-441.1,254.1],"q":[-482.5,158.3],"ll":[-7.560814,110.763748]},{"n":"TETRA Coffee & Eatery - Solo","s":"known","r":2.5,"a":"Laweyan","ad":"Jl. Slamet Riyadi No.560, Jajar, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57146","h":"00:00-23:59","g":"E3","d":3740,"p":[25.2,213],"q":[-195.4,132.9],"ll":[-7.558804,110.786734]},{"n":"Kopi Konnichiwa Slamet Riyadi","s":"known","r":2,"a":"Slamet Riyadi St No.85","ad":"Slamet Riyadi St No.85, Kauman, Pasar Kliwon, Surakarta City, Central Java 57122","h":"09:00-23:59","g":"J5","d":1679,"p":[805.5,464.4],"q":[284.9,287.7],"ll":[-7.57109,110.825203]},{"n":"Sorak Sorai Coffee Solo","s":"reviewed","r":3,"a":"Laweyan","ad":"Jl. Adi Sucipto No.96, Jajar, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57174","h":"07:00-23:59","g":"F3","d":3260,"p":[124.2,50.5],"q":[-134.5,32.9],"ll":[-7.550864,110.791613]},{"n":"Sekutu Rumah Karya","s":"known","r":5,"a":"Desa Tegalmulyo RT 002 / RW 004","ad":"Desa Tegalmulyo RT 002 / RW 004, Gajahan, Colomadu, Karanganyar, Jawa, Tengah, Surakarta, Jawa Tengah 57176","h":"07:00-23:00","g":"B1","d":7025,"p":[-525.5,-203.3],"q":[-534.4,-123.3],"ll":[-7.538463,110.759585]},{"n":"Sekutu Kopi","s":"known","r":5,"a":"Slamet Riyadi St No.116","ad":"Slamet Riyadi St No.116, Keprabon, Banjarsari, Surakarta City, Central Java 57151","h":"07:00-23:00","g":"J5","d":1547,"p":[754.7,451.4],"q":[253.7,279.7],"ll":[-7.570455,110.822698]},{"n":"Space NjRo Coffee","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Pemugaran Utama No.30a, Kadipiro, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57136","h":"05:00-23:00","g":"H1","d":1931,"p":[669.8,-182.8],"q":[201.4,-110.7],"ll":[-7.539461,110.818512]},{"n":"28 Coffee Widuran Solo","s":"known","r":0,"a":"Jebres","ad":"Jl. Sutan Syahrir No.42c, Kepatihan Wetan, Kec. Jebres, Kota Surakarta, Jawa Tengah 57129","h":"00:00-23:59","g":"K4","d":1497,"p":[921.1,349.5],"q":[356.1,217],"ll":[-7.565474,110.830902]},{"n":"Riwena coffee","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Wora Wari No.20Mangkubumen, Mangkubumen, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57141","h":"07:00-02:00","g":"H4","d":1218,"p":[559.3,333.9],"q":[133.4,207.4],"ll":[-7.564711,110.813064]},{"n":"Kiara Roastery (Kiara Coffee Goods)","s":"known","r":0,"a":"Grogol","ad":"Jl. Raya Djlopo No.GE-25, Dusun 2, Gedangan, Kec. Grogol, Kabupaten Sukoharjo, Jawa Tengah 57552","h":"09:00-23:00","g":"G8","d":6229,"p":[321.1,1247.6],"q":[-13.3,769.8],"ll":[-7.609362,110.80132]},{"n":"Letravail Coffee","s":"known","r":0,"a":"Slamet Riyadi St No.227","ad":"Slamet Riyadi St No.227, Kemlayan, Serengan, Surakarta City, Central Java 57151","h":"07:00-01:00","g":"H4","d":1424,"p":[656.1,426],"q":[193,264.1],"ll":[-7.569213,110.817838]},{"n":"28 Coffee Solo","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Gajahmada No.10, Timuran, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57131","h":"00:00-23:59","g":"H4","d":1361,"p":[648.8,412.2],"q":[188.5,255.6],"ll":[-7.568541,110.817477]},{"n":"DISTRIK COFFEE ROASTER SLAMET RIYADI","s":"known","r":4.5,"a":"Slamet Riyadi St","ad":"Slamet Riyadi St, Sriwedari, Laweyan, Surakarta City, Central Java 57141","h":"00:00-23:59","g":"H4","d":1415,"p":[629.1,416.7],"q":[176.4,258.4],"ll":[-7.568761,110.816507]},{"n":"Sourta Coffee","s":"known","r":0,"a":"Slamet Riyadi St No.335","ad":"Slamet Riyadi St No.335, Purwosari, Laweyan, Surakarta City, Central Java 57142","h":"00:00-23:59","g":"G4","d":2111,"p":[361.1,336.2],"q":[11.3,208.8],"ll":[-7.564825,110.803291]},{"n":"Lukku Coffee","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Adi Sumarmo No.254, Banyuanyar, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57137","h":"00:00-23:59","g":"G1","d":3034,"p":[332.6,-239.5],"q":[-6.2,-145.6],"ll":[-7.536692,110.801888]},{"n":"Kopi Nako Solo","s":"known","r":0,"a":"Laweyan","ad":"Jl. Kalitan No.1, Penumping, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57141","h":"00:00-23:59","g":"G4","d":1651,"p":[466.9,349.2],"q":[76.5,216.8],"ll":[-7.565462,110.808508]},{"n":"Layana Coffee","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Teratai II No.11, Mangkubumen, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57139","h":"00:00-23:59","g":"H4","d":1183,"p":[565.3,330.7],"q":[137.1,205.4],"ll":[-7.564559,110.813361]},{"n":"Di Beranda Coffee Specialty","s":"known","r":0,"a":"Ps. Kliwon","ad":"Jl. Keden No.9, Joyosuran, Kec. Ps. Kliwon, Kota Surakarta, Jawa Tengah 57116","h":"00:00-23:59","g":"J6","d":3302,"p":[855.7,760.5],"q":[315.8,470],"ll":[-7.58556,110.827673]},{"n":"The Hidden Swargi Coffee Roastery","s":"known","r":4.5,"a":"Banjarsari","ad":"Jl. Jageran No.1, RT.003/RW.004, Ketelan, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57132","h":"07:00-00:00","g":"J4","d":723,"p":[724.4,302.4],"q":[235,188],"ll":[-7.563175,110.821201]},{"n":"Blue Doors Solo","s":"known","r":0,"a":"Jebres","ad":"Jl. RE. Martadinata No.15, Sudiroprajan, Kec. Jebres, Kota Surakarta, Jawa Tengah 57121","h":"06:00-20:30","g":"K4","d":1969,"p":[955.4,438.5],"q":[377.2,271.8],"ll":[-7.569823,110.832592]},{"n":"Sociallatte coffee & eatery","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Mawar No.7b, RT.4/RW.5, Mangkubumen, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57139","h":"07:00-23:00","g":"G4","d":1464,"p":[472.1,292],"q":[79.7,181.6],"ll":[-7.562666,110.808763]},{"n":"Blackbird Coffeeshop Honggowongso","s":"known","r":0,"a":"Laweyan","ad":"Jl. Honggowongso No.16, Sriwedari, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57149","h":"08:00-23:30","g":"H4","d":1510,"p":[638.6,437.8],"q":[182.2,271.4],"ll":[-7.569792,110.816972]},{"n":"Southern Coffee House","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Yosodipuro No.78, Punggawan, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57131","h":"08:00-23:30","g":"H4","d":963,"p":[597.7,305.3],"q":[157,189.8],"ll":[-7.563315,110.814957]},{"n":"Kopi Mekar Solo","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Samratulangi No.35A, Manahan, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57144","h":"08:00-23:30","g":"F4","d":2586,"p":[241.4,240],"q":[-62.3,149.6],"ll":[-7.560124,110.797395]},{"n":"Ndalem Kartowikoro 1835 Coffee & Eatery","s":"known","r":0,"a":"Ps. Kliwon","ad":"Jl. Wijaya Kusuma No.9, Kauman, Kec. Ps. Kliwon, Kota Surakarta, Jawa Tengah 57122","h":"08:00-23:30","g":"J5","d":2014,"p":[803.7,529.2],"q":[283.8,327.6],"ll":[-7.574256,110.82511]},{"n":"Natahati Coffee & Eatery","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Punggawan No.6, Punggawan, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57132","h":"08:00-23:30","g":"H4","d":747,"p":[664.7,298.9],"q":[198.3,185.8],"ll":[-7.563003,110.818262]},{"n":"Red Shoes Coffee Roaster","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Manyar IV No.3, Manahan, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57139","h":"08:00-23:30","g":"G3","d":1653,"p":[410.6,209.5],"q":[41.8,130.8],"ll":[-7.558635,110.805735]},{"n":"Prasetyo Home Brew","s":"known","r":0,"a":"Ps. Kliwon","ad":"CR8M+3C6, Gg. Serayu 3, Semanggi, Kec. Ps. Kliwon, Kota Surakarta, Jawa Tengah 57191","h":"08:00-23:30","g":"K6","d":3440,"p":[975.3,745.8],"q":[389.4,461],"ll":[-7.584843,110.83357]},{"n":"Rejo Coffe Surakarta","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Dr. Setiabudi No.63B, Gilingan, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57134","h":"08:00-23:30","g":"H3","d":531,"p":[640.3,103.8],"q":[183.2,65.8],"ll":[-7.55347,110.817057]},{"n":"Butler Coffee Boutique","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Ronggowarsito No.171, Timuran, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57131","h":"08:00-23:30","g":"H4","d":1132,"p":[609.4,351.2],"q":[164.2,218.1],"ll":[-7.56556,110.815536]},{"n":"Blu Coffee","s":"known","r":0,"a":"CQPX+GWJ","ad":"CQPX+GWJ, Slamet Riyadi St, Purwosari, Laweyan, Surakarta City, Central Java 57142","h":"08:00-23:30","g":"F4","d":2422,"p":[289.8,312.4],"q":[-32.5,194.2],"ll":[-7.563663,110.799779]},{"n":"White Desk Coffee Roastery","s":"known","r":0,"a":"Laweyan","ad":"Jl. Kenanga No.9, Purwosari, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57142","h":"08:00-23:30","g":"G4","d":1718,"p":[416.4,281.7],"q":[45.4,175.3],"ll":[-7.562162,110.80602]},{"n":"Nauka Coffee & Space","s":"known","r":0,"a":"Laweyan","ad":"Jl. Perintis Kemerdekaan No.8, Purwosari, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57147","h":"08:00-23:30","g":"F4","d":2546,"p":[272,330.4],"q":[-43.5,205.2],"ll":[-7.564541,110.798901]},{"n":"TheNord Coffee","s":"known","r":0,"a":"Parking area","ad":"Parking area, Benteng, Vastenburg, Kota Surakarta, Jawa Tengah 57133","h":"08:00-23:30","g":"K5","d":2013,"p":[911.8,482],"q":[350.3,298.6],"ll":[-7.571952,110.83044]},{"n":"Slari Coffee","s":"known","r":0,"a":"Slamet Riyadi St No.111","ad":"Slamet Riyadi St No.111, Kemlayan, Serengan, Surakarta City, Central Java 57151","h":"08:00-23:30","g":"J5","d":1635,"p":[779.6,463.2],"q":[269,287],"ll":[-7.571032,110.823923]},{"n":"Cold 'N Brew - Solo Balapan","s":"known","r":3,"a":"Banjarsari","ad":"Jl. Hasanudin No.129, Punggawan, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57132","h":"08:00-23:30","g":"J3","d":197,"p":[702.1,204.8],"q":[221.3,127.9],"ll":[-7.558406,110.820104]},{"n":"Nakama Coffee & Eatery | Solo","s":"known","r":3.5,"a":"Banjarsari","ad":"Jl. R. M. Said No.134, Punggawan, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57132","h":"00:00-23:59","g":"H4","d":567,"p":[652.7,255.6],"q":[190.9,159.2],"ll":[-7.560888,110.817668]},{"n":"Green House Coffee & Eatery","s":"known","r":0,"a":"Laweyan","ad":"Jl. Siwalan, Kerten, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57144","h":"00:00-23:59","g":"F3","d":3279,"p":[108.7,167.7],"q":[-144,105.1],"ll":[-7.55659,110.79085]},{"n":"ODDS Coffee Company","s":"known","r":1,"a":"Slamet Riyadi St No.241","ad":"Slamet Riyadi St No.241, Kemlayan, Serengan, Surakarta City, Central Java 57151","h":"00:00-23:59","g":"H4","d":1433,"p":[646.4,425.4],"q":[187,263.7],"ll":[-7.569183,110.817358]},{"n":"Arzi Coffee","s":"known","r":0,"a":"CR7F+CFQ","ad":"CR7F+CFQ, Danukusuman, Serengan, Surakarta City, Central Java 57156","h":"","g":"J6","d":3321,"p":[775.9,777.8],"q":[266.7,480.6],"ll":[-7.586404,110.823741]},{"n":"Nalla Coffee","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Gajahmada No.133, RT.05/RW.01, Punggawan, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57132","h":"08:00-22:00","g":"H3","d":287,"p":[699.3,221.2],"q":[219.6,138],"ll":[-7.559204,110.819967]},{"n":"Koffiera Coffee & Moment","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Derkuku No.8, Manahan, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57139","h":"16:00-23:00","g":"G3","d":1194,"p":[495.1,204.3],"q":[93.8,127.6],"ll":[-7.558381,110.809897]},{"n":"D'GRAMM COFFEE SURAKARTA x AYAM BETUTU BLI YAN","s":"known","r":0,"a":"Banjarsari","ad":"Jl. R. M. Said No.151, Punggawan, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57132","h":"07:00-00:00","g":"H3","d":621,"p":[615.4,230.7],"q":[167.9,143.9],"ll":[-7.559671,110.815828]},{"n":"Kopi Aloo Solo","s":"known","r":0,"a":"Laweyan","ad":"Jl. A. Yani No.379, Kerten, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57143","h":"08:00-22:00","g":"F3","d":2715,"p":[212.8,186.1],"q":[-79.9,116.4],"ll":[-7.557492,110.795983]},{"n":"Antarakata Coffee, Solo","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Moh. Saleh Wedisastro No.2A, Setabelan, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57139","h":"08:00-23:00","g":"J4","d":1090,"p":[872.1,291.1],"q":[325.9,181.1],"ll":[-7.562622,110.828484]},{"n":"Cold 'N Brew - Fajar Indah","s":"known","r":2.5,"a":"Laweyan","ad":"Jl. Adi Sucipto No.148, Jajar, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57144","h":"00:00-23:59","g":"E2","d":3738,"p":[40.1,23.2],"q":[-186.2,16.1],"ll":[-7.549529,110.787472]},{"n":"Rustic Coffee & Roastery","s":"known","r":0,"a":"Laweyan","ad":"Jl. Basuki Rahmat No.78, Jajar, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57144","h":"14:00-22:00","g":"E3","d":3708,"p":[30.1,150.1],"q":[-192.4,94.2],"ll":[-7.555731,110.786977]},{"n":"SL-13 Coffee","s":"known","r":0,"a":"Laweyan","ad":"Jl. Perintis Kemerdekaan No.13, Sondakan, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57147","h":"07:00-23:00","g":"F4","d":2556,"p":[274.2,341.4],"q":[-42.1,212],"ll":[-7.56508,110.799012]},{"n":"Zarcoon","s":"known","r":3,"a":"Slamet Riyadi St No.164","ad":"Slamet Riyadi St No.164, Timuran, Banjarsari, Surakarta City, Central Java 57131","h":"07:00-23:00","g":"J4","d":1450,"p":[719,436.7],"q":[231.7,270.6],"ll":[-7.569735,110.820938]},{"n":"Pagi Sore Coffee","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Gajahmada No.72, Timuran, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57138","h":"07:00-00:00","g":"H4","d":1013,"p":[665.6,350.5],"q":[198.8,217.6],"ll":[-7.565523,110.818302]},{"n":"Kalagyan Coffee","s":"known","r":0,"a":"Slamet Riyadi St No.11","ad":"Slamet Riyadi St No.11, Kauman, Pasar Kliwon, Surakarta City, Central Java 57122","h":"09:00-23:00","g":"J5","d":1892,"p":[858.2,486],"q":[317.4,301],"ll":[-7.572145,110.827801]},{"n":"Hip Coffee Artisans","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Demak Bintoro Utama No.9, Nusukan, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57135","h":"10:00-16:00","g":"H2","d":1041,"p":[696.4,-21],"q":[217.7,-11.1],"ll":[-7.547368,110.81982]},{"n":"MAJAPAHIT COFEE & EATERY","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Majapahit IV No.8a, Nusukan, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57135","h":"12:00-21:00","g":"J2","d":878,"p":[747.9,12.4],"q":[249.4,9.5],"ll":[-7.549002,110.82236]},{"n":"Cold 'n Brew Veteran","s":"known","r":0,"a":"Ps. Kliwon","ad":"Jl. Veteran No.136, Gajahan, Kec. Ps. Kliwon, Kota Surakarta, Jawa Tengah 57156","h":"07:00-01:00","g":"J6","d":2827,"p":[718.5,690.1],"q":[231.4,426.7],"ll":[-7.582122,110.820912]},{"n":"Hanz Coffee & Eatery","s":"known","r":0,"a":"Jebres","ad":"Gg. Kebangkitan 1 No.RT 08/12, Mojosongo, Kec. Jebres, Kota Surakarta, Jawa Tengah 57127","h":"07:00-01:00","g":"K2","d":2329,"p":[974.9,-168.8],"q":[389.2,-102],"ll":[-7.540149,110.83355]},{"n":"Pinara Coffee Roaster","s":"known","r":0,"a":"Laweyan","ad":"Jl. Kebangkitan Nasional No.85, Penumping, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57141","h":"07:00-01:00","g":"G4","d":2027,"p":[441.3,426.3],"q":[60.7,264.3],"ll":[-7.569231,110.807247]},{"n":"Meurdue Chocolate & Coffee","s":"known","r":0,"a":"Jebres","ad":"Pasar Gede Gedung Barat, Jl. Jend. Urip Sumoharjo Lt.2, Kepatihan Wetan, Kec. Jebres, Kota Surakarta, Jawa Tengah 57129","h":"07:00-22:00","g":"K4","d":1784,"p":[930.9,414.7],"q":[362.1,257.1],"ll":[-7.568663,110.831383]},{"n":"Cold 'N Brew - Wahidin","s":"known","r":0,"a":"Laweyan","ad":"Jl. Dr. Wahidin No.15 A, Penumping, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57142","h":"07:00-01:00","g":"G4","d":2085,"p":[403.8,398.4],"q":[37.7,247.1],"ll":[-7.567864,110.805401]},{"n":"Pixel Coffee & Kitchen","s":"known","r":0,"a":"Laweyan","ad":"Jl. Satrio Wibowo No.35, Purwosari, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57142","h":"08:00-23:00","g":"G4","d":2256,"p":[336.3,346.2],"q":[-3.9,215],"ll":[-7.565315,110.80207]},{"n":"Eighteen Grounds Coffee","s":"known","r":0,"a":"Laweyan","ad":"Jl. Honggowongso No.78G, Panularan, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57149","h":"08:00-23:00","g":"H5","d":1955,"p":[621.7,518.2],"q":[171.8,320.8],"ll":[-7.57372,110.81614]},{"n":"OXYCO Coffee Shop","s":"known","r":0,"a":"Grogol","ad":"Soba Bisnis Square Ruko Narendra JD-23 Solo Baru, Dusun I, Madegondo, Kec. Grogol, Kabupaten Sukoharjo, Jawa Tengah 57552","h":"08:00-23:00","g":"H7","d":4787,"p":[563.3,1038.2],"q":[135.8,640.9],"ll":[-7.599129,110.813261]},{"n":"Unknown Coffee HQ","s":"known","r":0,"a":"Colomadu","ad":"Jl. Raya Baturan Jl. Melati 2, Klemburan, Baturan, Kec. Colomadu, Kabupaten Karanganyar, Jawa Tengah 57171","h":"08:00-23:00","g":"E2","d":3652,"p":[69.5,-27.1],"q":[-168.1,-14.8],"ll":[-7.547072,110.788921]},{"n":"Kopinangkau solo","s":"known","r":0,"a":"Serengan","ad":"Jl. Tejosari No.18, RT.05/RW.04, Danukusuman, Kec. Serengan, Kota Surakarta, Jawa Tengah 57155","h":"09:00-20:00","g":"J6","d":3157,"p":[777.5,747.3],"q":[267.7,461.9],"ll":[-7.584913,110.823818]},{"n":"Wahidin Coffee","s":"known","r":0,"a":"Laweyan","ad":"Jl. Dr. Wahidin No.3 A, Penumping, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57148","h":"08:00-23:00","g":"G4","d":1918,"p":[416.3,362.4],"q":[45.4,224.9],"ll":[-7.566104,110.806016]},{"n":"Tomuan Coffee & Eatery","s":"known","r":3,"a":"Banjarsari","ad":"CRW5+2M6, Jl. Menteri Supeno No.7B, Manahan, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57139","h":"08:00-23:00","g":"G3","d":1288,"p":[477.8,134.5],"q":[83.2,84.6],"ll":[-7.554967,110.809048]},{"n":"Harso Coffee","s":"known","r":4,"a":"Laweyan","ad":"Jl. Perintis Kemerdekaan No.15, Purwosari, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57147","h":"07:00-23:00","g":"F4","d":2574,"p":[271.6,343.9],"q":[-43.8,213.5],"ll":[-7.565201,110.79888]},{"n":"Thamrin Coffee","s":"known","r":0,"a":"Laweyan","ad":"Jl. Moh. Husni Thamrin No.10, Kerten, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57143","h":"07:00-23:00","g":"F3","d":2381,"p":[274.1,160],"q":[-42.2,100.4],"ll":[-7.556216,110.799006]},{"n":"Threea Coffee and Eatery","s":"known","r":0,"a":"Jln. Pinang no. 45A Turi Baru","ad":"Jln. Pinang no. 45A Turi Baru, RT.02/RW.10, Jati, Cemani, Grogol, Sukoharjo Regency, Central Java 57552","h":"09:00-15:00","g":"G6","d":3180,"p":[378.6,650.8],"q":[22.1,402.5],"ll":[-7.580198,110.804154]},{"n":"Koeslan Coffee Company","s":"known","r":3,"a":"Laweyan","ad":"No.476 B, Jl. Dr. Rajiman, Bumi, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57149","h":"07:00-22:00","g":"F5","d":2773,"p":[287.5,452.8],"q":[-34,280.6],"ll":[-7.570521,110.799663]},{"n":"Stieti Coffee","s":"known","r":0,"a":"Laweyan","ad":"Jl. Adi Sucipto No.87c, Jajar, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57144","h":"08:00-23:00","g":"F3","d":3376,"p":[101.5,55.2],"q":[-148.4,35.8],"ll":[-7.551094,110.790496]},{"n":"About This by Suaka Coffee","s":"known","r":3.5,"a":"Laweyan","ad":"Jl. Siwalan No.126, Kerten, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57143","h":"09:00-00:00","g":"F3","d":3146,"p":[137.9,96.1],"q":[-126,61],"ll":[-7.553091,110.792291]},{"n":"Ratulangi Coffee","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Samratulangi No.8, Manahan, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57139","h":"16:00-23:00","g":"G3","d":1574,"p":[426.7,218.4],"q":[51.7,136.3],"ll":[-7.55907,110.806527]},{"n":"C&L Coffee","s":"known","r":0,"a":"Laweyan","ad":"Jl. Dr. Rajiman No.525, Laweyan, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57148","h":"10:00-22:00","g":"F4","d":3064,"p":[214.2,434.4],"q":[-79.1,269.3],"ll":[-7.569625,110.796049]},{"n":"Puncak Kopi 4000Mdpl","s":"known","r":0,"a":"Serengan","ad":"Jl. Dr. Rajiman, Kemlayan, Kec. Serengan, Kota Surakarta, Jawa Tengah 57152","h":"20:00-01:00","g":"J5","d":1885,"p":[717.5,516.8],"q":[230.7,320],"ll":[-7.57365,110.820863]},{"n":"POINT COFFEE","s":"known","r":0,"a":"CRQ9+3XM","ad":"CRQ9+3XM, Ketelan, Banjarsari, Surakarta City, Central Java 57132","h":"00:00-23:59","g":"H4","d":1125,"p":[645.2,365.9],"q":[186.2,227.1],"ll":[-7.566277,110.817296]},{"n":"UD Djaya Coffee - Slamet Riyadi","s":"known","r":0,"a":"Slamet Riyadi St No.103","ad":"Slamet Riyadi St No.103, RT.002/RW.03, Kauman, Pasar Kliwon, Surakarta City, Central Java 57118","h":"07:00-00:00","g":"J5","d":1666,"p":[790.7,466.4],"q":[275.8,288.9],"ll":[-7.571187,110.824469]},{"n":"B-coffee","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Monumen 45 No.4, Setabelan, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57133","h":"13:00-23:00","g":"J3","d":710,"p":[828.6,229.2],"q":[299.1,143],"ll":[-7.559598,110.826338]},{"n":"Hella Coffee","s":"known","r":0,"a":"Laweyan","ad":"Jl. Dr. Rajiman No.327, Panularan, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57149","h":"10:00-22:00","g":"H5","d":1971,"p":[523.3,479.5],"q":[111.2,297],"ll":[-7.571828,110.811288]},{"n":"BLOOMS Coffee & Eatery","s":"known","r":0,"a":"Grogol","ad":"Ruko Saraswati Jln. Ir. Soekarno No : 12 Dusun I, Madegondo Kec : Grogol Kab : Sukoharjo Solo Baru, Dusun I, Madegondo, Kec. Grogol, Kabupaten Sukoharjo, Jawa Tengah 57552","h":"10:00-22:00","g":"H7","d":4569,"p":[595.1,1002.6],"q":[155.4,619],"ll":[-7.597389,110.81483]},{"n":"Trah Tumerah coffee","s":"known","r":0,"a":"Banjarsari","ad":"Jl. DI Panjaitan No.i 5a, Gilingan, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57134","h":"00:00-23:59","g":"J3","d":963,"p":[888.7,185.4],"q":[336.2,116],"ll":[-7.557456,110.829304]},{"n":"Geger Geni Coffee & Roastery","s":"known","r":0,"a":"Laweyan","ad":"Jl. Sidoluhur No.5/7, Bumi, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57169","h":"00:00-23:59","g":"F5","d":2950,"p":[251.5,457],"q":[-56.1,283.2],"ll":[-7.570729,110.797888]},{"n":"Cendhono Coffee","s":"known","r":0,"a":"Gedung Barat","ad":"Gedung Barat, Jl. Jend. Urip Sumoharjo Lantai 2, Kepatihan Wetan, Jebres, Surakarta City, Central Java 57129","h":"09:00-00:00","g":"K4","d":1812,"p":[929.2,423.1],"q":[361,262.3],"ll":[-7.569073,110.831297]},{"n":"Cafe at eden coffee & Kitchen","s":"known","r":0,"a":"Dusun III","ad":"Dusun III, Madegondo, Grogol, Sukoharjo Regency, Central Java 57552","h":"07:00-22:00","g":"H8","d":5327,"p":[624.4,1146.5],"q":[173.5,707.6],"ll":[-7.604419,110.816276]},{"n":"Communion Coffee Brewer","s":"known","r":0,"a":"Ps. Kliwon","ad":"Jl. Brigjen Slamet Riyadi No.61, Kauman, Kec. Ps. Kliwon, Kota Surakarta, Jawa Tengah 57122","h":"07:00-00:00","g":"J5","d":1766,"p":[823.3,475.3],"q":[295.9,294.4],"ll":[-7.571623,110.82608]},{"n":"SALA Coffee & Eatery","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Sutan Syahrir No.16, Ketelan, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57132","h":"07:00-00:00","g":"J4","d":749,"p":[745.8,303.5],"q":[248.1,188.7],"ll":[-7.563229,110.822256]},{"n":"Cubical Coffee and Space","s":"known","r":0,"a":"Klodran Indah","ad":"Klodran Indah, Klodran, Colomadu, Karanganyar Regency, Central Java 57172","h":"08:00-22:00","g":"F1","d":3970,"p":[133,-275.4],"q":[-129,-167.7],"ll":[-7.534937,110.792049]},{"n":"Goat Father Coffee House","s":"known","r":0,"a":"Ps. Kliwon","ad":"Jl. Citarum No.7, Joyosuran, Kec. Ps. Kliwon, Kota Surakarta, Jawa Tengah 57116","h":"07:00-00:00","g":"J6","d":3169,"p":[825.1,742.2],"q":[297,458.7],"ll":[-7.584664,110.826166]},{"n":"Copy Coffee House","s":"known","r":0,"a":"Serengan","ad":"Jl. Dr. Rajiman No.67, Kemlayan, Kec. Serengan, Kota Surakarta, Jawa Tengah 57151","h":"10:00-22:00","g":"H5","d":1857,"p":[694.1,511.2],"q":[216.4,316.5],"ll":[-7.573377,110.819711]},{"n":"Loma Coffee and Kitchen","s":"known","r":0,"a":"Jebres","ad":"Jl. Jaya Wijaya No.137, Mojosongo, Kec. Jebres, Kota Surakarta, Jawa Tengah 57127","h":"06:00-00:00","g":"K1","d":2997,"p":[1060,-258],"q":[441.6,-157],"ll":[-7.535786,110.837745]},{"n":"LIGHTSPACE COFFEE & EATERY","s":"known","r":0,"a":"Kartasura","ad":"Jl. Al Ikhlas, Mendungan, Pabelan, Kec. Kartasura, Kabupaten Sukoharjo, Jawa Tengah 57145","h":"09:00-23:30","g":"D3","d":4802,"p":[-171,138.1],"q":[-316.2,86.9],"ll":[-7.555145,110.777064]},{"n":"Anak Panah Kopi Solo Keprabon","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Ronggowarsito No.57, Keprabon, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57131","h":"09:00-23:30","g":"J4","d":1507,"p":[815.6,427.2],"q":[291.2,264.8],"ll":[-7.569275,110.825701]},{"n":"Dahayu Coffee & Space","s":"known","r":0,"a":"Laweyan","ad":"Jl. Honggowongso No.99, Sriwedari, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57149","h":"09:00-23:30","g":"H5","d":1888,"p":[626.6,506.6],"q":[174.8,313.7],"ll":[-7.573153,110.816382]},{"n":"Gemati Coffee and Eatery","s":"known","r":0,"a":"Laweyan","ad":"Jl. Matoa Raya I, Karangasem, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57145","h":"09:00-23:30","g":"D3","d":5435,"p":[-280.7,49.3],"q":[-383.7,32.2],"ll":[-7.550806,110.771654]},{"n":"Kopi Titik Koma Solo Baru","s":"known","r":0,"a":"Grogol","ad":"CR27+4J3, Jl. Ir. Soekarno No.25, Dusun I, Madegondo, Kec. Grogol, Kabupaten Sukoharjo, Jawa Tengah 57552","h":"09:00-23:30","g":"H7","d":4840,"p":[580,1050.7],"q":[146.1,648.7],"ll":[-7.599742,110.814083]},{"n":"Solo Kopi","s":"known","r":0,"a":"Colomadu","ad":"Jl. Adi Sucipto No.31A, Kenaiban, Blulukan, Kec. Colomadu, Kabupaten Karanganyar, Jawa Tengah 57174","h":"09:00-23:30","g":"D2","d":5209,"p":[-218.5,-59.7],"q":[-345.4,-34.9],"ll":[-7.545478,110.77472]},{"n":"BlackWhite House Coffee & Space","s":"known","r":0,"a":"Colomadu","ad":"FQ8G+3X9, Sawah, Tohudan, Kec. Colomadu, Kabupaten Karanganyar, Jawa Tengah 57173","h":"09:00-23:30","g":"D1","d":5364,"p":[-168.9,-275.4],"q":[-314.9,-167.7],"ll":[-7.534938,110.777168]},{"n":"Value Coffee","s":"known","r":0,"a":"Ps. Kliwon","ad":"Jl. Ronggowarsito No.34, Kp. Baru, Kec. Ps. Kliwon, Kota Surakarta, Jawa Tengah 57133","h":"09:00-23:30","g":"J4","d":1625,"p":[848.4,436.2],"q":[311.3,270.4],"ll":[-7.569712,110.827315]},{"n":"Loske Coffee Service","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Teuku Umar No.48, Keprabon, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57131","h":"09:00-23:30","g":"J4","d":1388,"p":[776.5,417.1],"q":[267,258.6],"ll":[-7.568778,110.82377]},{"n":"Cuphi Street Coffee Bar","s":"known","r":0,"a":"CRJ7+VPH","ad":"CRJ7+VPH, Slamet Riyadi St, Sriwedari, Laweyan, Surakarta City, Central Java 57141","h":"09:00-23:30","g":"D2","d":4803,"p":[-146.6,-39.4],"q":[-301.2,-22.4],"ll":[-7.546471,110.778264]},{"n":"Srivijava Coffee Roastery","s":"known","r":0,"a":"Colomadu","ad":"Jl. Adi Sumarmo Jl. Klegen No.77b, Banukan, Malangjiwan, Kec. Colomadu, Kabupaten Karanganyar, Jawa Tengah 57177","h":"10:15-17:30","g":"A1","d":8476,"p":[-807.6,-181.2],"q":[-708.1,-109.7],"ll":[-7.53954,110.74568]},{"n":"BENTENG GADING Cofeeshop","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Tarumanegara I, RT.04/RW.08, Banyuanyar, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57137","h":"11:00-21:00","g":"G1","d":3193,"p":[339.7,-284.5],"q":[-1.8,-173.3],"ll":[-7.534492,110.80224]},{"n":"House of Cendana","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Semeru Jl. Gremet No.1, RT.001/RW.07, Manahan, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57139","h":"11:00-21:00","g":"G3","d":1698,"p":[402.7,213],"q":[37,133],"ll":[-7.558804,110.805344]},{"n":"Kopi Parang","s":"known","r":0,"a":"Laweyan","ad":"Jl. Parang Klitik I No.10, Sondakan, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57147","h":"07:00-23:00","g":"F4","d":2883,"p":[235.6,402.9],"q":[-65.9,249.8],"ll":[-7.568083,110.797105]},{"n":"Head Room Coffee Slamet Riyadi","s":"known","r":0,"a":"Slamet Riyadi St","ad":"Slamet Riyadi St, Timuran, Banjarsari, Surakarta City, Central Java 57131","h":"07:00-23:00","g":"H4","d":1367,"p":[657,415.4],"q":[193.5,257.5],"ll":[-7.568694,110.817882]},{"n":"Margi Coffee Slamet Riyadi","s":"known","r":0,"a":"CRJ8+9QG","ad":"CRJ8+9QG, Sriwedari, Laweyan, Surakarta City, Central Java 57141","h":"07:00-23:00","g":"H4","d":1427,"p":[637.5,421.6],"q":[181.5,261.4],"ll":[-7.569001,110.81692]},{"n":"Madbottle Coffee","s":"known","r":0,"a":"Jebres","ad":"Jl. RE. Martadinata No.83, Sudiroprajan, Kec. Jebres, Kota Surakarta, Jawa Tengah 57121","h":"07:00-23:00","g":"K4","d":2150,"p":[1000.4,440.9],"q":[404.9,273.3],"ll":[-7.569942,110.834808]},{"n":"SEJALAN KOPI","s":"known","r":0,"a":"Slamet Riyadi St No.39","ad":"Slamet Riyadi St No.39, Kampung Baru, Pasar Kliwon, Surakarta City, Central Java 57122","h":"07:00-23:00","g":"J5","d":1822,"p":[839.5,480],"q":[305.9,297.3],"ll":[-7.571854,110.826877]},{"n":"Floith Coffee","s":"known","r":0,"a":"Serengan","ad":"Jl. Padmonegoro No.38, Danukusuman, Kec. Serengan, Kota Surakarta, Jawa Tengah 57552","h":"07:00-23:00","g":"J6","d":3124,"p":[752.7,743.4],"q":[252.4,459.5],"ll":[-7.584725,110.822597]},{"n":"Manaka Coffee And Eatery","s":"known","r":0,"a":"Laweyan","ad":"Jl. Matoa Raya I No.17, Karangasem, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57145","h":"07:00-23:00","g":"D3","d":5322,"p":[-260.3,53.2],"q":[-371.2,34.6],"ll":[-7.550998,110.772659]},{"n":"PINNKO Coffee & Space","s":"known","r":0,"a":"CQXC+RF3","ad":"CQXC+RF3, Karangasem, Laweyan, Surakarta City, Central Java 57145","h":"07:00-23:00","g":"D3","d":5491,"p":[-290.3,42.8],"q":[-389.6,28.2],"ll":[-7.550487,110.77118]},{"n":"Kopine Tjap Nyah Lemu","s":"known","r":0,"a":"Laweyan","ad":"Jl. Dr. Sutomo No.20, Penumping, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57141","h":"07:00-23:00","g":"H4","d":1451,"p":[499.3,331],"q":[96.4,205.6],"ll":[-7.564573,110.810105]},{"n":"Otsmani Coffee","s":"known","r":0,"a":"Arafah Square","ad":"Arafah Square, Gg. Lurik Kampung Santri No.17 Lt.4, Ngruki, Cemani, Grogol, Sukoharjo Regency, Central Java 57552","h":"07:00-23:00","g":"G6","d":3279,"p":[458.2,717.4],"q":[71.1,443.5],"ll":[-7.583455,110.808081]},{"n":"Kopi Omah Lojiwetan","s":"known","r":0,"a":"Jalan S.Sebakung No.18","ad":"Jalan S.Sebakung No.18, Kedung Lumbu, Pasar Kliwon, Surakarta City, Central Java 57199","h":"07:00-23:00","g":"K5","d":2375,"p":[997.8,500.7],"q":[403.3,310.1],"ll":[-7.572864,110.834679]},{"n":"Sedayu Kopi Solo","s":"known","r":0,"a":"Pasar Kliwon","ad":"Pasar Kliwon, Surakarta City, Central Java 57118","h":"07:00-23:00","g":"K6","d":3014,"p":[903.1,690.6],"q":[345,427],"ll":[-7.582146,110.830014]},{"n":"The Gade Coffee & Gold Solo","s":"known","r":0,"a":"Laweyan","ad":"Komplek Pegadaian Purwotomo, Jl. Slamet Riyadi No.357, Purwosari, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57141","h":"07:00-23:00","g":"G4","d":2356,"p":[306.4,322.6],"q":[-22.3,200.4],"ll":[-7.564162,110.800599]},{"n":"Aming Coffee Solo Square","s":"known","r":0,"a":"Slamet Riyadi St No.451-455","ad":"Slamet Riyadi St No.451-455, Pajang, Laweyan, Surakarta City, Central Java 57146","h":"07:00-23:00","g":"E4","d":3632,"p":[50,260.9],"q":[-180.1,162.5],"ll":[-7.561147,110.787959]},{"n":"Atmojo Coffee,Solo","s":"known","r":0,"a":"Serengan","ad":"Jl. Kapten Pattimura No.27, Danukusuman, Kec. Serengan, Kota Surakarta, Jawa Tengah 57156","h":"07:00-23:00","g":"J6","d":3602,"p":[720.6,832.8],"q":[232.6,514.5],"ll":[-7.589092,110.821015]},{"n":"Joxs Coffee","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Imam Bonjol, Keprabon, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57313","h":"07:00-23:00","g":"J4","d":1509,"p":[825.9,423.3],"q":[297.5,262.4],"ll":[-7.569081,110.826207]},{"n":"Kedai Kopi Pak Agus","s":"known","r":0,"a":"Jebres","ad":"Jl. Suryopranoto No.19, Kepatihan Wetan, Kec. Jebres, Kota Surakarta, Jawa Tengah 57129","h":"07:00-23:00","g":"K4","d":1804,"p":[931.9,418.8],"q":[362.7,259.7],"ll":[-7.568864,110.831432]},{"n":"Kelana Coffee and Eatery","s":"known","r":4,"a":"Banjarsari","ad":"Jl. Menteri Supeno No.11, Manahan, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57139","h":"07:00-23:00","g":"G3","d":1473,"p":[444.3,128.6],"q":[62.6,81],"ll":[-7.554683,110.807395]},{"n":"AM-PM Cafe","s":"known","r":0,"a":"Laweyan","ad":"Jl. Adi Sucipto No.73, Kerten, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57144","h":"00:00-23:59","g":"F3","d":3198,"p":[132.8,66.3],"q":[-129.2,42.6],"ll":[-7.551634,110.79204]},{"n":"DNA SPOT CAFE","s":"known","r":0,"a":"Banjarsari","ad":"FR9H+5HQ, Jl. Jaya Wijaya, Kadipiro, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57136","h":"10:00-23:00","g":"J1","d":2892,"p":[882.2,-334.4],"q":[332.1,-204],"ll":[-7.532056,110.828981]},{"n":"Kopi Lawe","s":"known","r":0,"a":"Laweyan","ad":"Jl. Perintis Kemerdekaan, Purwosari, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57147","h":"07:00-00:00","g":"F4","d":2705,"p":[262.6,383.9],"q":[-49.3,238.1],"ll":[-7.567155,110.798438]},{"n":"Coffca- Coffee & Co Working Space","s":"known","r":0,"a":"Kartasura","ad":"Jl. Tanuragan Raya No.4, Nilasari, Gonilan, Kec. Kartasura, Kabupaten Sukoharjo, Jawa Tengah 57169","h":"09:00-22:00","g":"C3","d":6083,"p":[-407.1,150.2],"q":[-461.5,94.3],"ll":[-7.555736,110.765424]},{"n":"Kayu Manis Coffee & Steak","s":"known","r":0,"a":"Slamet Riyadi St No.158","ad":"Slamet Riyadi St No.158, Timuran, Banjarsari, Surakarta City, Central Java 57151","h":"08:00-23:00","g":"J4","d":1435,"p":[721.5,433.8],"q":[233.2,268.9],"ll":[-7.569594,110.821058]},{"n":"Podjok Coffee Store","s":"known","r":0,"a":"Jebres","ad":"Jl. Utara Pasar Besar No.20, Sudiroprajan, Kec. Jebres, Kota Surakarta, Jawa Tengah 57129","h":"08:00-15:00","g":"K4","d":1822,"p":[938.9,417.1],"q":[367,258.6],"ll":[-7.568778,110.831775]},{"n":"Seperdua Kopi Kratonan","s":"known","r":0,"a":"Serengan","ad":"Jl. Yos Sudarso No.233, Kratonan, Kec. Serengan, Kota Surakarta, Jawa Tengah 57153","h":"07:00-23:00","g":"J6","d":2653,"p":[724.7,658.1],"q":[235.2,406.9],"ll":[-7.580555,110.821219]},{"n":"Ekuive Cafe & Lounge","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Nusa Indah IV No.13, Punggawan, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57132","h":"10:00-22:00","g":"H3","d":389,"p":[677.5,232.6],"q":[206.1,145],"ll":[-7.559761,110.818889]},{"n":"Janaco Resto & Coffee","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Adi Sumarmo, Banyuanyar, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57137","h":"10:00-22:00","g":"G1","d":2959,"p":[347,-234.1],"q":[2.7,-142.3],"ll":[-7.536954,110.802599]},{"n":"Son Rise Coffee","s":"known","r":0,"a":"Laweyan","ad":"Jl. Moh. Husni Thamrin No.10, Kerten, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57143","h":"10:00-22:00","g":"F3","d":2358,"p":[278.6,153.4],"q":[-39.4,96.3],"ll":[-7.555894,110.799227]},{"n":"Ganesha Coffee Bar","s":"known","r":0,"a":"Colomadu","ad":"Jl. Adi Sucipto No.56B, Gatak, Gajahan, Kec. Colomadu, Kabupaten Karanganyar, Jawa Tengah 57174","h":"10:00-22:00","g":"C1","d":6989,"p":[-516.6,-210],"q":[-528.9,-127.4],"ll":[-7.538135,110.760025]},{"n":"Tanuki Coffee & Eatery","s":"known","r":0,"a":"Jebres","ad":"Jl. Ir. Juanda No.107, Purwodiningratan, Kec. Jebres, Kota Surakarta, Jawa Tengah 57128","h":"10:00-22:00","g":"K4","d":2235,"p":[1056.1,395.6],"q":[439.2,245.4],"ll":[-7.567727,110.837553]},{"n":"Bhara Coffee 1991 Banaran","s":"known","r":0,"a":"Colomadu","ad":"Kompleks EX PG Colomadu, Jl. Adi Sucipto, Colomadu, Malangjiwan, Kec. Colomadu, Kabupaten Karanganyar, Jawa Tengah 57177","h":"10:00-23:00","g":"A1","d":8391,"p":[-752.6,-319],"q":[-674.2,-194.5],"ll":[-7.532804,110.748392]},{"n":"Marsi Coffee and Eatery","s":"known","r":0,"a":"Laweyan","ad":"Jl. Setiyaki No.2A, Sriwedari, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57141","h":"10:00-23:00","g":"H5","d":1771,"p":[564.9,460.7],"q":[136.8,285.4],"ll":[-7.570908,110.813338]},{"n":"Linggih Food & Coffee Bar","s":"known","r":0,"a":"Laweyan","ad":"Jl. Satrio Wibowo No.32, Purwosari, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57142","h":"10:00-23:00","g":"G4","d":2206,"p":[344.5,342.1],"q":[1.2,212.5],"ll":[-7.565115,110.802476]},{"n":"R3 Coffee House","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Tegal Asri, RT.01/RW.17, Kadipiro, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57136","h":"10:00-23:00","g":"J1","d":3027,"p":[860.3,-367],"q":[318.6,-224.1],"ll":[-7.530461,110.827901]},{"n":"Ve Coffee","s":"known","r":0,"a":"Banjarsari","ad":"Jl Dr. Cipto Mangunkusumo No.42, Mangkubumen, Tengah, Jawa, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57139","h":"10:00-23:00","g":"H4","d":1289,"p":[517.3,305.1],"q":[107.5,189.7],"ll":[-7.563305,110.810993]},{"n":"Filcof Coffee Sekip","s":"known","r":0,"a":"Banjarsari","ad":"Jl. Kerinci No.20b, Kadipiro, Kec. Banjarsari, Kota Surakarta, Jawa Tengah 57136","h":"10:00-23:00","g":"J1","d":2697,"p":[727.9,-326.1],"q":[237.2,-198.9],"ll":[-7.532461,110.821377]},{"n":"Antara kopi","s":"known","r":0,"a":"Laweyan","ad":"Jl. Duwet Raya No.15, Mendungan, Karangasem, Kec. Laweyan, Kota Surakarta, Jawa Tengah 57145","h":"10:00-23:00","g":"D3","d":4889,"p":[-185.5,108.5],"q":[-325.1,68.6],"ll":[-7.553697,110.776349]},{"n":"Mekarsa Shoe Clean & Coffee Bar","s":"known","r":0,"a":"Kartasura","ad":"CQR8+VCM, Jl. Pabelan I, Gatak, Pabelan, Kec. Kartasura, Kabupaten Sukoharjo, Jawa Tengah 57169","h":"10:00-23:00","g":"C3","d":6014,"p":[-394.4,191.9],"q":[-453.7,120],"ll":[-7.557776,110.766049]},{"n":"Namu Korean Cafe & Resto Solo","s":"known","r":0,"a":"Grogol","ad":"Jl. Kantil No.19, Dusun I, Grogol, Kec. Grogol, Kabupaten Sukoharjo, Jawa Tengah 57552","h":"10:00-23:00","g":"J7","d":4361,"p":[751.9,971.5],"q":[251.9,599.9],"ll":[-7.595871,110.822559]},{"n":"Bless Coffee","s":"known","r":0,"a":"Jebres","ad":"Jl. Sutan Syahrir Widuran Solo No.88, Kepatihan Kulon, Kec. Jebres, Kota Surakarta, Jawa Tengah 57129","h":"08:00-00:00","g":"J4","d":1360,"p":[898.7,336.9],"q":[342.3,209.2],"ll":[-7.564859,110.829795]},{"n":"Kopi Berarti","s":"known","r":0,"a":"Grogol","ad":"Jl. Kutilang Jl. Raya Solo Baru, Dusun I, Langenharjo, Kec. Grogol, Kabupaten Sukoharjo, Jawa Tengah 57552","h":"08:00-00:00","g":"H8","d":5858,"p":[614.5,1243.6],"q":[167.4,767.4],"ll":[-7.609165,110.815787]},{"n":"Pelipur Kopi","s":"known","r":0,"a":"Ps. Kliwon","ad":"Jl. Wijaya Kusuma No.28, Kauman, Kec. Ps. Kliwon, Kota Surakarta, Jawa Tengah 57122","h":"08:00-00:00","g":"J5","d":1880,"p":[811.5,501.3],"q":[288.6,310.4],"ll":[-7.572893,110.825498]},{"n":"Deca Dessert and Coffee","s":"known","r":3.5,"a":"Banjarnegara","ad":"Jl. Mayjend Panjaitan No.53, Semarang, Kec. Banjarnegara, Kab. Banjarnegara, Jawa Tengah 53411","h":"10:00-20:00","g":null,"d":124958,"p":[-22048.1,-3084.1],"q":[-13783.1,-1896.6],"ll":[-7.397653,109.698593]}],"desk":{"clusters":[{"x":544,"y":470,"n":2,"rv":0,"i":[138,82]},{"x":705.9,"y":513.9,"n":2,"rv":0,"i":[92,78]},{"x":237.3,"y":407.1,"n":3,"rv":0,"i":[127,107,77]},{"x":269.6,"y":454.9,"n":2,"rv":0,"i":[85,73]},{"x":276.3,"y":156.6,"n":2,"rv":0,"i":[134,71]},{"x":461.1,"y":131.5,"n":2,"rv":0,"i":[124,69]},{"x":624.1,"y":512.4,"n":2,"rv":0,"i":[64,96]},{"x":422.6,"y":412.3,"n":2,"rv":0,"i":[62,60]},{"x":722.1,"y":-4.5,"n":2,"rv":0,"i":[57,56]},{"x":720.3,"y":435.1,"n":2,"rv":0,"i":[129,53]},{"x":54.8,"y":-1.9,"n":2,"rv":0,"i":[66,50]},{"x":693,"y":219.5,"n":3,"rv":0,"i":[132,40,45]},{"x":414.1,"y":230.7,"n":4,"rv":0,"i":[31,106,76,36]},{"x":227.1,"y":212.9,"n":2,"rv":0,"i":[28,48]},{"x":734.9,"y":303,"n":2,"rv":0,"i":[89,23]},{"x":441.7,"y":355.7,"n":2,"rv":0,"i":[68,20]},{"x":307,"y":334.5,"n":8,"rv":0,"i":[18,63,139,119,35,52,70,37]},{"x":647.2,"y":407.9,"n":9,"rv":0,"i":[43,15,16,108,17,109,26,79,54]},{"x":897.4,"y":326,"n":3,"rv":0,"i":[12,146,49]},{"x":124,"y":67.1,"n":4,"rv":1,"i":[8,125,74,75]},{"x":810.3,"y":463.1,"n":13,"rv":0,"i":[29,148,95,122,101,102,10,39,80,7,111,88,55]},{"x":35.1,"y":208,"n":3,"rv":0,"i":[6,120,51]},{"x":617.8,"y":261.9,"n":4,"rv":1,"i":[27,2,47,41]},{"x":519.9,"y":311.4,"n":6,"rv":0,"i":[25,115,141,1,21,13]},{"x":942.6,"y":433.6,"n":7,"rv":0,"i":[38,24,61,130,123,86,110]},{"x":721.6,"y":674.1,"n":2,"rv":0,"i":[131,58]}],"points":[84,81,72,46,42,34,33,30,136,117,118],"cols":[-922.8,-720,-517.1,-314.3,-111.4,91.4,294.3,497.1,700,902.9,1105.7],"rows":[-376.4,-171.8,32.8,237.5,442.1,646.7,851.4,1056,1260.7],"mpp":5.433835499528168},"phone":{"clusters":[{"x":124,"y":291.1,"n":2,"rv":0,"i":[138,82]},{"x":223.6,"y":318.2,"n":2,"rv":0,"i":[92,78]},{"x":72.9,"y":82.8,"n":2,"rv":0,"i":[124,69]},{"x":173.3,"y":317.3,"n":2,"rv":0,"i":[64,96]},{"x":49.2,"y":255.6,"n":2,"rv":0,"i":[62,60]},{"x":233.6,"y":-0.9,"n":2,"rv":0,"i":[57,56]},{"x":232.5,"y":269.7,"n":2,"rv":0,"i":[129,53]},{"x":215.7,"y":136.9,"n":3,"rv":0,"i":[132,40,45]},{"x":44,"y":143.8,"n":4,"rv":0,"i":[31,106,76,36]},{"x":241.5,"y":188.4,"n":2,"rv":0,"i":[89,23]},{"x":61,"y":220.8,"n":2,"rv":0,"i":[68,20]},{"x":187.5,"y":253,"n":9,"rv":0,"i":[43,15,16,108,17,109,26,79,54]},{"x":341.5,"y":202.5,"n":3,"rv":0,"i":[12,146,49]},{"x":287.9,"y":286.9,"n":13,"rv":0,"i":[29,148,95,122,101,102,10,39,80,7,111,88,55]},{"x":169.4,"y":163.1,"n":4,"rv":1,"i":[27,2,47,41]},{"x":109.1,"y":193.5,"n":6,"rv":0,"i":[25,115,141,1,21,13]},{"x":369.3,"y":268.8,"n":7,"rv":0,"i":[38,24,61,130,123,86,110]},{"x":145.7,"y":636.2,"n":3,"rv":0,"i":[98,65,83]},{"x":233.3,"y":416.8,"n":2,"rv":0,"i":[131,58]},{"x":262.2,"y":467.4,"n":3,"rv":0,"i":[112,67,44]},{"x":306.4,"y":464.4,"n":2,"rv":0,"i":[91,22]}],"points":[84,81,72,46,34,33,30,147,145,121,118,116,87,32],"cols":[-779,-654.1,-529.2,-404.4,-279.5,-154.6,-29.8,95.1,220,344.8,469.7],"rows":[-229.9,-103.9,22.1,148,274,400,525.9,651.9,777.9],"mpp":8.826958944536305},"latest":[3,8,2],"sel":{"cols":[-13847.5,-11983.4,-10119.3,-8255.1,-6391,-4526.9,-2662.7,-798.6,1065.6,2929.7,4793.8],"rows":[-5601.5,-3721.2,-1840.8,39.7,1920.2,3800.7,5681.3,7562,9442.6],"points":[[27,125.4,663.1]],"mpp":0.5913083208933297}}</script>
+<script>
+const D = JSON.parse(document.getElementById('data').textContent);
+const S = D.shops;
+const LET = 'ABCDEFGHJK';
+const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+// Same as formatDistance in -util.ts.
+const km = (m) => (m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1)} km`);
+const kind = (s) => (s.s === 'closed' ? 'x' : s.s === 'reviewed' ? 'v' : 'k');
+const ref = (s) => s.g ?? 'Off plate';
+const status = (s) =>
+  s.s === 'closed' ? '<b class="st-x">Closed</b>'
+  : s.s === 'reviewed' ? `<b class="st-v">Reviewed ★ ${s.r.toFixed(1)}</b>`
+  : s.r > 0 ? `★ ${s.r.toFixed(1)}` : 'Not reviewed';
+const tackSvg = (k, cls = '') => `<svg class="${cls} ${k}" viewBox="0 0 24 30" aria-hidden="true"><use href="#tack${k === 'x' ? '-x' : ''}"/></svg>`;
+const starsHTML = (r) => `<span class="stars" role="img" aria-label="${r} out of 5 stars"><span class="on" style="width:${(r / 5) * 100}%">★★★★★</span>★★★★★</span>`;
+const dist = (a, b) => {
+  const rad = Math.PI / 180;
+  const h = Math.sin(((b[0] - a[0]) * rad) / 2) ** 2 + Math.cos(a[0] * rad) * Math.cos(b[0] * rad) * Math.sin(((b[1] - a[1]) * rad) / 2) ** 2;
+  return 2 * 6371000 * Math.asin(Math.sqrt(h));
+};
+function rowHTML(i, d = S[i].d) {
+  const s = S[i];
+  const meta = [status(s), s.a && esc(s.a), km(d)].filter(Boolean).join(' · ');
+  return `<li><button class="row" type="button" data-i="${i}"><span class="thumb" style="background-position:${-(i % 15) * 40}px ${-Math.floor(i / 15) * 40}px"></span><span><span class="l1"><span class="nm">${esc(s.n)}</span><span class="dots"></span><span class="ref">${ref(s)}</span></span><span class="meta">${meta}</span></span></button></li>`;
+}
+document.querySelectorAll('[data-stars]').forEach((el) => {
+  const r = +el.dataset.stars;
+  el.innerHTML = `${starsHTML(r)} ${r.toFixed(1)}`;
+});
+
+// ---- the plate: margins, tacks, tags, marking ----
+function plate(el, P, key, opt) {
+  const { w, h, bt, br, left = 0 } = opt;
+  const marks = el.querySelector('.marks');
+  if (marks) {
+    let html = P.clusters.map((c, n) => `<span class="tag ${c.rv ? 'v' : 'k'}" data-c="${n}" style="left:${c.x}px;top:${c.y}px"><svg viewBox="0 0 10 10" aria-hidden="true"><use href="#head"/></svg>${c.n}</span>`).join('');
+    html += P.points.map((i) => { const [x, y] = S[i][key]; return `<button class="tack" type="button" data-i="${i}" style="left:${x}px;top:${y}px" aria-label="${esc(S[i].n)}">${tackSvg(kind(S[i]))}</button>`; }).join('');
+    marks.innerHTML = html;
+  }
+  const t = el.querySelector('.band.t'), r = el.querySelector('.band.r');
+  let th = '', rh = '';
+  for (let i = 0; i < P.cols.length - 1; i++) {
+    const a = Math.max(P.cols[i], left), b = Math.min(P.cols[i + 1], w - br);
+    if (b - a > 24) th += `<span data-col="${LET[i]}" style="left:${(a + b) / 2}px">${LET[i]}</span>`;
+  }
+  for (const x of P.cols) if (x > left && x < w - br) th += `<i style="left:${x}px"></i>`;
+  for (let j = 0; j < P.rows.length - 1; j++) {
+    const a = Math.max(P.rows[j], bt), b = Math.min(P.rows[j + 1], h);
+    if (b - a > 24) rh += `<span data-row="${j + 1}" style="top:${(a + b) / 2}px">${j + 1}</span>`;
+  }
+  for (const y of P.rows) if (y > bt && y < h) rh += `<i style="top:${y}px"></i>`;
+  t.innerHTML = th; r.innerHTML = rh;
+  const hover = el.querySelector('.hover');
+  return function mark(i) {
+    el.querySelectorAll('.band span.on').forEach((b) => b.classList.remove('on'));
+    if (i == null) { if (hover) hover.hidden = true; return; }
+    const s = S[i];
+    if (s.g) el.querySelectorAll(`[data-col="${s.g[0]}"],[data-row="${s.g.slice(1)}"]`).forEach((b) => b.classList.add('on'));
+    if (!hover) return;
+    const [x, y] = s[key];
+    hover.hidden = x < 0 || x > w || y < 0 || y > h;
+    hover.style.left = `${x}px`; hover.style.top = `${y}px`;
+    hover.classList.toggle('flip', x > w - 260);
+    hover.querySelector('svg.t').outerHTML = tackSvg(kind(s), 't');
+    hover.querySelector('.lbl').innerHTML = `${esc(s.n)}<b>${ref(s)}</b>`;
+  };
+}
+const DESK = { w: 1116, h: 700, bt: 26, br: 30, left: 400 };
+// Scale bar: 500 m at the render's metres per pixel.
+document.querySelectorAll('.desk .scale i').forEach((i) => (i.style.width = `${Math.round(500 / D.desk.mpp)}px`));
+
+// ---- Fig. 1: browse ----
+(function browse() {
+  const el = document.getElementById('desk-browse');
+  const mark = plate(el, D.desk, 'p', DESK);
+  const list = el.querySelector('.list'), input = el.querySelector('input[type=search]');
+  const tabs = [...el.querySelectorAll('[role=tab]')];
+  const byDist = S.map((_, i) => i).sort((a, b) => S[a].d - S[b].d);
+  let tab = 'index', rows = [], hl = -1;
+  const DEFAULT = byDist[4];
+  let sticky = DEFAULT;
+  const lit = (i) => list.querySelectorAll('.row').forEach((b) => b.classList.toggle('lit', +b.dataset.i === i));
+  function render() {
+    const q = input.value.trim().toLowerCase();
+    rows = q ? S.map((_, i) => i).filter((i) => S[i].n.toLowerCase().includes(q) || S[i].ad.toLowerCase().includes(q)) : tab === 'reviews' ? D.latest : byDist;
+    list.innerHTML = rows.length ? rows.map((i) => rowHTML(i)).join('') : `<li class="empty">No shop matches “${esc(input.value.trim())}”.</li>`;
+    tabs.forEach((t) => t.setAttribute('aria-selected', String((q ? 'index' : tab) === t.dataset.tab)));
+    hl = -1; lit(sticky); mark(sticky);
+  }
+  tabs.forEach((t) => t.addEventListener('click', () => { tab = t.dataset.tab; render(); }));
+  input.addEventListener('input', render);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      hl = Math.min(rows.length - 1, Math.max(0, hl + (e.key === 'ArrowDown' ? 1 : -1)));
+      lit(rows[hl]); mark(rows[hl]);
+      list.querySelector(`.row[data-i="${rows[hl]}"]`)?.scrollIntoView({ block: 'nearest' });
+    } else if (e.key === 'Enter' && rows[hl] != null) { sticky = rows[hl]; }
+    else if (e.key === 'Escape' && input.value) { e.stopPropagation(); input.value = ''; render(); }
+  });
+  list.addEventListener('pointerover', (e) => { const b = e.target.closest('.row'); if (b) { lit(+b.dataset.i); mark(+b.dataset.i); } });
+  list.addEventListener('pointerleave', () => { lit(sticky); mark(sticky); });
+  list.addEventListener('click', (e) => { const b = e.target.closest('.row'); if (b) sticky = +b.dataset.i; });
+  const marks = el.querySelector('.marks');
+  const slip = document.createElement('div');
+  slip.className = 'slipcard'; slip.hidden = true; marks.after(slip);
+  marks.addEventListener('pointerover', (e) => {
+    const t = e.target.closest('.tack'), c = e.target.closest('.tag');
+    if (t) { lit(+t.dataset.i); mark(+t.dataset.i); }
+    if (c) {
+      const k = D.desk.clusters[+c.dataset.c];
+      slip.innerHTML = k.i.slice(0, 3).map((i) => `<div><span class="n">${esc(S[i].n)}</span><span class="dots"></span><b>${ref(S[i])}</b></div>`).join('') + (k.n > 3 ? `<div class="more">+${k.n - 3} more</div>` : '');
+      slip.style.left = `${k.x}px`; slip.style.top = `${k.y}px`; slip.hidden = false;
+    }
+  });
+  marks.addEventListener('pointerout', (e) => {
+    if (e.target.closest('.tag')) slip.hidden = true;
+    if (e.target.closest('.tack')) { lit(sticky); mark(sticky); }
+  });
+  marks.addEventListener('click', (e) => { const t = e.target.closest('.tack'); if (t) { sticky = +t.dataset.i; lit(sticky); mark(sticky); } });
+  // Keys: the footer button or ?, inside this figure.
+  const dlg = el.querySelector('dialog');
+  dlg.innerHTML = legendHTML(true);
+  const toggleKeys = () => (dlg.open ? dlg.close() : dlg.show());
+  el.querySelector('.keys').addEventListener('click', toggleKeys);
+  dlg.addEventListener('click', (e) => { if (e.target.closest('.close')) dlg.close(); });
+  el.addEventListener('keydown', (e) => {
+    if (e.target === input) return;
+    if (e.key === '?') toggleKeys();
+    if (e.key === 'Escape' && dlg.open) dlg.close();
+  });
+  render();
+})();
+
+function legendHTML(closable) {
+  // The ten entries in -shortcuts.tsx.
+  const KEYS = [['Esc', 'Back one step'], ['⌘K  /', 'Search'], ['↑ ↓  Enter', 'Move through the list, open a shop'], ['J  K', 'Next / previous shop'], ['D', 'Directions'], ['C', 'Copy address'], ['R', 'Read the full review'], ['L', 'My location'], ['1  2', 'Latest reviews / All places'], ['?', 'This list']];
+  return `<div class="lh"><h4>Keys</h4>${closable ? '<button class="textbtn close" type="button">Close <span class="kcap">Esc</span></button>' : '<span style="min-height:44px"></span>'}</div><dl>${KEYS.map(([k, l]) => `<dt>${k.split('  ').map((x) => `<span class="kcap">${x}</span>`).join('')}</dt><dd>${l}</dd>`).join('')}</dl>`;
+}
+document.getElementById('legend-spec').innerHTML = legendHTML(false);
+
+// ---- Fig. 2: adding ----
+(function adding() {
+  const el = document.getElementById('desk-add');
+  plate(el, D.desk, 'p', DESK);
+  const P = D.desk;
+  // Mercator x is linear in longitude; across 5 km, y is close enough to linear in latitude.
+  const toLng = (x) => 110.74 + ((x - P.cols[0]) / (P.cols[1] - P.cols[0])) * 0.01;
+  const toLat = (y) => -7.53 - ((y - P.rows[0]) / (P.rows[1] - P.rows[0])) * 0.01;
+  const toX = (lng) => P.cols[0] + ((lng - 110.74) / 0.01) * (P.cols[1] - P.cols[0]);
+  const toY = (lat) => P.rows[0] + ((-7.53 - lat) / 0.01) * (P.rows[1] - P.rows[0]);
+  const xh = el.querySelector('.xh'), xv = el.querySelector('.xv'), cap = el.querySelector('.capture');
+  const t = el.querySelector('.band.t'), r = el.querySelector('.band.r');
+  const rt = document.createElement('span'), rr = document.createElement('span');
+  rt.className = rr.className = 'read'; t.append(rt); r.append(rr);
+  const hover = el.querySelector('.hover');
+  const sheet = el.querySelector('.dsheet'), slip = el.querySelector('.addslip'), form = el.querySelector('.newform');
+  const err = slip.querySelector('.err'), link = slip.querySelector('input');
+  let placed = false;
+  function aim(x, y) {
+    xh.style.top = `${y}px`; xv.style.left = `${x}px`;
+    rt.style.left = `${x}px`; rt.textContent = `${toLng(x).toFixed(4)} E`;
+    rr.style.top = `${y}px`; rr.textContent = `${Math.abs(toLat(y)).toFixed(4)} S`;
+  }
+  function place(x, y, name = '') {
+    placed = true;
+    hover.hidden = false; hover.style.left = `${x}px`; hover.style.top = `${y}px`;
+    hover.querySelector('svg.t').outerHTML = tackSvg('v', 't');
+    hover.querySelector('.lbl').innerHTML = `${name ? esc(name) : 'New shop'}<b>${LET[Math.floor((toLng(x) - 110.74) / 0.01)] ?? ''}${Math.floor((-7.53 - toLat(y)) / 0.01) + 1}</b>`;
+    aim(x, y);
+    slip.hidden = true; form.hidden = false; sheet.classList.remove('slipmode');
+    form.elements.loc.value = `${toLat(y).toFixed(6)}, ${toLng(x).toFixed(6)}`;
+    form.elements.name.value = name;
+    form.elements.name.focus({ preventScroll: true });
+  }
+  function reset() {
+    placed = false; hover.hidden = true; err.hidden = true; link.value = '';
+    slip.hidden = false; form.hidden = true; sheet.classList.add('slipmode');
+    aim(760, 330);
+  }
+  cap.addEventListener('pointermove', (e) => { if (placed) return; const b = el.getBoundingClientRect(); aim(e.clientX - b.left, e.clientY - b.top); });
+  cap.addEventListener('click', (e) => { if (placed) return; const b = el.getBoundingClientRect(); place(e.clientX - b.left, e.clientY - b.top); });
+  // Full Google Maps URLs carry the spot as !3d<lat>!4d<lng> or @<lat>,<lng>; short links need the app's worker.
+  const tryLink = (text) => {
+    const m = text.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/) || text.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+    const name = decodeURIComponent((text.match(/\/place\/([^/]+)/)?.[1] ?? '').replace(/\+/g, ' '));
+    if (!m) { err.hidden = false; return; }
+    err.hidden = true;
+    place(toX(+m[2]), toY(+m[1]), name);
+  };
+  link.addEventListener('keydown', (e) => { if (e.key === 'Enter') tryLink(link.value); });
+  link.addEventListener('paste', (e) => setTimeout(() => tryLink(link.value)));
+  el.querySelectorAll('.cancel').forEach((b) => b.addEventListener('click', reset));
+  reset();
+})();
+
+// ---- record cards: nearby ----
+document.querySelectorAll('[data-nearby]').forEach((ul) => {
+  const i0 = S.findIndex((s) => s.n === ul.dataset.nearby);
+  const near = S.map((s, i) => [i, dist(S[i0].ll, s.ll)]).filter(([i]) => i !== i0).sort((a, b) => a[1] - b[1]).slice(0, 4);
+  ul.innerHTML = near.map(([i, d]) => rowHTML(i, d)).join('');
+});
+
+// ---- the form ----
+(function form() {
+  const f = document.getElementById('editform');
+  const photos = document.getElementById('photos');
+  photos.addEventListener('click', (e) => {
+    const ph = e.target.closest('.ph');
+    if (!ph) return;
+    if (e.target.closest('.rm')) ph.remove();
+    else if (e.target.closest('.img')) photos.prepend(ph);
+    const all = [...photos.querySelectorAll('.ph')];
+    all.forEach((p, n) => {
+      p.classList.toggle('is-cover', n === 0);
+      p.querySelector('.img').setAttribute('aria-label', n === 0 ? 'Cover photo' : 'Make cover');
+      p.querySelector('.covertag')?.remove();
+      if (n === 0) p.querySelector('.img').insertAdjacentHTML('afterend', '<span class="covertag">Cover</span>');
+    });
+  });
+  const unknown = f.elements.unknown;
+  unknown.addEventListener('change', () => { f.elements.open.disabled = f.elements.close.disabled = unknown.checked; });
+  const rater = document.getElementById('rater'), on = rater.querySelector('.on');
+  const setR = (v) => {
+    v = Math.max(0, Math.min(5, v));
+    on.style.width = `${(v / 5) * 100}%`;
+    rater.setAttribute('aria-valuenow', v);
+    rater.setAttribute('aria-valuetext', v ? `${v} stars` : 'Not rated');
+  };
+  rater.addEventListener('click', (e) => { const b = rater.getBoundingClientRect(); setR(Math.ceil(((e.clientX - b.left) / b.width) * 10) / 2); });
+  rater.addEventListener('keydown', (e) => {
+    const v = +rater.getAttribute('aria-valuenow');
+    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { e.preventDefault(); setR(v + 0.5); }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { e.preventDefault(); setR(v - 0.5); }
+  });
+  document.getElementById('rate-clear').addEventListener('click', () => setR(0));
+  const err = document.getElementById('form-err'), save = document.getElementById('save');
+  f.addEventListener('submit', (e) => {
+    e.preventDefault();
+    // The first message ModifyCoffeeSchema would give.
+    const name = f.elements.name.value.trim();
+    const hours = unknown.checked ? '' : `${f.elements.open.value}-${f.elements.close.value}`;
+    const msg = name.length < 2 ? 'Name is too short'
+      : hours && !/^\d{2}:\d{2}-\d{2}:\d{2}$/.test(hours) ? 'Hours must be HH:MM-HH:MM, or left unknown'
+      : !/^\s*-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?\s*$/.test(f.elements.loc.value) ? 'Location must be "lat, long"' : '';
+    err.textContent = msg; err.hidden = !msg;
+    if (msg) return;
+    save.textContent = 'Saving…'; save.disabled = true;
+    setTimeout(() => { save.textContent = 'Save'; save.disabled = false; }, 1200);
+  });
+})();
+
+// ---- phones ----
+const PHONE = { w: 390, h: 844, bt: 22, br: 22 };
+(function phones() {
+  const idx = document.getElementById('ph-index');
+  const markIdx = plate(idx, D.phone, 'q', PHONE);
+  const byDist = S.map((_, i) => i).sort((a, b) => S[a].d - S[b].d);
+  idx.querySelector('.list').innerHTML = byDist.slice(0, 6).map((i) => rowHTML(i)).join('');
+  const first = byDist[4];
+  idx.querySelector(`.row[data-i="${first}"]`).classList.add('lit');
+  markIdx(first);
+  idx.querySelector('.hover .lbl').remove();
+
+  const rec = document.getElementById('ph-record');
+  const couvee = S.findIndex((s) => s.n === 'Couvee Solo');
+  const sel = { clusters: [], points: [], cols: D.sel.cols, rows: D.sel.rows };
+  const markRec = plate(rec, sel, 'q', PHONE);
+  rec.querySelector('.marks').innerHTML = D.sel.points.map(([i, x, y]) => `<span class="tack" style="left:${x}px;top:${y}px">${tackSvg(kind(S[i]))}</span>`).join('');
+  markRec(couvee);
+  const hv = rec.querySelector('.hover');
+  hv.style.left = '195px'; hv.style.top = '211px'; hv.hidden = false; hv.classList.add('flip');
+  rec.querySelector('.hover .lbl').remove();
+
+  plate(document.getElementById('ph-edit'), { clusters: [], points: [], cols: D.phone.cols, rows: D.phone.rows }, 'q', PHONE);
+
+  const add = document.getElementById('ph-add');
+  plate(add, D.phone, 'q', PHONE);
+  const x = 195, y = 330;
+  add.querySelector('.xh').style.top = `${y}px`; add.querySelector('.xv').style.left = `${x}px`;
+  const P = D.phone;
+  const lng = 110.74 + ((x - P.cols[0]) / (P.cols[1] - P.cols[0])) * 0.01, lat = -7.53 - ((y - P.rows[0]) / (P.rows[1] - P.rows[0])) * 0.01;
+  add.querySelector('.band.t').insertAdjacentHTML('beforeend', `<span class="read" style="left:${x}px">${lng.toFixed(4)} E</span>`);
+  add.querySelector('.band.r').insertAdjacentHTML('beforeend', `<span class="read" style="top:${y}px">${Math.abs(lat).toFixed(4)} S</span>`);
+})();
+
+// ---- night desk ----
+const themeBtn = document.getElementById('theme');
+themeBtn.addEventListener('click', () => {
+  const dark = document.documentElement.dataset.theme !== 'dark';
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  themeBtn.setAttribute('aria-pressed', String(dark));
+});
+</script>
+</body>
+</html>
