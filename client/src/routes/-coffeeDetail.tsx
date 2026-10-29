@@ -16,17 +16,28 @@ import {
 import { CoffeeListItem } from './-contentTab/-common/-cofeeListItem.tsx';
 import { MiniMap } from './-miniMap.tsx';
 import { getTokens } from '@cookies/tokens.ts';
-import { type ReactNode, memo, useEffect, useMemo, useState } from 'react';
+import { type ReactNode, memo, useEffect, useMemo, useRef, useState } from 'react';
 import {
   at,
   directionsUrl,
   distance,
   formatDistance,
   formatHours,
+  isDesktop,
   isTypingTarget,
+  tilt,
   useDesktop,
   shopUrl,
 } from './-util.ts';
+
+// Esc or ×: on desktop the ticket shortens into its stub first.
+export function closeTicket() {
+  const ticket = document.querySelector('[data-ticket].ticket');
+  const motion = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!isDesktop() || !ticket || !motion) return useAppStore.getState().removeSelectedCoffee();
+  ticket.classList.add('take-down');
+  setTimeout(() => useAppStore.getState().removeSelectedCoffee(), 200);
+}
 
 const NEARBY_COUNT = 4;
 const canShare = typeof navigator.share === 'function';
@@ -43,7 +54,6 @@ export const CoffeeDetail = memo(function CoffeeDetail({
 }: {
   coffee: Coffee;
 }) {
-  const clearSelected = useAppStore((state) => state.removeSelectedCoffee);
   const startEdit = useAppStore((state) => state.startEdit);
   const userLocation = useAppStore((state) => state.userLocation);
   const { authenticated } = getTokens();
@@ -106,6 +116,9 @@ export const CoffeeDetail = memo(function CoffeeDetail({
   }, [coffee, post]);
 
   const [photo, setPhoto] = useState(0);
+  const swipeFrom = useRef(0);
+  const swipeBack = useRef(false);
+  const still = useAppStore((state) => state.still);
 
   // A missing fact is a link for the owner and plain text for visitors; never an empty row.
   const missing = (label: string) =>
@@ -121,7 +134,10 @@ export const CoffeeDetail = memo(function CoffeeDetail({
 
   return (
     // On a phone the sheet is the ticket; its keys move to the till.
-    <div className={`flex min-h-0 flex-1 flex-col ${desktop ? 'ticket hang' : ''}`}>
+    <div
+      data-ticket
+      className={`flex min-h-0 flex-1 flex-col ${desktop ? `ticket ${still ? '' : 'hang'}` : ''}`}
+    >
       <span className="hold max-lg:hidden" />
       <span className="eyelet" data-eyelet />
       <div className="ticket-fade flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pt-7 pb-12 [&>*]:shrink-0">
@@ -129,10 +145,11 @@ export const CoffeeDetail = memo(function CoffeeDetail({
           <h2 className="flex-1 font-display text-[30px] leading-[0.94] font-black uppercase text-balance lg:text-[34px]">
             {coffee.name}
           </h2>
+          {/* On a phone Back on the till closes it. */}
           <button
             type="button"
-            className="key key-sm w-8 px-0"
-            onClick={clearSelected}
+            className="key key-sm w-8 px-0 max-lg:hidden"
+            onClick={closeTicket}
             title="Close (Esc)"
             aria-label="Close"
           >
@@ -142,9 +159,15 @@ export const CoffeeDetail = memo(function CoffeeDetail({
 
         {(reviewed || coffee.status === 'closed' || coffee.rating > 0) && (
           <div className="mt-3.5 flex flex-wrap items-center gap-3">
-            {reviewed && <span className="stamp stamp-lg [--r:-3deg]">Reviewed</span>}
+            {reviewed && (
+              <span className="stamp stamp-lg stamp-in" style={tilt(coffee.id)}>
+                Reviewed
+              </span>
+            )}
             {coffee.status === 'closed' && (
-              <span className="stamp stamp-ink stamp-lg [--r:2deg]">Closed</span>
+              <span className="stamp stamp-ink stamp-lg stamp-in" style={tilt(`${coffee.id}c`)}>
+                Closed
+              </span>
             )}
             {coffee.rating > 0 && (
               <>
@@ -164,16 +187,33 @@ export const CoffeeDetail = memo(function CoffeeDetail({
             <i className="corner" />
             <i className="corner" />
             {images && images.length > 0 ? (
-              <div
-                className="flex size-full snap-x snap-mandatory overflow-x-auto"
-                onScroll={(e) =>
-                  setPhoto(Math.round(e.currentTarget.scrollLeft / e.currentTarget.clientWidth))
-                }
+              // A click sends the top print to the back; a swipe goes either way.
+              <button
+                type="button"
+                className="block size-full cursor-pointer touch-pan-y disabled:cursor-default"
+                disabled={images.length < 2}
+                aria-label="Next photo"
+                onPointerDown={(e) => (swipeFrom.current = e.clientX)}
+                onPointerUp={(e) => {
+                  const dx = e.clientX - swipeFrom.current;
+                  swipeBack.current = dx > 30;
+                }}
+                onClick={() => {
+                  const step = swipeBack.current ? -1 : 1;
+                  swipeBack.current = false;
+                  setPhoto((p) => (p + step + images.length) % images.length);
+                }}
               >
-                {images.map((i) => (
-                  <img key={i.id} className="size-full shrink-0 snap-center object-cover" src={i.url} alt={i.alt} />
+                {/* All stay mounted, so the next print is already loaded. */}
+                {images.map((i, n) => (
+                  <img
+                    key={n === photo ? `top-${i.id}` : i.id}
+                    className={`size-full object-cover ${n === photo ? 'swap' : 'hidden'}`}
+                    src={i.url}
+                    alt={i.alt}
+                  />
                 ))}
-              </div>
+              </button>
             ) : (
               <MiniMap lat={coffee.lat} lng={coffee.lng} />
             )}
@@ -350,7 +390,7 @@ function Cups({ rating }: { rating: number }) {
 
 function Fact({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="flex min-h-9 items-center border-b border-dashed border-base-content/25">
+    <div className="flex min-h-11 items-center border-b border-dashed border-base-content/25 lg:min-h-9">
       <dt className="text-[#4D4D4D]">{label}</dt>
       <i className="leader" />
       <dd className="font-bold">{children}</dd>

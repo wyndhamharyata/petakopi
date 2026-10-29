@@ -7,8 +7,13 @@ export type LatLng = [number, number];
 
 type SelectedCoffeeSlice = {
   selectedCoffee: Coffee | null;
-  setSelectedCoffee: (coffee: Coffee) => void;
+  // still: the ticket is already in place (a saved nota turning back into it), so it doesn't hang in.
+  setSelectedCoffee: (coffee: Coffee, still?: boolean) => void;
+  still: boolean;
   removeSelectedCoffee: () => void;
+  // The stub under the pointer, which gets a faint thread to its stamp.
+  stubHover: string | null;
+  setStubHover: (id: string | null) => void;
   // Shops opened before the open one, newest first: the stubs on the rail.
   rail: Coffee[];
   takeDown: (id: string) => void;
@@ -30,10 +35,15 @@ export const createSelectedCoffeeSlice: StateCreator<
 > = (set, get) => ({
   selectedCoffee: null,
   rail: [],
+  still: false,
+  stubHover: null,
+  setStubHover: (stubHover) => set({ stubHover }),
   // A fresh object every time, so picking the selected shop again still flies the map back to it.
-  setSelectedCoffee: (coffee: Coffee) =>
+  setSelectedCoffee: (coffee: Coffee, still = false) =>
     set({
       selectedCoffee: { ...coffee },
+      still,
+      stubHover: null,
       rail: hang(get().rail, get().selectedCoffee, coffee),
       editing: false,
       placing: false,
@@ -67,6 +77,8 @@ type PanelSlice = {
   // The name a Google Maps link gave the shop being added.
   draftName: string;
   setDraft: (draft: LatLng) => void;
+  // The tack is being dragged: the location field shows it is being written.
+  dragging: boolean;
   importShop: (name: string, latLng: LatLng) => void;
   startEdit: () => void;
   startAdd: () => void;
@@ -94,6 +106,7 @@ export const createPanelSlice: StateCreator<
   draft: null,
   draftName: '',
   setDraft: (draft) => set({ draft }),
+  dragging: false,
   startEdit: () => {
     const coffee = get().selectedCoffee;
     if (coffee) set({ editing: true, draft: [coffee.lat, coffee.lng], sheet: 'full' });

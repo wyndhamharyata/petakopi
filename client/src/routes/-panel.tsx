@@ -14,7 +14,7 @@ import { AddKey, Browse, Search } from './-browse.tsx';
 import { CoffeeDetail } from './-coffeeDetail.tsx';
 import { Editor } from './-coffeeEditor/-editor.tsx';
 import { findExistingShop, readGoogleMapsLink } from './-googleMaps.ts';
-import { area, directionsUrl, useDesktop } from './-util.ts';
+import { area, directionsUrl, tilt, useDesktop, useWide } from './-util.ts';
 
 const ORDER: Sheet[] = ['peek', 'half', 'full'];
 
@@ -32,6 +32,10 @@ export function Panel() {
   const { data: shops } = useSWR('coffees', rpcFetch(client.api.coffees.$get)({}));
   const [linkError, setLinkError] = useState('');
   const desktop = useDesktop();
+  const wide = useWide();
+  // Below 1280px the receipt rolls into the till while a ticket hangs; a list key drops it again.
+  const [dropped, setDropped] = useState(false);
+  useEffect(() => setDropped(false), [selected?.id]);
   const keyboard = useKeyboardInset();
   // Each Add starts clean; the error belongs to the last link only.
   useEffect(() => {
@@ -89,7 +93,11 @@ export function Panel() {
     return (
       <>
         <div className="pointer-events-none absolute inset-y-4 left-4 z-[1000] flex w-[400px] flex-col font-atkinson">
-          <Browse slip={placing ? placingSlip : undefined} rolled={editing} />
+          <Browse
+            slip={placing ? placingSlip : undefined}
+            rolled={editing || (!wide && !!selected && !dropped)}
+            onListKey={() => setDropped(true)}
+          />
         </div>
         <Rail ticket={editing || !!selected} />
         {(editing || selected) && (
@@ -105,15 +113,15 @@ export function Panel() {
     );
   }
 
-  const tillUp = !editing && !placing;
-  // The paper rides on the till; with the till away (editing) it reaches the bottom edge.
+  const tillUp = !placing;
+  // The paper rides on the till; with the till away (placing) it reaches the bottom edge.
   const bottom = tillUp ? `calc(${TILL}px + env(safe-area-inset-bottom) + ${keyboard.inset}px)` : '0px';
   const height =
-    sheet === 'peek' ? '64px' : sheet === 'half' ? '45dvh' : `calc(${keyboard.height}px - ${bottom} - 44px)`;
+    sheet === 'peek' ? '58px' : sheet === 'half' ? '45dvh' : `calc(${keyboard.height}px - ${bottom} - 44px)`;
 
   return (
     <>
-      {tillUp && <MobileRail />}
+      {tillUp && !editing && <MobileRail />}
       <section
         className="fixed inset-x-2 z-[1000] flex flex-col font-atkinson drop-shadow-[0_-6px_10px_rgb(0_0_0/.18)] transition-[height] duration-[240ms] ease-[cubic-bezier(.2,.8,.2,1)]"
         style={{ bottom, height }}
@@ -125,7 +133,7 @@ export function Panel() {
         >
           <button
             type="button"
-            className="flex h-7 shrink-0 cursor-grab touch-none items-center justify-center"
+            className="flex h-5 shrink-0 cursor-grab touch-none items-center justify-center"
             aria-label="Resize panel"
             onPointerDown={(e) => {
               dragStart.current = e.clientY;
@@ -149,7 +157,12 @@ export function Panel() {
         </div>
       </section>
       {tillUp && (
-        <MobileTill coffee={selected} bottom={keyboard.inset} authenticated={authenticated} />
+        <MobileTill
+          coffee={editing ? null : selected}
+          editing={editing}
+          bottom={keyboard.inset}
+          authenticated={authenticated}
+        />
       )}
     </>
   );
@@ -184,10 +197,12 @@ function useKeyboardInset() {
 // Back, Directions, Copy and Review on a ticket.
 function MobileTill({
   coffee,
+  editing,
   bottom,
   authenticated,
 }: {
   coffee: Coffee | null;
+  editing: boolean;
   bottom: number;
   authenticated: boolean;
 }) {
@@ -204,7 +219,10 @@ function MobileTill({
       className="till fixed inset-x-0 z-[1001] flex items-center gap-2 border-x-0 border-b-0 px-2.5 pt-2.5 pb-[max(10px,env(safe-area-inset-bottom))] before:absolute before:inset-x-0 before:-top-[9px] before:h-[9px] before:bg-[#0A0A0A] before:shadow-[inset_0_-3px_3px_#000]"
       style={{ bottom }}
     >
-      {coffee ? (
+      {editing ? (
+        // The editor portals its Cancel and Save keys here.
+        <div id="till-slot" className="flex flex-1 gap-2" />
+      ) : coffee ? (
         <>
           <button type="button" className="key min-h-12 w-12 shrink-0 px-0" onClick={clearSelected} aria-label="Back to the list">
             <RiArrowLeftSLine size={24} />
@@ -255,23 +273,32 @@ function MobileRail() {
   const rail = useAppStore((state) => state.rail);
   const selected = useAppStore((state) => state.selectedCoffee);
   const setSelected = useAppStore((state) => state.setSelectedCoffee);
+  const takeDown = useAppStore((state) => state.takeDown);
   if (!selected && rail.length === 0) return null;
   return (
     <>
       <div className="steel fixed inset-x-0 top-0 z-[999] h-[18px] border-x-0 border-t-0" />
       <ul className="fixed top-3.5 right-2 left-2 z-[1000] flex flex-row-reverse gap-2 overflow-hidden pt-2 font-atkinson">
         {rail.slice(0, 2).map((c) => (
-          <li key={c.id} className="shrink-0">
+          <li key={c.id} className="ticket relative flex h-11 w-[170px] shrink-0">
+            <span className="hold" />
             <button
               type="button"
-              className="ticket h-11 w-[150px] cursor-pointer px-2.5 pt-3 text-left"
+              className="min-w-0 flex-1 cursor-pointer pt-3 pl-2.5 text-left"
               onClick={() => setSelected(c)}
               title={`Open ${c.name}`}
             >
-              <span className="hold" />
               <span className="block truncate font-display text-[16px] leading-none font-extrabold uppercase">
                 {c.name}
               </span>
+            </button>
+            <button
+              type="button"
+              className="grid w-11 shrink-0 cursor-pointer place-items-center pt-1.5 font-mono text-[17px] font-bold"
+              onClick={() => takeDown(c.id)}
+              aria-label={`Take ${c.name} down`}
+            >
+              ×
             </button>
           </li>
         ))}
@@ -285,6 +312,7 @@ function Rail({ ticket }: { ticket: boolean }) {
   const rail = useAppStore((state) => state.rail);
   const setSelected = useAppStore((state) => state.setSelectedCoffee);
   const takeDown = useAppStore((state) => state.takeDown);
+  const setStubHover = useAppStore((state) => state.setStubHover);
   if (!ticket && rail.length === 0) return null;
   return (
     <>
@@ -295,9 +323,15 @@ function Rail({ ticket }: { ticket: boolean }) {
         }`}
       >
         {rail.map((c) => (
-          <li key={c.id} className="relative shrink-0">
+          <li
+            key={c.id}
+            className="group relative shrink-0"
+            onMouseEnter={() => setStubHover(c.id)}
+            onMouseLeave={() => setStubHover(null)}
+          >
             <button
               type="button"
+              data-stub={c.id}
               className="ticket h-24 w-[168px] cursor-pointer px-3 pt-[15px] pb-2.5 text-left"
               onClick={() => setSelected(c)}
               title={`Open ${c.name}`}
@@ -308,9 +342,13 @@ function Rail({ ticket }: { ticket: boolean }) {
               </span>
               <span className="mt-2 flex items-center gap-1.5 font-mono text-[13px]">
                 {c.status === 'reviewed' ? (
-                  <span className="stamp">Reviewed {c.rating.toFixed(1)}</span>
+                  <span className="stamp" style={tilt(c.id)}>
+                    Reviewed {c.rating.toFixed(1)}
+                  </span>
                 ) : c.status === 'closed' ? (
-                  <span className="stamp stamp-ink">Closed</span>
+                  <span className="stamp stamp-ink" style={tilt(c.id)}>
+                    Closed
+                  </span>
                 ) : c.rating > 0 ? (
                   <b className="inline-flex items-center gap-0.5">
                     <i className="cup" />
@@ -322,8 +360,11 @@ function Rail({ ticket }: { ticket: boolean }) {
             </button>
             <button
               type="button"
-              className="absolute top-3 right-1 z-[3] grid size-6 cursor-pointer place-items-center border-[1.5px] border-base-content bg-[#F6F6F6] font-mono text-[15px] font-bold"
-              onClick={() => takeDown(c.id)}
+              className="absolute top-3 right-1 z-[3] grid size-6 cursor-pointer place-items-center border-[1.5px] border-base-content bg-[#F6F6F6] font-mono text-[15px] font-bold opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+              onClick={() => {
+                takeDown(c.id);
+                setStubHover(null);
+              }}
               title="Take down"
               aria-label={`Take ${c.name} down`}
             >

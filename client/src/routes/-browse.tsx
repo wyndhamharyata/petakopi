@@ -6,6 +6,7 @@ import { getTokens } from '@cookies/tokens.ts';
 import { RiAddLine, RiSearchLine } from 'react-icons/ri';
 import { CoffeeListItem } from './-contentTab/-common/-cofeeListItem.tsx';
 import { at, distance } from './-util.ts';
+import { toggleShortcuts } from './-shortcuts.tsx';
 
 // The till always; under it the receipt, or the slip that replaces it while adding.
 // Rolled: the receipt is back in the till, so the map is free while editing.
@@ -13,7 +14,8 @@ export function Browse({
   slip,
   rolled = false,
   mobile = false,
-}: { slip?: ReactNode; rolled?: boolean; mobile?: boolean } = {}) {
+  onListKey,
+}: { slip?: ReactNode; rolled?: boolean; mobile?: boolean; onListKey?: () => void } = {}) {
   const tab = useAppStore((state) => state.tab);
   const setTab = useAppStore((state) => state.setTab);
   const query = useAppStore((state) => state.query);
@@ -75,7 +77,10 @@ export function Browse({
       role="tab"
       aria-selected={tab === id}
       className="key flex-1"
-      onClick={() => setTab(id)}
+      onClick={() => {
+        setTab(id);
+        onListKey?.();
+      }}
       title={`${label} (${hint})`}
     >
       <span className="led" />
@@ -109,7 +114,8 @@ export function Browse({
       {q && list.length === 0 && (
         <p className="p-6 text-center text-[15px]">No shop matches “{query.trim()}”.</p>
       )}
-      <ul ref={listRef} className="flex flex-col">
+      {/* Keyed by what is listed, so a new list prints in. */}
+      <ul ref={listRef} key={`${tab}|${q}`} className="print flex flex-col">
         {list.map((c, i) => (
           <CoffeeListItem key={c.id} coffee={c} highlighted={i === highlight} />
         ))}
@@ -142,12 +148,21 @@ export function Browse({
         <div role="tablist" className="mt-2.5 flex gap-2">
           {tabs}
           {authenticated && <AddKey />}
+          <button
+            type="button"
+            className={`key w-10 shrink-0 px-0 font-mono ${authenticated ? '' : 'ml-auto'}`}
+            onClick={toggleShortcuts}
+            title="Keyboard shortcuts (?)"
+            aria-label="Keyboard shortcuts"
+          >
+            ?
+          </button>
         </div>
         <div className="-mx-3 mt-3 h-2 bg-[#0A0A0A] shadow-[inset_0_3px_3px_#000]" />
       </div>
       {slip ? (
         <div className="receipt tear-b mx-2 pb-3">{slip}</div>
-      ) : rolled ? null : (
+      ) : rolled && !q ? null : (
         <div className="receipt tear-b mx-2 flex min-h-0 flex-1 flex-col pb-4 lg:flex-initial">
           {total}
           {rows}

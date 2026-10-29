@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useAppStore } from '@store/store.ts';
 import { isDesktop, isTypingTarget } from './-util.ts';
+import { closeTicket } from './-coffeeDetail.tsx';
 
 // D, C and R live in the shop view and L in the map layer, next to what they act on.
 const KEYS: [string, string][] = [
@@ -27,6 +28,12 @@ const focusSearch = () => {
   setTimeout(() => document.getElementById('search-bar')?.focus());
 };
 
+export function toggleShortcuts() {
+  const dialog = document.getElementById('shortcuts') as HTMLDialogElement | null;
+  if (dialog?.open) dialog.close();
+  else dialog?.showModal();
+}
+
 export function Shortcuts() {
   const dialog = useRef<HTMLDialogElement>(null);
 
@@ -41,7 +48,7 @@ export function Shortcuts() {
       if (e.key === 'Escape') {
         if (state.editing || document.querySelector('dialog[open]')) return;
         if (state.placing) return state.stopEdit();
-        if (state.selectedCoffee) return state.removeSelectedCoffee();
+        if (state.selectedCoffee) return closeTicket();
         if (state.query) return state.setQuery('');
         return;
       }
@@ -51,8 +58,7 @@ export function Shortcuts() {
         e.preventDefault();
         focusSearch();
       } else if (e.key === '?') {
-        if (dialog.current?.open) dialog.current.close();
-        else dialog.current?.showModal();
+        toggleShortcuts();
       } else if ((e.key === '1' || e.key === '2') && !state.selectedCoffee) {
         state.setTab(e.key === '1' ? 'latestReviews' : 'allPlaces');
       } else if ((e.key === '[' || e.key === ']') && state.rail.length) {
@@ -72,6 +78,7 @@ export function Shortcuts() {
     // A laminated card on the counter; a click outside it closes it.
     <dialog
       ref={dialog}
+      id="shortcuts"
       className="m-auto max-w-sm bg-transparent p-0 font-atkinson backdrop:bg-black/45"
       onClick={(e) => e.target === e.currentTarget && e.currentTarget.close()}
     >

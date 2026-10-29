@@ -1,4 +1,5 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { safeParse } from 'valibot';
 import { type Coffee, ModifyCoffeeSchema } from '@rpcTypes/coffee.ts';
 import type { Image } from '@rpcTypes/image.ts';
@@ -20,6 +21,10 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
   const stopEdit = useAppStore((state) => state.stopEdit);
   const setSelected = useAppStore((state) => state.setSelectedCoffee);
   const desktop = useDesktop();
+  const dragging = useAppStore((state) => state.dragging);
+  // The phone till renders its slot in the same commit as this form, so it is found after mount.
+  const [tillSlot, setTillSlot] = useState<HTMLElement | null>(null);
+  useEffect(() => setTillSlot(document.getElementById('till-slot')), []);
 
   const { data: savedImages } = useSWR(
     coffee ? `imageData:${coffee.id}` : null,
@@ -121,8 +126,14 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
       const { coffee: saved } = await rpcFetch(client.api.coffees[':id'].$get)({
         param: { id: body.id },
       })();
+      // The nota lifts and drains to mint, then it is the ticket again, already hanging.
+      const paper = formRef.current?.closest('.nota');
+      if (paper && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        paper.classList.add('drain');
+        await new Promise((r) => setTimeout(r, 500));
+      }
       stopEdit();
-      if (saved) setSelected(saved);
+      if (saved) setSelected(saved, true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Saving failed.');
     } finally {
@@ -132,11 +143,24 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
 
   const ratingOwnedByReview = !!coffee?.review;
 
+  const keys = (
+    <div className="flex flex-1 gap-2">
+      <button type="button" className="key min-h-12 flex-1 lg:min-h-10" onClick={cancel} disabled={saving}>
+        Cancel
+      </button>
+      {/* form=: on a phone this key is portalled out of the form, onto the till. */}
+      <button type="submit" form="nota-form" className="key key-signal min-h-12 flex-1 lg:min-h-10" disabled={saving}>
+        {saving ? 'Saving…' : 'Save'}
+      </button>
+    </div>
+  );
+
   const isClosed = coffee?.status === 'closed';
 
   return (
     <form
       ref={formRef}
+      id="nota-form"
       onSubmit={save}
       onChange={() => setDirty(true)}
       // On a phone the sheet is the slip.
@@ -265,7 +289,7 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
         <Field label="Location" htmlFor="f-location">
           <input
             id="f-location"
-            className="line"
+            className={`line ${dragging ? 'border-b-[3px]! bg-white/35!' : ''}`}
             value={latLong}
             placeholder="-7.55, 110.77"
             onChange={(e) => {
@@ -292,17 +316,14 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
         </label>
       </fieldset>
 
-      <div className="flex shrink-0 flex-col gap-2 border-t border-dashed border-[#141414]/40 p-3">
-        {error && <p className="err">× {error}</p>}
-        <div className="flex gap-2">
-          <button type="button" className="key flex-1" onClick={cancel} disabled={saving}>
-            Cancel
-          </button>
-          <button type="submit" className="key key-signal flex-1" disabled={saving}>
-            {saving ? 'Saving…' : 'Save'}
-          </button>
+      {(desktop || error) && (
+        <div className="flex shrink-0 flex-col gap-2 border-t border-dashed border-[#141414]/40 p-3">
+          {error && <p className="err">× {error}</p>}
+          {desktop && keys}
         </div>
-      </div>
+      )}
+      {/* On a phone the keys sit on the till, above the keyboard. */}
+      {!desktop && tillSlot && createPortal(keys, tillSlot)}
     </form>
   );
 }

@@ -2,7 +2,7 @@ import type { Coffee } from '@rpcTypes/coffee.ts';
 import { type LatLng, useAppStore } from '@store/store.ts';
 import { memo } from 'react';
 import { RiChat3Line, RiMapPin2Line } from 'react-icons/ri';
-import { area, at, distance, formatDistance } from '../../-util.ts';
+import { area, at, distance, formatDistance, tilt } from '../../-util.ts';
 
 export interface CoffeeListItemProps {
   // Set by "Latest Reviews" only: approved comments under the review on mwyndham.dev.
@@ -51,9 +51,13 @@ export const CoffeeListItem = memo(function CoffeeListItem({
           </span>
           <span className="mt-0.5 flex min-w-0 items-center gap-1.5 font-mono text-[13px]">
             {coffee.status === 'closed' ? (
-              <span className="stamp stamp-ink">Closed</span>
+              <span className="stamp stamp-ink" style={tilt(coffee.id)}>
+                Closed
+              </span>
             ) : coffee.status === 'reviewed' ? (
-              <span className="stamp">Reviewed {coffee.rating.toFixed(1)}</span>
+              <span className="stamp" style={tilt(coffee.id)}>
+                Reviewed {coffee.rating.toFixed(1)}
+              </span>
             ) : (
               coffee.rating > 0 && (
                 <span className="inline-flex items-center gap-0.5 font-bold">

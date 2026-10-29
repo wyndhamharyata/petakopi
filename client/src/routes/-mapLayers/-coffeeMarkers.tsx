@@ -33,7 +33,7 @@ function panelOffset(): PointLike {
   if (isDesktop()) return selectedCoffee || editing ? [0, 0] : [208, 0];
   const sheet = useAppStore.getState().sheet;
   // The till (68px) plus the paper on it.
-  const covered = 68 + (sheet === 'peek' ? 64 : window.innerHeight * (sheet === 'half' ? 0.45 : 0.85));
+  const covered = 68 + (sheet === 'peek' ? 58 : window.innerHeight * (sheet === 'half' ? 0.45 : 0.85));
   return [0, -covered / 2];
 }
 
@@ -99,6 +99,7 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
   const setDraft = useAppStore((state) => state.setDraft);
   const userLocation = useAppStore((state) => state.userLocation);
   const desktop = useDesktop();
+  const stubHover = useAppStore((state) => state.rail.find((c) => c.id === state.stubHover));
 
   const map = useMap('map-layer');
 
@@ -341,6 +342,9 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
         <CoffeeMarker coffee={hoveredCoffee} isSelected={false} showCard />
       )}
       {editing && draft ? desktop && <Thread at={draft} /> : selectedAt && <Thread at={selectedAt} />}
+      {stubHover && (
+        <Thread at={[stubHover.lat, stubHover.lng]} from={`[data-stub="${stubHover.id}"]`} faint />
+      )}
       {placing && <Plotter />}
       {userLocation && (
         <RMarker longitude={userLocation[1]} latitude={userLocation[0]} className="pointer-events-none">

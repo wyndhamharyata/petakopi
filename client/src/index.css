@@ -362,12 +362,13 @@ body {
 
 /* ---------- Nota rail and tickets ---------- */
 :root {
+    --news: #DCDCDC;
     --ticket: #CDEBDF;
     --fiber: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.011 .32' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='320' height='320' filter='url(%23f)' opacity='.10'/%3E%3C/svg%3E");
     --mottle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.035' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23f)' opacity='.12'/%3E%3C/svg%3E");
 }
 @media (prefers-color-scheme: dark) {
-    :root { --ticket: #A9C7BB; }
+    :root { --ticket: #A9C7BB; --news: #BDBDBD; }
 }
 .steel {
     background:
@@ -497,7 +498,7 @@ body {
 .clipping {
     position: relative;
     padding: 22px 16px 16px;
-    background: var(--mottle), var(--grain), #DCDCDC;
+    background: var(--mottle), var(--grain), var(--news);
     transform: rotate(-.6deg);
     box-shadow: 0 1px 0 rgb(0 0 0 / .14), 0 7px 10px -6px rgb(0 0 0 / .4);
 }
@@ -565,7 +566,8 @@ body {
 .nota {
     position: relative;
     color: #141414;
-    background: radial-gradient(60% 40% at 20% 30%, rgb(30 63 217 / .05), transparent), var(--fiber), var(--grain), var(--nota);
+    background-color: var(--nota);
+    background-image: radial-gradient(60% 40% at 20% 30%, rgb(30 63 217 / .05), transparent), var(--fiber), var(--grain);
     border: 1px solid rgb(20 20 20 / .3);
     box-shadow: 0 2px 0 rgb(20 20 20 / .12), 0 18px 28px -12px rgb(0 0 0 / .5);
 }
@@ -706,8 +708,52 @@ textarea.line:focus {
 .stamp-in {
     animation: stamp-in .16s ease-out both;
 }
+/* The list prints: the first rows feed in from the top, 12ms apart. */
+@keyframes print {
+    from { clip-path: inset(0 0 100% 0); transform: translateY(-6px); }
+    to { clip-path: inset(0); transform: none; }
+}
+.print > li { animation: print .16s steps(4) both; }
+.print > li:nth-child(2) { animation-delay: 12ms; }
+.print > li:nth-child(3) { animation-delay: 24ms; }
+.print > li:nth-child(4) { animation-delay: 36ms; }
+.print > li:nth-child(5) { animation-delay: 48ms; }
+.print > li:nth-child(6) { animation-delay: 60ms; }
+.print > li:nth-child(7) { animation-delay: 72ms; }
+.print > li:nth-child(8) { animation-delay: 84ms; }
+.print > li:nth-child(9) { animation-delay: 96ms; }
+.print > li:nth-child(10) { animation-delay: 108ms; }
+.print > li:nth-child(n + 11) { animation-delay: 120ms; }
+/* Take down: the ticket shortens into its stub. */
+@keyframes take-down {
+    to { transform: scale(.44, .11); opacity: .4; }
+}
+.take-down {
+    transform-origin: 0 0;
+    animation: take-down .2s ease-in forwards;
+}
+/* Saved: the nota lifts and the pink drains to mint, and it is the ticket again. */
+@keyframes drain {
+    35% { transform: translateY(-6px) rotate(-1.4deg); }
+    100% { transform: none; background-color: var(--ticket); }
+}
+.drain { animation: drain .5s ease-in-out forwards; }
+/* A cup is stamped. */
+@keyframes ink {
+    0% { opacity: 0; transform: scale(1.3); }
+    60% { opacity: 1; transform: scale(.96); }
+    100% { transform: none; }
+}
+.cups > i.f::after,
+.cups > i.h::after { animation: ink .16s ease-out; }
+/* The top print goes to the back of the stack. */
+@keyframes swap {
+    from { transform: translate(8px, 8px) rotate(1.6deg); opacity: .4; }
+    to { transform: none; opacity: 1; }
+}
+.swap { animation: swap .22s ease-out; }
 @media (prefers-reduced-motion: reduce) {
-    .hang, .stamp-in { animation: none; }
+    .hang, .stamp-in, .print > li, .take-down, .drain, .swap, .cups > i::after { animation: none; }
 }
 /* Closed permanently: the stamp lands only when the box is ticked. */
 .closed-well > .stamp { display: none; }

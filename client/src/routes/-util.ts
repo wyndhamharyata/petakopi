@@ -45,14 +45,25 @@ export const isTypingTarget = (e: KeyboardEvent) => {
 };
 
 const DESKTOP = window.matchMedia('(min-width: 1024px)');
+const WIDE = window.matchMedia('(min-width: 1280px)');
 export const isDesktop = () => DESKTOP.matches;
 
-// Desktop and mobile mount different trees, so the shop view's shortcuts never run twice.
-export const useDesktop = () =>
+const useMedia = (query: MediaQueryList) =>
   useSyncExternalStore(
     (onChange) => {
-      DESKTOP.addEventListener('change', onChange);
-      return () => DESKTOP.removeEventListener('change', onChange);
+      query.addEventListener('change', onChange);
+      return () => query.removeEventListener('change', onChange);
     },
-    isDesktop
+    () => query.matches
   );
+// Desktop and mobile mount different trees, so the shop view's shortcuts never run twice.
+export const useDesktop = () => useMedia(DESKTOP);
+// Below this the receipt and a ticket leave the map too little room side by side.
+export const useWide = () => useMedia(WIDE);
+
+// A rubber stamp lands at a slight angle, the same for a shop every time: -4° to 4°.
+export const tilt = (id: string) => {
+  let h = 0;
+  for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) | 0;
+  return { '--r': `${(Math.abs(h) % 9) - 4}deg` } as React.CSSProperties;
+};

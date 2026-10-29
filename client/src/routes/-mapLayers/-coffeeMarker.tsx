@@ -68,10 +68,12 @@ export function CoffeeMarker({ coffee, isSelected, showCard = false, onMove }: C
       // Tapping the selected stamp again closes the panel.
       onClick={() => !onMove && (isSelected ? clearSelected() : setSelected(coffee))}
       draggable={!!onMove}
-      onDragEnd={(e) => {
+      onDragStart={() => useAppStore.setState({ dragging: true })}
+      onDrag={(e) => {
         const { lat, lng } = e.target.getLngLat();
         onMove?.([lat, lng]);
       }}
+      onDragEnd={() => useAppStore.setState({ dragging: false })}
     >
       {/* 44px square: the tap target, whatever the stamp's drawn size. */}
       <div className="relative grid size-11 place-items-center">
