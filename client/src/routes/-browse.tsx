@@ -134,7 +134,7 @@ export function Browse({
 
   return (
     <div
-      className="flex min-h-0 flex-1 flex-col lg:pointer-events-auto lg:flex-none"
+      className="flex min-h-0 flex-1 flex-col lg:pointer-events-auto lg:flex-initial"
       onKeyDown={onKeyDown}
     >
       <div className="till shrink-0 px-3 pt-3">
@@ -148,7 +148,7 @@ export function Browse({
       {slip ? (
         <div className="receipt tear-b mx-2 pb-3">{slip}</div>
       ) : rolled ? null : (
-        <div className="receipt tear-b mx-2 flex min-h-0 flex-1 flex-col pb-4 lg:flex-none">
+        <div className="receipt tear-b mx-2 flex min-h-0 flex-1 flex-col pb-4 lg:flex-initial">
           {total}
           {rows}
         </div>

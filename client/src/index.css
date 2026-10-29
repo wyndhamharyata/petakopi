@@ -105,6 +105,11 @@ html, body, #root {
     margin: 0;
 }
 
+/* The app is one screen; panels scroll inside themselves, never the page. */
+body {
+    overflow: hidden;
+}
+
 /* Nota: every edge is cut square. */
 *, *::before, *::after {
     border-radius: 0 !important;
