@@ -12,8 +12,10 @@ export interface CoffeeListItemProps {
   from?: LatLng | null;
 }
 
+// The halftone grey is baked into the image at the edge: a CSS filter on every row would
+// stop Android from compositing the list while it scrolls.
 const optimize = (url: string) =>
-  `https://${new URL(url).hostname}/cdn-cgi/image/width=96,height=96,fit=cover,quality=50,format=auto,gravity=auto${new URL(url).pathname}`;
+  `https://${new URL(url).hostname}/cdn-cgi/image/width=96,height=96,fit=cover,quality=50,format=auto,gravity=auto,saturation=0,contrast=1.25${new URL(url).pathname}`;
 
 export const CoffeeListItem = memo(function CoffeeListItem({
   coffee,

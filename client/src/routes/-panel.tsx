@@ -174,7 +174,7 @@ export function Panel() {
       {railUp && <MobileRail />}
       <section
         ref={sheetRef}
-        className="pointer-events-auto absolute inset-x-2 z-[1] flex flex-col drop-shadow-[0_-6px_10px_rgb(0_0_0/.18)]"
+        className="pointer-events-auto absolute inset-x-2 z-[1] flex flex-col shadow-[0_-6px_10px_rgb(0_0_0/.18)]"
         style={{ bottom, height }}
       >
         <div
