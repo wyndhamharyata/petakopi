@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   RiArrowLeftSLine,
-  RiExternalLinkLine,
   RiFileCopyLine,
   RiRouteLine,
 } from 'react-icons/ri';
@@ -33,6 +32,10 @@ export function Panel() {
   const [linkError, setLinkError] = useState('');
   const desktop = useDesktop();
   const wide = useWide();
+  const railLength = useAppStore((state) => state.rail.length);
+  // Phones: the rail is up on a shop or once there are stubs; a full sheet stops below it.
+  const railUp = !placing && !editing && (!!selected || railLength > 0);
+  const railGap = !railUp ? RAIL_GAP : railLength > 0 ? RAIL_GAP_STUBS : RAIL_GAP_BARE;
   // Below 1280px the receipt rolls into the till while a ticket hangs; a list key drops it again.
   const [dropped, setDropped] = useState(false);
   useEffect(() => setDropped(false), [selected?.id]);
@@ -64,7 +67,7 @@ export function Panel() {
   const onPointerDown = (e: React.PointerEvent) => {
     const box = sheetRef.current!.getBoundingClientRect();
     // The bottom edge stays put, so full is the distance from it to the top margin.
-    drag.current = { y: e.clientY, h: box.height, full: box.bottom - RAIL_GAP };
+    drag.current = { y: e.clientY, h: box.height, full: box.bottom - railGap };
     e.currentTarget.setPointerCapture(e.pointerId);
   };
   const onPointerMove = (e: React.PointerEvent) => {
@@ -150,11 +153,11 @@ export function Panel() {
         ? `${PEEK}px`
         : sheet === 'half'
           ? '45dvh'
-          : `calc(${keyboard.height}px - ${tillUp ? `${TILL}px - env(safe-area-inset-bottom)` : '0px'} - ${RAIL_GAP}px)`;
+          : `calc(${keyboard.height}px - ${tillUp ? `${TILL}px - env(safe-area-inset-bottom)` : '0px'} - ${railGap}px)`;
 
   return (
     <>
-      {tillUp && !editing && <MobileRail />}
+      {railUp && <MobileRail />}
       <section
         ref={sheetRef}
         className="fixed inset-x-2 z-[1000] flex flex-col font-atkinson drop-shadow-[0_-6px_10px_rgb(0_0_0/.18)]"
@@ -207,7 +210,10 @@ export function Panel() {
 const TILL = 68;
 const PEEK = 64;
 // Room left above a full sheet for the rail.
-const RAIL_GAP = 44;
+const RAIL_GAP = 16;
+// The bare rail is 18px; with stubs hanging from it, 66px.
+const RAIL_GAP_BARE = 26;
+const RAIL_GAP_STUBS = 74;
 
 // The keyboard covers the layout viewport on iOS; the visual viewport says how much.
 function useKeyboardInset() {
@@ -289,12 +295,6 @@ function MobileTill({
               {copied ? '✓' : <RiFileCopyLine size={18} />}
             </button>
           )}
-          {post && (
-            <a className="key key-signal min-h-12 flex-1" target="_blank" href={post.url}>
-              Review
-              <RiExternalLinkLine size={16} />
-            </a>
-          )}
         </>
       ) : (
         <>
@@ -304,7 +304,30 @@ function MobileTill({
           {authenticated && <AddKey />}
         </>
       )}
+      <SheetKey />
     </div>
+  );
+}
+
+// Always on the till: steps the paper peek → half → full and back, with one lamp per height.
+function SheetKey() {
+  const sheet = useAppStore((state) => state.sheet);
+  const setSheet = useAppStore((state) => state.setSheet);
+  const level = ORDER.indexOf(sheet);
+  return (
+    <button
+      type="button"
+      className="key min-h-12 w-12 shrink-0 flex-col gap-[3px] px-0"
+      onClick={() => setSheet(ORDER[(level + 1) % ORDER.length])}
+      aria-label={`Sheet height: ${sheet}. Change it`}
+    >
+      {[2, 1, 0].map((n) => (
+        <i
+          key={n}
+          className={`h-[3px] w-4 ${n <= level ? 'bg-[var(--signal)] shadow-[0_0_5px_rgb(255_90_31/.8)]' : 'bg-[#404040]'}`}
+        />
+      ))}
+    </button>
   );
 }
 

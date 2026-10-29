@@ -147,15 +147,17 @@ export const CoffeeDetail = memo(function CoffeeDetail({
             {coffee.name}
           </h2>
           {/* On a phone Back on the till closes it. */}
-          <button
-            type="button"
-            className="key key-sm w-8 px-0 max-lg:hidden"
-            onClick={closeTicket}
-            title="Close (Esc)"
-            aria-label="Close"
-          >
-            <RiCloseLine size={18} />
-          </button>
+          {desktop && (
+            <button
+              type="button"
+              className="key key-sm w-8 px-0"
+              onClick={closeTicket}
+              title="Close (Esc)"
+              aria-label="Close"
+            >
+              <RiCloseLine size={18} />
+            </button>
+          )}
         </header>
 
         {(reviewed || coffee.status === 'closed' || coffee.rating > 0) && (
