@@ -1,4 +1,0 @@
-# Build files carry a content hash in their names, so they never change. Without this the
-# browser revalidates every one of them on every visit.
-/assets/*
-  Cache-Control: public, max-age=31536000, immutable
