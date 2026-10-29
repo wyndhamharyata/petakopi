@@ -112,7 +112,7 @@ export function Browse({
   );
 
   const rows = (
-    <div className="min-h-0 flex-1 overflow-y-auto px-3">
+    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3">
       {q && list.length === 0 && (
         <p className="p-6 text-center text-[15px]">No shop matches “{query.trim()}”.</p>
       )}

@@ -815,6 +815,12 @@ textarea.line:focus {
     .print > li, .swap, .stamp-in, .drain, .cups > i::after {
         animation: none;
     }
+    /* A place list is 150 rows. Only the rows near the viewport are laid out and painted,
+       so the first drag does not rasterise every thumbnail, stamp and blend below it. */
+    .print > li {
+        content-visibility: auto;
+        contain-intrinsic-size: auto 61px;
+    }
     .key {
         transition: none;
     }
