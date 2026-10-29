@@ -3,12 +3,9 @@ import useSWR from 'swr';
 import { client, rpcFetch } from '@fetcher/fetcher.ts';
 import { useEffect, useState } from 'react';
 import { CoffeeMarkers } from './-mapLayers/-coffeeMarkers.tsx';
+import { addGrain, usePrintedStyle } from './-mapStyle.ts';
 
 export const DEFAULT_CENTER: [number, number] = [-7.5603894, 110.771847];
-export const TILE_URL_LIGHT =
-  'https://resource.mwyndham.dev/sono/alidade_smooth_light.json';
-export const TILE_URL_DARK =
-  'https://resource.mwyndham.dev/sono/alidade_smooth_dark.json';
 
 export function useDarkMode() {
   const [isDarkMode, setIsDarkMode] = useState(
@@ -37,18 +34,22 @@ export function MapLayers() {
   });
 
   const isDark = useDarkMode();
+  const style = usePrintedStyle(isDark);
 
   return (
     <div className="h-full w-full">
+      {style && (
       <RMap
         id="map-layer"
-        className="!h-full w-full bg-base-100"
-        mapStyle={isDark ? TILE_URL_DARK : TILE_URL_LIGHT}
+        className="!h-full w-full bg-[#D6D6D6] dark:bg-[#262626]"
+        mapStyle={style}
+        onStyleImageMissing={addGrain}
         initialCenter={[DEFAULT_CENTER[1], DEFAULT_CENTER[0]]}
         initialZoom={13}
       >
         <CoffeeMarkers data={data} hovered={hovered} setHovered={setHovered} isDark={isDark} />
       </RMap>
+      )}
     </div>
   );
 }

@@ -23,9 +23,6 @@ interface MarkerProps {
 const CLUSTER_RADIUS = 40;
 const CLUSTER_MAX_ZOOM = 16;
 
-const PIN_PATH =
-  'M18.364 17.364L12 23.7279L5.63604 17.364C2.12132 13.8492 2.12132 8.15076 5.63604 4.63604C9.15076 1.12132 14.8492 1.12132 18.364 4.63604C21.8787 8.15076 21.8787 13.8492 18.364 17.364ZM12 13C13.1046 13 14 12.1046 14 11C14 9.89543 13.1046 9 12 9C10.8954 9 10 9.89543 10 11C10 12.1046 10.8954 13 12 13Z';
-
 const NEW_SHOP = { id: 'new', name: 'New shop', status: 'known' } as Coffee;
 
 // Keep the shop clear of the panel: right of it on desktop, above the sheet on mobile.
@@ -36,26 +33,50 @@ function panelOffset(): PointLike {
   return [0, -covered / 2];
 }
 
-// MapLibre can't read CSS variables or oklch(); paint one pixel to get rgb.
-function themeColor(name: string, alpha = 1) {
-  const ctx = document.createElement('canvas').getContext('2d')!;
-  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-  ctx.fillRect(0, 0, 1, 1);
-  const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+const INK = '#141414';
+const THERMAL = '#F6F6F6';
+const CHOP = '#B80F2A';
+const ROUGH =
+  '<filter id="r" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="1.1" xChannelSelector="R" yChannelSelector="G"/></filter>';
+const star = (x: number, y: number, w: number) =>
+  [50, 0, 61, 35, 98, 35, 68, 57, 79, 91, 50, 70, 21, 91, 32, 57, 2, 35, 39, 35]
+    .map((v, i) => (i % 2 ? y : x) + (v / 100) * w)
+    .join(' ');
+
+// Stamps, drawn centred in a 44px square so a thumb can take one; clusters are stacks of paper.
+const STAMPS: Record<string, [number, string]> = {
+  'stamp-known': [
+    44,
+    `<rect x="16.5" y="16.5" width="13" height="13" fill="${INK}" opacity=".3"/><rect x="16.5" y="16.5" width="11" height="11" fill="${THERMAL}" stroke="${INK}" stroke-width="2"/>`,
+  ],
+  'stamp-reviewed': [
+    44,
+    `<g filter="url(#r)"><rect x="11.5" y="11.5" width="21" height="21" fill="${CHOP}"/><polygon points="${star(15, 15, 14)}" fill="${THERMAL}"/></g>`,
+  ],
+  'stamp-closed': [
+    44,
+    `<rect x="16.5" y="16.5" width="11" height="11" fill="${THERMAL}" fill-opacity=".55" stroke="${INK}" stroke-opacity=".55" stroke-width="2"/><path d="M18 18l8 8M26 18l-8 8" stroke="${INK}" stroke-opacity=".6" stroke-width="1.5"/>`,
+  ],
+};
+for (const [size, sheets] of [[28, 1], [32, 2], [38, 3]]) {
+  const x = 30 - size / 2;
+  const stack = [...Array(sheets)]
+    .map((_, k) => {
+      const o = 3 * (sheets - k);
+      return `<rect x="${x + o}" y="${x + o}" width="${size}" height="${size}" fill="${THERMAL}" stroke="${INK}" stroke-width="1.5"/>`;
+    })
+    .join('');
+  const top = `<rect x="${x}" y="${x}" width="${size}" height="${size}" fill="${THERMAL}" stroke="${INK}" stroke-width="1.5"/>`;
+  const chip = `<rect x="${x + size - 5}" y="${x - 6}" width="11" height="11" fill="${CHOP}" filter="url(#r)"/>`;
+  STAMPS[`cluster-${sheets}`] = [60, stack + top];
+  STAMPS[`cluster-${sheets}r`] = [60, stack + top + chip];
 }
 
-// Pins are map images, drawn once per theme; a style switch drops them, so they are re-added.
-function addPinImages(map: MapLibreMap) {
-  const base = themeColor('--color-base-100');
-  // Reviewed: outlined in primary, so it stands out without competing with the filled selected pin.
-  const pins = {
-    'pin-known': [base, themeColor('--color-accent'), '1.7'],
-    'pin-reviewed': [base, themeColor('--color-primary'), '2.6'],
-  };
+// Stamps are map images; a style switch drops them, so they are re-added.
+function addStampImages(map: MapLibreMap) {
   const ratio = 2;
-  for (const [id, [fill, stroke, width]] of Object.entries(pins)) {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${40 * ratio}" height="${40 * ratio}" viewBox="-1 -1 26 26"><path d="${PIN_PATH}" fill="${fill}" stroke="${stroke}" stroke-width="${width}"/></svg>`;
+  for (const [id, [size, body]] of Object.entries(STAMPS)) {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size * ratio}" height="${size * ratio}" viewBox="0 0 ${size} ${size}"><defs>${ROUGH}</defs>${body}</svg>`;
     const img = new Image();
     img.onload = () => {
       if (map.hasImage(id)) map.removeImage(id);
@@ -72,6 +93,7 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
   const placing = useAppStore((state) => state.placing);
   const draft = useAppStore((state) => state.draft);
   const setDraft = useAppStore((state) => state.setDraft);
+  const userLocation = useAppStore((state) => state.userLocation);
 
   const map = useMap('map-layer');
 
@@ -92,23 +114,11 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
     [data, selectedCoffee?.id]
   );
 
-  // Colors follow the daisyUI theme, which changes with dark mode.
-  const colors = useMemo(
-    () => ({
-      bubble: themeColor('--color-base-100', 0.95),
-      bubbleText: themeColor('--color-base-content'),
-      bubbleRing: themeColor('--color-accent'),
-      reviewedRing: themeColor('--color-primary'),
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isDark]
-  );
-
   useEffect(() => {
     if (!map) return;
-    addPinImages(map);
+    addStampImages(map);
     const onStyle = () => {
-      if (!map.hasImage('pin-known')) addPinImages(map);
+      if (!map.hasImage('stamp-known')) addStampImages(map);
     };
     map.on('styledata', onStyle);
     return () => {
@@ -265,35 +275,25 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
       <RLayer
         id="coffee-clusters"
         source="coffees"
-        type="circle"
-        filter={['has', 'point_count']}
-        paint={{
-          'circle-color': colors.bubble,
-          'circle-radius': ['step', ['get', 'point_count'], 16, 10, 20, 30, 26],
-          'circle-stroke-width': 3,
-          'circle-stroke-color': [
-            'case',
-            ['>', ['get', 'reviewed'], 0],
-            colors.reviewedRing,
-            colors.bubbleRing,
-          ],
-        }}
-        onClick={onClusterClick}
-        onMouseEnter={onClusterEnter}
-        onMouseLeave={onClusterLeave}
-      />
-      <RLayer
-        id="coffee-cluster-count"
-        source="coffees"
         type="symbol"
         filter={['has', 'point_count']}
         layout={{
+          'icon-image': [
+            'concat',
+            'cluster-',
+            ['step', ['get', 'point_count'], '1', 10, '2', 30, '3'],
+            ['case', ['>', ['get', 'reviewed'], 0], 'r', ''],
+          ],
+          'icon-allow-overlap': true,
           'text-field': ['get', 'point_count_abbreviated'],
           'text-font': ['sono'],
-          'text-size': 13,
+          'text-size': ['step', ['get', 'point_count'], 13, 30, 15],
           'text-allow-overlap': true,
         }}
-        paint={{ 'text-color': colors.bubbleText }}
+        paint={{ 'text-color': INK }}
+        onClick={onClusterClick}
+        onMouseEnter={onClusterEnter}
+        onMouseLeave={onClusterLeave}
       />
       <RLayer
         id="coffee-pins"
@@ -302,12 +302,10 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
         // The selected shop is drawn as an HTML marker instead.
         filter={['all', ['!', ['has', 'point_count']], ['!=', ['get', 'id'], selectedCoffee?.id ?? '']]}
         layout={{
-          'icon-image': ['match', ['get', 'status'], 'reviewed', 'pin-reviewed', 'pin-known'],
-          'icon-anchor': 'bottom',
+          'icon-image': ['match', ['get', 'status'], 'reviewed', 'stamp-reviewed', 'closed', 'stamp-closed', 'stamp-known'],
           'icon-allow-overlap': true,
           'symbol-sort-key': ['match', ['get', 'status'], 'reviewed', 1, 0],
         }}
-        paint={{ 'icon-opacity': ['match', ['get', 'status'], 'closed', 0.4, 1] }}
         onClick={onPinClick}
         onMouseMove={(e: MapLayerMouseEvent) => {
           setCursor('pointer')();
@@ -332,6 +330,11 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
       {hoveredCoffee && hoveredCoffee.id !== selectedCoffee?.id && (
         <CoffeeMarker coffee={hoveredCoffee} isSelected={false} showCard />
       )}
+      {userLocation && (
+        <RMarker longitude={userLocation[1]} latitude={userLocation[0]} className="pointer-events-none">
+          <span className="you-mark" />
+        </RMarker>
+      )}
       {clusterCard && (
         <RMarker
           longitude={clusterCard.lng}
@@ -339,10 +342,10 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
           initialAnchor="bottom"
           className="pointer-events-none"
         >
-          {/* As tall as the bubble, so the card starts at its top edge instead of covering it. */}
+          {/* Half the stack, so the card starts at its top edge instead of covering it. */}
           <div
             className="relative"
-            style={{ height: clusterCard.total < 10 ? 32 : clusterCard.total < 30 ? 40 : 52 }}
+            style={{ height: clusterCard.total < 10 ? 16 : clusterCard.total < 30 ? 18 : 21 }}
           >
             <CoffeeHoverCard coffees={clusterCard.coffees} total={clusterCard.total} />
           </div>
