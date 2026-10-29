@@ -1,6 +1,6 @@
 # Kopimap redesign
 
-Status: built (all five steps). Selected pin: option B with a primary glow, see [`pins.html`](redesign/pins.html). Mockups: [`docs/redesign/mockups.html`](redesign/mockups.html). Open it in a browser and use the theme toggle at the top.
+Status: superseded by Nota, built in October 2026 (steps 0–7 of [`redesign/nota-neutral/`](redesign/nota-neutral/index.html)). This file records the earlier redesign; its rules no longer describe the app. Earlier status: built (all five steps). Selected pin: option B with a primary glow, see [`pins.html`](redesign/pins.html). Mockups: [`docs/redesign/mockups.html`](redesign/mockups.html). Open it in a browser and use the theme toggle at the top.
 
 ## Direction (decided)
 
