@@ -15,6 +15,11 @@ export default defineConfig({
         react(),
         tsconfigPaths()
     ],
+    // Client files and server/rpcTypes resolve valibot from different node_modules,
+    // and Rollup would bundle both copies.
+    resolve: {
+        dedupe: ['valibot']
+    },
     server: {
         proxy: {
             '/api': {

@@ -1,7 +1,7 @@
 // Prints Kopimap's map styles: Stadia's alidade styles, recoloured as the Nota placemat.
 // Run from client/: node scripts/print-map-style.mjs <out-dir>
 // Then, from the repo root with .env loaded, for light and dark:
-//   npx wrangler r2 object put mwyndham-dev/sono/kopimap_print_light.json --file <out-dir>/kopimap_print_light.json --content-type application/json --remote
+//   npx wrangler r2 object put mwyndham-dev/sono/kopimap_print_light.json --file <out-dir>/kopimap_print_light.json --content-type application/json --cache-control "public, max-age=3600" --remote
 import { writeFileSync } from 'node:fs';
 
 const UPSTREAM = 'https://resource.mwyndham.dev/sono/alidade_smooth_';

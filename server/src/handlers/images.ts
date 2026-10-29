@@ -50,7 +50,10 @@ export async function createImage(
 ) {
   const imageId = uuidv7();
   const key = `images/${imageId}-${image.file.name}`;
-  await Resource.PetaKopiBucket.put(key, image.file);
+  // The key holds a new id on every upload, so the photo at this URL never changes.
+  await Resource.PetaKopiBucket.put(key, image.file, {
+    httpMetadata: { cacheControl: 'public, max-age=31536000, immutable' },
+  });
 
   const db = await getDB();
   const res = await db
