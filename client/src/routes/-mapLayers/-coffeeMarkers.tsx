@@ -33,7 +33,7 @@ function panelOffset(): PointLike {
   if (isDesktop()) return selectedCoffee || editing ? [0, 0] : [208, 0];
   const sheet = useAppStore.getState().sheet;
   // The till (68px) plus the paper on it.
-  const covered = 68 + (sheet === 'peek' ? 58 : window.innerHeight * (sheet === 'half' ? 0.45 : 0.85));
+  const covered = 68 + (sheet === 'peek' ? 64 : window.innerHeight * (sheet === 'half' ? 0.45 : 0.85));
   return [0, -covered / 2];
 }
 

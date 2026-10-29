@@ -317,7 +317,7 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
       </fieldset>
 
       {(desktop || error) && (
-        <div className="flex shrink-0 flex-col gap-2 border-t border-dashed border-[#141414]/40 p-3">
+        <div className="tear-line flex shrink-0 flex-col gap-2 p-3">
           {error && <p className="err">× {error}</p>}
           {desktop && keys}
         </div>

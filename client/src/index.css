@@ -457,7 +457,7 @@ body {
 .prints {
     position: relative;
     height: 178px;
-    margin: 0 6px 22px 2px;
+    margin: 20px 6px 22px 2px;
 }
 .prints > .sheet {
     position: absolute;
@@ -672,6 +672,8 @@ textarea.line:focus {
     inset: -5px;
     border: 3px solid var(--marker);
     pointer-events: none;
+    /* China marker: a waxy, fringed edge. */
+    filter: url(#grease);
 }
 .film-edge {
     position: absolute;
@@ -788,4 +790,33 @@ textarea.line:focus {
     background: linear-gradient(115deg, rgb(255 255 255 / .55) 0, transparent 32%, transparent 68%, rgb(255 255 255 / .25) 100%);
     outline: 6px solid rgb(255 255 255 / .35);
     outline-offset: -1px;
+}
+
+/* The tear line: 2px dashes, the one dash for every line you could tear along. */
+.tear-line {
+    background: repeating-linear-gradient(90deg, rgb(20 20 20 / .35) 0 4px, transparent 4px 8px) top / 100% 2px no-repeat;
+}
+/* A stub tears along its bottom edge, not under the slider. */
+.ticket.stub::after {
+    top: auto;
+    bottom: 7px;
+    height: 2px;
+    background: repeating-linear-gradient(90deg, rgb(20 20 20 / .35) 0 4px, transparent 4px 8px);
+}
+.ticket.stub-m::after {
+    display: none;
+}
+.key:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+    transform: none;
+}
+/* Phones: nothing animates. */
+@media (max-width: 1023px) {
+    .print > li, .swap, .stamp-in, .drain, .cups > i::after {
+        animation: none;
+    }
+    .key {
+        transition: none;
+    }
 }

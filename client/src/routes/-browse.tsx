@@ -75,7 +75,9 @@ export function Browse({
   const tabKey = (id: typeof tab, label: string, hint: string) => (
     <button
       role="tab"
-      aria-selected={tab === id}
+      // Searching lists every shop, so neither list is on; the keys stay where they are.
+      aria-selected={!q && tab === id}
+      disabled={!!q}
       className="key flex-1"
       onClick={() => {
         setTab(id);
@@ -88,7 +90,7 @@ export function Browse({
     </button>
   );
 
-  const tabs = !q && (
+  const tabs = (
     <>
       {tabKey('latestReviews', 'Latest reviews', '1')}
       {tabKey('allPlaces', 'All places', '2')}
@@ -128,11 +130,9 @@ export function Browse({
     return (
       <div className="flex min-h-0 flex-1 flex-col">
         {total}
-        {tabs && (
-          <div role="tablist" className="flex gap-2 px-3 pt-3 pb-1.5">
-            {tabs}
-          </div>
-        )}
+        <div role="tablist" className="flex gap-2 px-3 pt-3 pb-1.5">
+          {tabs}
+        </div>
         {rows}
       </div>
     );

@@ -140,7 +140,8 @@ export const CoffeeDetail = memo(function CoffeeDetail({
     >
       <span className="hold max-lg:hidden" />
       <span className="eyelet" data-eyelet />
-      <div className="ticket-fade flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pt-7 pb-12 [&>*]:shrink-0">
+      {/* Starts below the perforation, so scrolled content never runs over it or the slider. */}
+      <div className="ticket-fade mt-5 flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pt-2 pb-12 [&>*]:shrink-0">
         <header className="flex items-start gap-2.5">
           <h2 className="flex-1 font-display text-[30px] leading-[0.94] font-black uppercase text-balance lg:text-[34px]">
             {coffee.name}
@@ -355,7 +356,7 @@ export const CoffeeDetail = memo(function CoffeeDetail({
       </div>
 
       {authenticated && (
-        <div className="flex gap-2 border-t border-dashed border-base-content/40 p-3">
+        <div className="tear-line flex gap-2 p-3">
           <button type="button" className="key flex-1" onClick={startEdit}>
             Edit
           </button>

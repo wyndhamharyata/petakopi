@@ -15,6 +15,10 @@
     <feColorMatrix in="m" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.6 1.8" result="mask"/>
     <feComposite in="d" in2="mask" operator="in"/>
   </filter>
+  <filter id="grease" x="-10%" y="-10%" width="120%" height="120%">
+    <feTurbulence type="fractalNoise" baseFrequency=".09" numOctaves="2" seed="5" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
 </svg>
 <div id="root" class="h-full w-full"></div>
 <script type="module" src="/src/main.tsx"></script>

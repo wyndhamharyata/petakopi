@@ -56,14 +56,40 @@ export function Panel() {
     importShop(imported.name, imported.latLng);
   };
 
-  // Drag the handle up or down a step; a tap moves up, or back to half from full.
-  const dragStart = useRef(0);
+  // The paper follows the finger on the handle, then settles at the nearest height.
+  // A tap moves up a step, or back to half from full.
+  const sheetRef = useRef<HTMLElement>(null);
+  const drag = useRef<{ y: number; h: number; full: number } | null>(null);
+  const [dragHeight, setDragHeight] = useState<number | null>(null);
+  const onPointerDown = (e: React.PointerEvent) => {
+    const box = sheetRef.current!.getBoundingClientRect();
+    // The bottom edge stays put, so full is the distance from it to the top margin.
+    drag.current = { y: e.clientY, h: box.height, full: box.bottom - RAIL_GAP };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    const d = drag.current;
+    if (!d || Math.abs(e.clientY - d.y) < 8) return;
+    setDragHeight(Math.min(Math.max(d.h - (e.clientY - d.y), PEEK), d.full));
+  };
   const onPointerUp = (e: React.PointerEvent) => {
-    const dy = e.clientY - dragStart.current;
-    const i = ORDER.indexOf(sheet);
-    if (Math.abs(dy) < 8) setSheet(sheet === 'full' ? 'half' : ORDER[i + 1]);
-    else if (dy < -40) setSheet(ORDER[Math.min(i + 1, 2)]);
-    else if (dy > 40) setSheet(ORDER[Math.max(i - 1, 0)]);
+    const d = drag.current;
+    drag.current = null;
+    setDragHeight(null);
+    if (!d) return;
+    const dy = e.clientY - d.y;
+    if (Math.abs(dy) < 8) {
+      const i = ORDER.indexOf(sheet);
+      return setSheet(sheet === 'full' ? 'half' : ORDER[i + 1]);
+    }
+    const h = d.h - dy;
+    const heights: [Sheet, number][] = [
+      ['peek', PEEK],
+      ['half', document.documentElement.clientHeight * 0.45],
+      ['full', d.full],
+    ];
+    heights.sort((a, b) => Math.abs(a[1] - h) - Math.abs(b[1] - h));
+    setSheet(heights[0][0]);
   };
 
   // One row: the peek sheet is shallow, and the map below it must stay tappable.
@@ -116,14 +142,22 @@ export function Panel() {
   const tillUp = !placing;
   // The paper rides on the till; with the till away (placing) it reaches the bottom edge.
   const bottom = tillUp ? `calc(${TILL}px + env(safe-area-inset-bottom) + ${keyboard.inset}px)` : '0px';
+  // Full fills what is visible above the till; the keyboard is already out of the visible height.
   const height =
-    sheet === 'peek' ? '58px' : sheet === 'half' ? '45dvh' : `calc(${keyboard.height}px - ${bottom} - 44px)`;
+    dragHeight !== null
+      ? `${dragHeight}px`
+      : sheet === 'peek'
+        ? `${PEEK}px`
+        : sheet === 'half'
+          ? '45dvh'
+          : `calc(${keyboard.height}px - ${tillUp ? `${TILL}px - env(safe-area-inset-bottom)` : '0px'} - ${RAIL_GAP}px)`;
 
   return (
     <>
       {tillUp && !editing && <MobileRail />}
       <section
-        className="fixed inset-x-2 z-[1000] flex flex-col font-atkinson drop-shadow-[0_-6px_10px_rgb(0_0_0/.18)] transition-[height] duration-[240ms] ease-[cubic-bezier(.2,.8,.2,1)]"
+        ref={sheetRef}
+        className="fixed inset-x-2 z-[1000] flex flex-col font-atkinson drop-shadow-[0_-6px_10px_rgb(0_0_0/.18)]"
         style={{ bottom, height }}
       >
         <div
@@ -133,13 +167,15 @@ export function Panel() {
         >
           <button
             type="button"
-            className="flex h-5 shrink-0 cursor-grab touch-none items-center justify-center"
+            className="flex h-7 shrink-0 cursor-grab touch-none items-center justify-center"
             aria-label="Resize panel"
-            onPointerDown={(e) => {
-              dragStart.current = e.clientY;
-              e.currentTarget.setPointerCapture(e.pointerId);
-            }}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
+            onPointerCancel={() => {
+              drag.current = null;
+              setDragHeight(null);
+            }}
           >
             <span className="h-[9px] w-[26px] bg-[linear-gradient(#141414,#141414)_0_0/100%_2px_no-repeat,linear-gradient(#141414,#141414)_0_50%/100%_2px_no-repeat,linear-gradient(#141414,#141414)_0_100%/100%_2px_no-repeat] opacity-70" />
           </button>
@@ -169,13 +205,17 @@ export function Panel() {
 }
 
 const TILL = 68;
+const PEEK = 64;
+// Room left above a full sheet for the rail.
+const RAIL_GAP = 44;
 
 // The keyboard covers the layout viewport on iOS; the visual viewport says how much.
 function useKeyboardInset() {
   const read = () => {
     const vv = window.visualViewport;
     return vv
-      ? { inset: Math.max(0, innerHeight - vv.height - vv.offsetTop), height: vv.height }
+      ? // clientHeight is the layout viewport; iOS also shrinks innerHeight, which hid the keyboard's size.
+        { inset: Math.max(0, document.documentElement.clientHeight - vv.height - vv.offsetTop), height: vv.height }
       : { inset: 0, height: innerHeight };
   };
   const [state, setState] = useState(read);
@@ -280,7 +320,7 @@ function MobileRail() {
       <div className="steel fixed inset-x-0 top-0 z-[999] h-[18px] border-x-0 border-t-0" />
       <ul className="fixed top-3.5 right-2 left-2 z-[1000] flex flex-row-reverse gap-2 overflow-hidden pt-2 font-atkinson">
         {rail.slice(0, 2).map((c) => (
-          <li key={c.id} className="ticket relative flex h-11 w-[170px] shrink-0">
+          <li key={c.id} className="ticket stub-m relative flex h-11 w-[170px] shrink-0">
             <span className="hold" />
             <button
               type="button"
@@ -332,7 +372,7 @@ function Rail({ ticket }: { ticket: boolean }) {
             <button
               type="button"
               data-stub={c.id}
-              className="ticket h-24 w-[168px] cursor-pointer px-3 pt-[15px] pb-2.5 text-left"
+              className="ticket stub h-24 w-[168px] cursor-pointer px-3 pt-[15px] pb-2.5 text-left"
               onClick={() => setSelected(c)}
               title={`Open ${c.name}`}
             >
