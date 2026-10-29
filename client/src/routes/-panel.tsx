@@ -32,6 +32,7 @@ export function Panel() {
   const { data: shops } = useSWR('coffees', rpcFetch(client.api.coffees.$get)({}));
   const [linkError, setLinkError] = useState('');
   const desktop = useDesktop();
+  const keyboard = useKeyboardInset();
   // Each Add starts clean; the error belongs to the last link only.
   useEffect(() => {
     if (placing) setLinkError('');
@@ -106,7 +107,6 @@ export function Panel() {
   }
 
   const tillUp = !editing && !placing;
-  const keyboard = useKeyboardInset();
   // The paper rides on the till; with the till away (editing) it reaches the bottom edge.
   const bottom = tillUp ? `calc(${TILL}px + env(safe-area-inset-bottom) + ${keyboard.inset}px)` : '0px';
   const height =
