@@ -1,5 +1,10 @@
 import { type RefObject, useEffect } from 'react';
 
+// Brave on iOS lays its address bar over the page just above the keyboard, and visualViewport
+// does not count it. 28px is measured from a screenshot of Brave 1.x on an iPhone.
+const IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const KEYBOARD_BAR = IOS && 'brave' in navigator ? 28 : 0;
+
 // Ported from reader-hero's library view. With the keyboard up the phone layout takes only the
 // visible area, so the till stays above the keyboard and the paper above the till.
 // active: the root only exists on phones; the listeners attach when it mounts.
@@ -13,7 +18,7 @@ export function useKeyboardFit(rootRef: RefObject<HTMLElement | null>, active: b
     const html = document.documentElement;
     let isTyping = false;
     const fit = () => {
-      root.style.height = isTyping ? `${viewport.height}px` : '';
+      root.style.height = isTyping ? `${viewport.height - KEYBOARD_BAR}px` : '';
 
       // iOS scrolls the window. Its viewport offset lags behind and stays stale for a while after the close.
       const shift = isTyping ? Math.max(window.scrollY, viewport.offsetTop) : window.scrollY;
@@ -47,7 +52,7 @@ export function useKeyboardFit(rootRef: RefObject<HTMLElement | null>, active: b
 
       // Shrunk before iOS opens the keyboard, the field is already in view, so iOS does not move the page.
       if (isTyping && known > 0 && html.clientHeight - viewport.height < 1) {
-        root.style.height = `${html.clientHeight - known}px`;
+        root.style.height = `${html.clientHeight - known - KEYBOARD_BAR}px`;
         html.style.height = `${html.clientHeight - known}px`;
         html.style.overflow = 'hidden';
       } else {

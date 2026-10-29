@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { type RefObject, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   RiArrowLeftSLine,
   RiFileCopyLine,
@@ -42,6 +42,16 @@ export function Panel() {
   useEffect(() => setDropped(false), [selected?.id]);
   const rootRef = useRef<HTMLDivElement>(null);
   useKeyboardFit(rootRef, !desktop);
+  // The paper rests on the till, whose height depends on the safe area; measured, not assumed.
+  const tillRef = useRef<HTMLDivElement>(null);
+  const [tillHeight, setTillHeight] = useState(0);
+  useLayoutEffect(() => {
+    const till = tillRef.current;
+    if (!till) return;
+    const observer = new ResizeObserver(() => setTillHeight(till.offsetHeight));
+    observer.observe(till);
+    return () => observer.disconnect();
+  }, [desktop, placing]);
   // Each Add starts clean; the error belongs to the last link only.
   useEffect(() => {
     if (placing) setLinkError('');
@@ -146,7 +156,7 @@ export function Panel() {
 
   const tillUp = !placing;
   // The paper rides on the till; with the till away (placing) it reaches the bottom edge.
-  const bottom = tillUp ? `calc(${TILL}px + env(safe-area-inset-bottom))` : '0px';
+  const bottom = tillUp ? `${tillHeight + SLOT}px` : '0px';
   // Full fills the root above the till. While typing the root is only the visible area, above the keyboard.
   const height =
     dragHeight !== null
@@ -200,14 +210,21 @@ export function Panel() {
         </div>
       </section>
       {tillUp && (
-        <MobileTill coffee={editing ? null : selected} editing={editing} authenticated={authenticated} />
+        <MobileTill
+          tillRef={tillRef}
+          coffee={editing ? null : selected}
+          editing={editing}
+          authenticated={authenticated}
+        />
       )}
     </div>
   );
 }
 
-const TILL = 68;
-const PEEK = 64;
+// The black slot the paper feeds out of, on top of the till.
+const SLOT = 9;
+// The handle and the count line.
+const PEEK = 74;
 // Room left above a full sheet for the rail.
 const RAIL_GAP = 16;
 // The bare rail is 18px; with stubs hanging from it, 66px.
@@ -217,10 +234,12 @@ const RAIL_GAP_STUBS = 74;
 // The till on the bottom edge. Its keys follow the paper on top: search on the receipt,
 // Back, Directions, Copy and Review on a ticket.
 function MobileTill({
+  tillRef,
   coffee,
   editing,
   authenticated,
 }: {
+  tillRef: RefObject<HTMLDivElement | null>;
   coffee: Coffee | null;
   editing: boolean;
   authenticated: boolean;
@@ -235,6 +254,7 @@ function MobileTill({
 
   return (
     <div
+      ref={tillRef}
       className="till pointer-events-auto absolute inset-x-0 bottom-0 z-[2] flex items-center gap-2 border-x-0 border-b-0 px-2.5 pt-2.5 pb-[max(10px,env(safe-area-inset-bottom))] before:absolute before:inset-x-0 before:-top-[9px] before:h-[9px] before:bg-[#0A0A0A] before:shadow-[inset_0_-3px_3px_#000]"
     >
       {editing ? (
