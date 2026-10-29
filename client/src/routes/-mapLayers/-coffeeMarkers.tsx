@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CoffeeHoverCard, CoffeeMarker } from './-coffeeMarker.tsx';
 import { isDesktop, isTypingTarget, useDesktop } from '../-util.ts';
 import { Thread } from './-thread.tsx';
+import { Plotter } from './-plotter.tsx';
 import type {
   GeoJSONSource,
   MapLayerMouseEvent,
@@ -169,7 +170,7 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
   // Adding a shop: the next tap on the map is where it goes.
   useEffect(() => {
     if (!map || !placing) return;
-    map.getCanvas().style.cursor = 'crosshair';
+    map.getCanvas().style.cursor = 'none';
     const onClick = (e: MapMouseEvent) => {
       useAppStore.setState({
         placing: false,
@@ -340,6 +341,7 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
         <CoffeeMarker coffee={hoveredCoffee} isSelected={false} showCard />
       )}
       {editing && draft ? desktop && <Thread at={draft} /> : selectedAt && <Thread at={selectedAt} />}
+      {placing && <Plotter />}
       {userLocation && (
         <RMarker longitude={userLocation[1]} latitude={userLocation[0]} className="pointer-events-none">
           <span className="you-mark" />

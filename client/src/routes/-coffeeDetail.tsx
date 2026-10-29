@@ -121,7 +121,7 @@ export const CoffeeDetail = memo(function CoffeeDetail({
 
   return (
     // On a phone the sheet is the ticket; its keys move to the till.
-    <div className={`flex min-h-0 flex-1 flex-col ${desktop ? 'ticket' : ''}`}>
+    <div className={`flex min-h-0 flex-1 flex-col ${desktop ? 'ticket hang' : ''}`}>
       <span className="hold max-lg:hidden" />
       <span className="eyelet" data-eyelet />
       <div className="ticket-fade flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pt-7 pb-12 [&>*]:shrink-0">

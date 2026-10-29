@@ -604,3 +604,162 @@ body {
         top: 4px;
     }
 }
+
+/* ---------- Nota: the edit and add slip ---------- */
+:root {
+    --nota: #FFB8D2;
+    --biro: #1E3FD9;
+}
+@media (prefers-color-scheme: dark) {
+    :root { --nota: #D9A0B5; }
+}
+.nota {
+    position: relative;
+    color: #141414;
+    background: radial-gradient(60% 40% at 20% 30%, rgb(30 63 217 / .05), transparent), var(--fiber), var(--grain), var(--nota);
+    border: 1px solid rgb(20 20 20 / .3);
+    box-shadow: 0 2px 0 rgb(20 20 20 / .12), 0 18px 28px -12px rgb(0 0 0 / .5);
+}
+/* What you write is in blue ballpoint on a ruled line. */
+.line {
+    display: block;
+    width: 100%;
+    padding: 6px 2px 5px;
+    font: 500 16px/1.35 var(--font-mono);
+    color: var(--biro);
+    background: none;
+    border: 0;
+    border-bottom: 1.5px solid #141414;
+    outline: 0;
+}
+.line:focus {
+    border-bottom-width: 3px;
+    padding-bottom: 3.5px;
+    background: rgb(255 255 255 / .35);
+}
+.line::placeholder {
+    color: rgb(20 20 20 / .45);
+}
+textarea.line {
+    resize: none;
+    line-height: 26px;
+    padding: 0 2px;
+    border-bottom: 0;
+    background: repeating-linear-gradient(transparent 0 25px, rgb(20 20 20 / .55) 25px 26.5px);
+}
+textarea.line:focus {
+    background: repeating-linear-gradient(transparent 0 25px, rgb(20 20 20 / .9) 25px 27px), rgb(255 255 255 / .3);
+}
+.time {
+    width: 100px;
+    padding: 7px 8px;
+    font: 700 16px/1 var(--font-mono);
+    color: var(--biro);
+    background: rgb(255 255 255 / .35);
+    border: 1.5px solid #141414;
+}
+.time:disabled {
+    color: rgb(20 20 20 / .45);
+    border-color: rgb(20 20 20 / .35);
+    background: none;
+}
+/* A ticked box is a blue ballpoint X. */
+.box {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    flex: none;
+    display: grid;
+    place-content: center;
+    border: 2px solid #141414;
+    background: rgb(255 255 255 / .3);
+    cursor: pointer;
+}
+.box::after {
+    content: "";
+    width: 13px;
+    height: 13px;
+    background:
+        linear-gradient(45deg, transparent 42%, var(--biro) 42% 58%, transparent 58%),
+        linear-gradient(-45deg, transparent 42%, var(--biro) 42% 58%, transparent 58%);
+    opacity: 0;
+}
+.box:checked::after { opacity: 1; }
+.box:focus-visible { outline: 2px solid #141414; outline-offset: 3px; }
+/* Photos are a contact sheet: film with sprocket holes. */
+.contact {
+    position: relative;
+    display: flex;
+    gap: 8px;
+    padding: 14px 10px 30px;
+    overflow-x: auto;
+    background: #1C1C1C;
+}
+.contact::before,
+.contact::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    min-width: 100%;
+    width: var(--film, 100%);
+    height: 5px;
+    background: repeating-linear-gradient(90deg, transparent 0 5px, #CCC 5px 11px, transparent 11px 14px);
+}
+.contact::before { top: 4px; }
+.contact::after { bottom: 3px; }
+.frame {
+    position: relative;
+    flex: none;
+    width: 100px;
+    height: 74px;
+    outline: 1px solid #000;
+}
+.frame.cover::after {
+    content: "";
+    position: absolute;
+    inset: -5px;
+    border: 3px solid var(--marker);
+    pointer-events: none;
+}
+.film-edge {
+    position: absolute;
+    left: 0;
+    bottom: -21px;
+    font: 700 12px/1 var(--font-mono);
+    letter-spacing: .08em;
+    color: var(--marker);
+}
+.err {
+    justify-self: start;
+    display: inline-block;
+    margin-top: 4px;
+    padding: 3px 8px;
+    font: 700 14px/1.35 var(--font-atkinson);
+    color: #fff;
+    background: #B80F2A;
+}
+@keyframes hang {
+    0% { transform: translateY(-60px) rotate(2.2deg); }
+    45% { transform: translateY(0) rotate(-1.3deg); }
+    72% { transform: rotate(.6deg); }
+    100% { transform: none; }
+}
+@keyframes stamp-in {
+    0% { opacity: 0; transform: rotate(var(--r, -3deg)) scale(1.3); }
+    60% { opacity: 1; transform: rotate(var(--r, -3deg)) scale(.96); }
+    100% { transform: rotate(var(--r, -3deg)) scale(1); }
+}
+.hang {
+    transform-origin: 50% 0;
+    animation: hang .48s cubic-bezier(.3, .7, .4, 1) both;
+}
+.stamp-in {
+    animation: stamp-in .16s ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+    .hang, .stamp-in { animation: none; }
+}
+/* Closed permanently: the stamp lands only when the box is ticked. */
+.closed-well > .stamp { display: none; }
+:checked + .closed-well > .stamp { display: inline-flex; }

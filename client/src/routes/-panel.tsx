@@ -65,9 +65,10 @@ export function Panel() {
   // One row: the peek sheet is shallow, and the map below it must stay tappable.
   const placingSlip = (
     <div className="flex flex-col gap-2 px-4 py-3 lg:py-4">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         <input
-          className="input flex-1"
+          className="line flex-1"
+          style={{ fontSize: 14 }}
           placeholder="Paste a link, or tap the map"
           aria-label="Paste a Google Maps link"
           onPaste={(e) => importLink(e.clipboardData.getData('text'))}
@@ -79,7 +80,7 @@ export function Panel() {
           Cancel
         </button>
       </div>
-      {linkError && <p className="text-[13px] text-error">{linkError}</p>}
+      {linkError && <p className="err">× {linkError}</p>}
     </div>
   );
 
@@ -94,9 +95,7 @@ export function Panel() {
         {(editing || selected) && (
           <div className="absolute top-7 right-4 bottom-4 z-[1001] flex w-[384px] flex-col font-atkinson">
             {editing ? (
-              <div className="paper flex min-h-0 flex-1 flex-col border border-base-content/30 shadow-xl">
-                <Editor key={selected?.id ?? 'new'} coffee={selected ?? undefined} />
-              </div>
+              <Editor key={selected?.id ?? 'new'} coffee={selected ?? undefined} />
             ) : (
               selected && <CoffeeDetail key={selected.id} coffee={selected} />
             )}
@@ -121,7 +120,7 @@ export function Panel() {
       >
         <div
           className={`tear-t flex min-h-0 flex-1 flex-col ${
-            tillUp ? (selected ? 'ticket' : 'receipt') : 'paper'
+            editing ? 'nota' : selected && !placing ? 'ticket' : 'receipt'
           }`}
         >
           <button

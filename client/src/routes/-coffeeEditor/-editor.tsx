@@ -5,8 +5,8 @@ import type { Image } from '@rpcTypes/image.ts';
 import { client, rpcFetch } from '@fetcher/fetcher.ts';
 import { useAppStore } from '@store/store.ts';
 import useSWR, { mutate } from 'swr';
+import { useDesktop } from '../-util.ts';
 import { RiAddLine, RiCloseLine } from 'react-icons/ri';
-import { PanelHeader } from '../-panelHeader.tsx';
 
 type EditableCoffee = Coffee & {
   review?: { slug: string; title: string } | null;
@@ -19,6 +19,7 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
   const setDraft = useAppStore((state) => state.setDraft);
   const stopEdit = useAppStore((state) => state.stopEdit);
   const setSelected = useAppStore((state) => state.setSelectedCoffee);
+  const desktop = useDesktop();
 
   const { data: savedImages } = useSWR(
     coffee ? `imageData:${coffee.id}` : null,
@@ -131,95 +132,80 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
 
   const ratingOwnedByReview = !!coffee?.review;
 
+  const isClosed = coffee?.status === 'closed';
+
   return (
     <form
       ref={formRef}
       onSubmit={save}
       onChange={() => setDirty(true)}
-      className="flex min-h-0 flex-1 flex-col"
+      // On a phone the sheet is the slip.
+      className={`flex min-h-0 flex-1 flex-col ${desktop ? 'nota' : ''}`}
     >
-      <PanelHeader
-        title={coffee ? `Edit ${coffee.name}` : 'Add a shop'}
-        onBack={cancel}
-        backLabel="Cancel"
-      />
+      <span className="hold max-lg:hidden" />
+      <span className="eyelet" data-eyelet />
+      <header className="flex shrink-0 items-start gap-2.5 px-4 pt-7 pb-3">
+        <h2 className="flex-1 font-display text-[30px] leading-[0.94] font-black uppercase text-balance lg:text-[34px]">
+          {coffee ? `Edit ${coffee.name}` : 'Add a shop'}
+        </h2>
+        <button
+          type="button"
+          className="key key-sm w-8 px-0"
+          onClick={cancel}
+          title="Cancel (Esc)"
+          aria-label="Cancel"
+        >
+          <RiCloseLine size={18} />
+        </button>
+      </header>
 
-      {/* min-w-0: a fieldset defaults to min-content width, so the photo strip widened the form. */}
+      {/* min-w-0: a fieldset defaults to min-content width, so the film strip widened the form. */}
       <fieldset
         disabled={saving}
-        className="flex min-h-0 min-w-0 flex-1 flex-col gap-5 overflow-y-auto p-4"
+        className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4 [&>*]:shrink-0"
       >
-        <div className="flex gap-3 overflow-x-auto p-1 pb-2">
+        <div className="contact">
           {images.map((image, index) => (
-            <div key={image.id} className="relative size-20 shrink-0">
+            <div key={image.id} className={`frame ${index === 0 ? 'cover' : ''}`}>
               <button
                 type="button"
                 aria-label={index === 0 ? 'Cover photo' : 'Make cover'}
                 title={index === 0 ? 'Cover photo' : 'Make cover'}
-                className={`size-full overflow-hidden rounded-box ${
-                  index === 0
-                    ? 'outline-2 outline-offset-2 outline-primary'
-                    : ''
-                }`}
+                className="size-full cursor-pointer"
                 onClick={() => {
-                  setImages([
-                    image,
-                    ...images.filter((i) => i.id !== image.id),
-                  ]);
+                  setImages([image, ...images.filter((i) => i.id !== image.id)]);
                   setDirty(true);
                 }}
               >
-                <img
-                  src={image.url}
-                  alt={image.alt}
-                  className="size-full object-cover"
-                />
+                <img src={image.url} alt={image.alt} className="size-full object-cover" />
               </button>
-              {index === 0 && (
-                <span className="badge badge-primary badge-xs absolute -bottom-2 left-1/2 -translate-x-1/2">
-                  Cover
-                </span>
-              )}
-              <button
-                type="button"
-                aria-label="Remove photo"
-                className="absolute -right-2 -top-2 grid size-6 place-items-center rounded-full border border-base-300 bg-base-100 hover:bg-error hover:text-error-content"
+              {index === 0 && <span className="film-edge">Cover</span>}
+              <RemoveFrame
                 onClick={() => {
                   setRemoved([...removed, image.id]);
                   setImages(images.filter((i) => i.id !== image.id));
                   setDirty(true);
                 }}
-              >
-                <RiCloseLine size={14} />
-              </button>
+              />
             </div>
           ))}
           {files.map(({ file, url }) => (
-            <div key={url} className="relative size-20 shrink-0">
-              <img
-                src={url}
-                alt={file.name}
-                className="size-full rounded-box object-cover opacity-80"
-              />
-              <span className="badge badge-xs absolute -bottom-2 left-1/2 -translate-x-1/2">
-                New
-              </span>
-              <button
-                type="button"
-                aria-label="Remove photo"
-                className="absolute -right-2 -top-2 grid size-6 place-items-center rounded-full border border-base-300 bg-base-100 hover:bg-error hover:text-error-content"
+            <div key={url} className="frame">
+              <img src={url} alt={file.name} className="size-full object-cover opacity-80" />
+              <span className="film-edge">New</span>
+              <RemoveFrame
                 onClick={() => {
                   URL.revokeObjectURL(url);
                   setFiles(files.filter((f) => f.url !== url));
                 }}
-              >
-                <RiCloseLine size={14} />
-              </button>
+              />
             </div>
           ))}
-          <label className="flex size-20 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-box border border-dashed border-base-content/25 text-[13px] text-base-content/60 hover:border-accent hover:text-accent">
-            <RiAddLine size={18} />
-            Add
+          <label className="frame grid cursor-pointer place-items-center text-center text-[13px] font-bold text-[#E6E6E6] outline-dashed outline-[1.5px] outline-[#8A8A8A] hover:outline-[var(--marker)]">
+            <span>
+              <RiAddLine size={18} className="mx-auto" />
+              Add photo
+            </span>
             <input
               type="file"
               accept="image/*"
@@ -237,65 +223,55 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
           </label>
         </div>
 
-        <Field label="Name">
+        <Field label="Name" htmlFor="f-name">
           <input
+            id="f-name"
             name="shopName"
-            className="input w-full"
+            className="line"
             defaultValue={coffee?.name ?? draftName}
             placeholder="Kopi Nusantara"
             autoFocus={!coffee}
           />
         </Field>
 
-        <Field label="Address">
+        <Field label="Address" htmlFor="f-address">
           <textarea
+            id="f-address"
             name="address"
             rows={2}
-            className="textarea w-full"
+            className="line"
             defaultValue={coffee?.address ?? ''}
             placeholder="Street, area, city"
           />
         </Field>
 
         <Field label="Hours">
-          <div className="flex items-center gap-2">
-            <input
-              type="time"
-              name="open"
-              className="input flex-1"
-              defaultValue={open}
-              disabled={hoursUnknown}
-            />
+          <div className="flex flex-wrap items-center gap-2">
+            <input type="time" name="open" className="time" defaultValue={open} disabled={hoursUnknown} aria-label="Opens" />
             <span>–</span>
-            <input
-              type="time"
-              name="close"
-              className="input flex-1"
-              defaultValue={close}
-              disabled={hoursUnknown}
-            />
+            <input type="time" name="close" className="time" defaultValue={close} disabled={hoursUnknown} aria-label="Closes" />
+            <label className="ml-1 inline-flex min-h-9 cursor-pointer items-center gap-2 text-[14px] font-semibold">
+              <input
+                type="checkbox"
+                className="box"
+                checked={hoursUnknown}
+                onChange={(e) => setHoursUnknown(e.target.checked)}
+              />
+              Unknown
+            </label>
           </div>
-          <label className="label text-[13px]">
-            <input
-              type="checkbox"
-              className="checkbox checkbox-xs"
-              checked={hoursUnknown}
-              onChange={(e) => setHoursUnknown(e.target.checked)}
-            />
-            Unknown
-          </label>
         </Field>
 
-        <Field label="Location">
+        <Field label="Location" htmlFor="f-location">
           <input
-            className="input w-full font-mono text-[13px]"
+            id="f-location"
+            className="line"
             value={latLong}
             placeholder="-7.55, 110.77"
             onChange={(e) => {
               setLatLong(e.target.value);
               const [lat, lng] = e.target.value.split(',').map(Number);
-              if (Number.isFinite(lat) && Number.isFinite(lng))
-                setDraft([lat, lng]);
+              if (Number.isFinite(lat) && Number.isFinite(lng)) setDraft([lat, lng]);
             }}
           />
         </Field>
@@ -303,76 +279,27 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
         {coffee && !ratingOwnedByReview && (
           // Without a review, this is my rating; a published review replaces it.
           <Field label="My rating">
-            <div className="flex items-center gap-3">
-              <div className="rating rating-half">
-                <input
-                  type="radio"
-                  name="rating"
-                  value={0}
-                  className="rating-hidden"
-                  defaultChecked={!coffee.rating}
-                  aria-label="Not rated"
-                />
-                {[...Array(10)].map((_, i) => {
-                  const v = (i + 1) / 2;
-                  return (
-                    <input
-                      key={v}
-                      type="radio"
-                      name="rating"
-                      value={v}
-                      className={`mask mask-star-2 ${i % 2 === 0 ? 'mask-half-1' : 'mask-half-2'} bg-warning`}
-                      aria-label={`${v} star`}
-                      defaultChecked={coffee.rating === v}
-                    />
-                  );
-                })}
-              </div>
-              <button
-                type="button"
-                className="btn btn-ghost btn-xs"
-                onClick={(e) => {
-                  const radios =
-                    e.currentTarget.form?.elements.namedItem('rating');
-                  if (radios instanceof RadioNodeList) radios.value = '0';
-                  setDirty(true);
-                }}
-              >
-                Clear
-              </button>
-            </div>
+            <CupsInput initial={coffee.rating} onChange={() => setDirty(true)} />
           </Field>
         )}
 
-        <label className="flex min-h-11 cursor-pointer items-center justify-between gap-4 rounded-field border border-base-300 px-3 py-2">
-          <span className="text-[15px]">Closed permanently</span>
-          <input
-            type="checkbox"
-            name="closed"
-            className="toggle toggle-sm toggle-error"
-            defaultChecked={coffee?.status === 'closed'}
-          />
+        <label className="flex min-h-14 cursor-pointer items-center justify-between gap-3 border-y-[1.5px] border-[#141414] py-1.5 text-[15px] font-semibold">
+          Closed permanently
+          <input type="checkbox" name="closed" className="peer sr-only" defaultChecked={isClosed} />
+          <span className="closed-well grid h-10 w-[118px] place-items-center border-[1.5px] border-dashed border-[#141414]/50 peer-checked:border-transparent peer-focus-visible:outline-2 peer-focus-visible:outline-offset-3 peer-focus-visible:outline-[#141414]">
+            <span className="stamp stamp-ink stamp-lg stamp-in [--r:-6deg]">Closed</span>
+          </span>
         </label>
       </fieldset>
 
-      <div className="flex flex-col gap-2 border-t border-base-300 p-3">
-        {error && <p className="text-[13px] text-error">{error}</p>}
+      <div className="flex shrink-0 flex-col gap-2 border-t border-dashed border-[#141414]/40 p-3">
+        {error && <p className="err">× {error}</p>}
         <div className="flex gap-2">
-          <button
-            type="button"
-            className="btn btn-ghost flex-1"
-            onClick={cancel}
-            disabled={saving}
-          >
+          <button type="button" className="key flex-1" onClick={cancel} disabled={saving}>
             Cancel
           </button>
-          <button
-            type="submit"
-            className="btn btn-primary flex-1"
-            disabled={saving}
-          >
-            {saving && <span className="loading loading-spinner loading-sm" />}
-            Save
+          <button type="submit" className="key key-signal flex-1" disabled={saving}>
+            {saving ? 'Saving…' : 'Save'}
           </button>
         </div>
       </div>
@@ -380,18 +307,76 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
   );
 }
 
+function RemoveFrame({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-label="Remove photo"
+      className="absolute top-0 right-0 grid size-6 cursor-pointer place-items-center bg-[#F6F6F6] text-[#141414] hover:bg-[#141414] hover:text-[#F6F6F6]"
+      onClick={onClick}
+    >
+      <RiCloseLine size={14} />
+    </button>
+  );
+}
+
+// Five cups; the left half of a cup sets .5. Submitted as "rating", 0 when cleared.
+function CupsInput({ initial, onChange }: { initial: number; onChange: () => void }) {
+  const [rating, setRating] = useState(initial);
+  const set = (v: number) => {
+    setRating(v);
+    onChange();
+  };
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <input type="hidden" name="rating" value={rating} />
+      <span className="cups" role="radiogroup" aria-label="My rating">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <i
+            key={n}
+            className={`size-[30px]! ${rating >= n ? 'f' : rating >= n - 0.5 ? 'h' : ''}`}
+          >
+            {[n - 0.5, n].map((v) => (
+              <button
+                key={v}
+                type="button"
+                role="radio"
+                aria-checked={rating === v}
+                aria-label={`${v} cups`}
+                className={`absolute inset-y-0 z-[1] w-1/2 cursor-pointer ${v === n ? 'right-0' : 'left-0'}`}
+                onClick={() => set(v)}
+              />
+            ))}
+          </i>
+        ))}
+      </span>
+      <b className="font-mono text-[15px]">{rating ? rating.toFixed(1) : '–'}</b>
+      <button type="button" className="key key-sm" onClick={() => set(0)}>
+        Clear
+      </button>
+    </div>
+  );
+}
+
 function Field({
   label,
+  htmlFor,
   children,
 }: {
   label: string;
+  htmlFor?: string;
   children: React.ReactNode;
 }) {
   return (
-    // Plain fieldset: daisyUI's adds padding to the legend, which made label gaps uneven.
-    <fieldset className="flex min-w-0 flex-col gap-2">
-      <legend className="mb-2 text-[13px] font-semibold">{label}</legend>
+    <div className="grid min-w-0 gap-1">
+      {htmlFor ? (
+        <label htmlFor={htmlFor} className="text-[14px] font-bold">
+          {label}
+        </label>
+      ) : (
+        <span className="text-[14px] font-bold">{label}</span>
+      )}
       {children}
-    </fieldset>
+    </div>
   );
 }
