@@ -177,6 +177,15 @@ export function Search() {
   const query = useAppStore((state) => state.query);
   const setQuery = useAppStore((state) => state.setQuery);
   const setSheet = useAppStore((state) => state.setSheet);
+  // The field keeps every keystroke; the list catches up when the typing pauses. Each
+  // keystroke otherwise remounts the 150 rows and replays their print animation.
+  const [typed, setTyped] = useState(query);
+  useEffect(() => setTyped(query), [query]);
+  useEffect(() => {
+    if (typed === query) return;
+    const id = setTimeout(() => setQuery(typed), 200);
+    return () => clearTimeout(id);
+  }, [typed, query, setQuery]);
   return (
     <label className="vfd">
       <RiSearchLine size={20} className="shrink-0" />
@@ -184,8 +193,8 @@ export function Search() {
         id="search-bar"
         type="search"
         placeholder="Search shops"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        value={typed}
+        onChange={(e) => setTyped(e.target.value)}
         onFocus={() => setSheet('full')}
       />
     </label>
