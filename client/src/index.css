@@ -709,13 +709,28 @@ textarea.line:focus {
     animation: stamp-in .16s ease-out both;
 }
 /* The list prints: the first rows feed in from the top, 12ms apart. */
-/* The head scans the row: the visible corner runs down and across together, in six
-   printed bands, so a line reads in from the left as the paper advances. */
-@keyframes print {
-    from { clip-path: polygon(0 0, 0 0, 0 0, 0 0); transform: translateY(-6px); }
-    to { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); transform: none; }
+/* The head prints one line at a time: it crosses a sixth of the row from the left, then the
+   paper steps down and the next line starts at the left margin. */
+@property --print-y { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+@property --print-x { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+@keyframes print-y { from { --print-y: 0%; } to { --print-y: 100%; } }
+@keyframes print-x { from { --print-x: 0%; } to { --print-x: 100%; } }
+.print > li {
+    --band: 16.667%;
+    clip-path: polygon(
+        0 0,
+        100% 0,
+        100% var(--print-y),
+        var(--print-x) var(--print-y),
+        var(--print-x) calc(var(--print-y) + var(--band)),
+        0 calc(var(--print-y) + var(--band))
+    );
+    /* Six lines of about ten pixels. Each line crosses in three steps, and one line takes
+       long enough to see before the paper steps down. */
+    animation:
+        print-y .56s steps(6, end) both,
+        print-x 93.333ms steps(3, end) 6 both;
 }
-.print > li { animation: print .32s steps(6) both; }
 .print > li:nth-child(2) { animation-delay: 24ms; }
 .print > li:nth-child(3) { animation-delay: 48ms; }
 .print > li:nth-child(4) { animation-delay: 72ms; }
