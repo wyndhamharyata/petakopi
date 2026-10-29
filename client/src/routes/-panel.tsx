@@ -10,6 +10,7 @@ import { type Sheet, useAppStore } from '@store/store.ts';
 import { getTokens } from '@cookies/tokens.ts';
 import { client, rpcFetch } from '@fetcher/fetcher.ts';
 import { AddKey, Browse, Search } from './-browse.tsx';
+import { useKeyboardFit } from './-useKeyboardFit.ts';
 import { CoffeeDetail } from './-coffeeDetail.tsx';
 import { Editor } from './-coffeeEditor/-editor.tsx';
 import { findExistingShop, readGoogleMapsLink } from './-googleMaps.ts';
@@ -39,7 +40,8 @@ export function Panel() {
   // Below 1280px the receipt rolls into the till while a ticket hangs; a list key drops it again.
   const [dropped, setDropped] = useState(false);
   useEffect(() => setDropped(false), [selected?.id]);
-  const keyboard = useKeyboardInset();
+  const rootRef = useRef<HTMLDivElement>(null);
+  useKeyboardFit(rootRef, !desktop);
   // Each Add starts clean; the error belongs to the last link only.
   useEffect(() => {
     if (placing) setLinkError('');
@@ -144,8 +146,8 @@ export function Panel() {
 
   const tillUp = !placing;
   // The paper rides on the till; with the till away (placing) it reaches the bottom edge.
-  const bottom = tillUp ? `calc(${TILL}px + env(safe-area-inset-bottom) + ${keyboard.inset}px)` : '0px';
-  // Full fills what is visible above the till; the keyboard is already out of the visible height.
+  const bottom = tillUp ? `calc(${TILL}px + env(safe-area-inset-bottom))` : '0px';
+  // Full fills the root above the till. While typing the root is only the visible area, above the keyboard.
   const height =
     dragHeight !== null
       ? `${dragHeight}px`
@@ -153,14 +155,16 @@ export function Panel() {
         ? `${PEEK}px`
         : sheet === 'half'
           ? '45dvh'
-          : `calc(${keyboard.height}px - ${tillUp ? `${TILL}px - env(safe-area-inset-bottom)` : '0px'} - ${railGap}px)`;
+          : `calc(100% - ${bottom} - ${railGap}px)`;
 
   return (
-    <>
+    // One root for the phone layout; useKeyboardFit fits it to what the keyboard leaves visible.
+    // The map shows through it, so only its children take taps.
+    <div ref={rootRef} className="pointer-events-none fixed inset-x-0 top-0 z-[1000] h-dvh font-atkinson">
       {railUp && <MobileRail />}
       <section
         ref={sheetRef}
-        className="fixed inset-x-2 z-[1000] flex flex-col font-atkinson drop-shadow-[0_-6px_10px_rgb(0_0_0/.18)]"
+        className="pointer-events-auto absolute inset-x-2 z-[1] flex flex-col drop-shadow-[0_-6px_10px_rgb(0_0_0/.18)]"
         style={{ bottom, height }}
       >
         <div
@@ -196,14 +200,9 @@ export function Panel() {
         </div>
       </section>
       {tillUp && (
-        <MobileTill
-          coffee={editing ? null : selected}
-          editing={editing}
-          bottom={keyboard.inset}
-          authenticated={authenticated}
-        />
+        <MobileTill coffee={editing ? null : selected} editing={editing} authenticated={authenticated} />
       )}
-    </>
+    </div>
   );
 }
 
@@ -215,41 +214,15 @@ const RAIL_GAP = 16;
 const RAIL_GAP_BARE = 26;
 const RAIL_GAP_STUBS = 74;
 
-// The keyboard covers the layout viewport on iOS; the visual viewport says how much.
-function useKeyboardInset() {
-  const read = () => {
-    const vv = window.visualViewport;
-    return vv
-      ? // clientHeight is the layout viewport; iOS also shrinks innerHeight, which hid the keyboard's size.
-        { inset: Math.max(0, document.documentElement.clientHeight - vv.height - vv.offsetTop), height: vv.height }
-      : { inset: 0, height: innerHeight };
-  };
-  const [state, setState] = useState(read);
-  useEffect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const onChange = () => setState(read());
-    vv.addEventListener('resize', onChange);
-    vv.addEventListener('scroll', onChange);
-    return () => {
-      vv.removeEventListener('resize', onChange);
-      vv.removeEventListener('scroll', onChange);
-    };
-  }, []);
-  return state;
-}
-
 // The till on the bottom edge. Its keys follow the paper on top: search on the receipt,
 // Back, Directions, Copy and Review on a ticket.
 function MobileTill({
   coffee,
   editing,
-  bottom,
   authenticated,
 }: {
   coffee: Coffee | null;
   editing: boolean;
-  bottom: number;
   authenticated: boolean;
 }) {
   const clearSelected = useAppStore((state) => state.removeSelectedCoffee);
@@ -262,8 +235,7 @@ function MobileTill({
 
   return (
     <div
-      className="till fixed inset-x-0 z-[1001] flex items-center gap-2 border-x-0 border-b-0 px-2.5 pt-2.5 pb-[max(10px,env(safe-area-inset-bottom))] before:absolute before:inset-x-0 before:-top-[9px] before:h-[9px] before:bg-[#0A0A0A] before:shadow-[inset_0_-3px_3px_#000]"
-      style={{ bottom }}
+      className="till pointer-events-auto absolute inset-x-0 bottom-0 z-[2] flex items-center gap-2 border-x-0 border-b-0 px-2.5 pt-2.5 pb-[max(10px,env(safe-area-inset-bottom))] before:absolute before:inset-x-0 before:-top-[9px] before:h-[9px] before:bg-[#0A0A0A] before:shadow-[inset_0_-3px_3px_#000]"
     >
       {editing ? (
         // The editor portals its Cancel and Save keys here.
@@ -340,8 +312,8 @@ function MobileRail() {
   if (!selected && rail.length === 0) return null;
   return (
     <>
-      <div className="steel fixed inset-x-0 top-0 z-[999] h-[18px] border-x-0 border-t-0" />
-      <ul className="fixed top-3.5 right-2 left-2 z-[1000] flex flex-row-reverse gap-2 overflow-hidden pt-2 font-atkinson">
+      <div className="steel absolute inset-x-0 top-0 h-[18px] border-x-0 border-t-0" />
+      <ul className="pointer-events-auto absolute top-3.5 right-2 left-2 flex flex-row-reverse gap-2 overflow-hidden pt-2">
         {rail.slice(0, 2).map((c) => (
           <li key={c.id} className="ticket stub-m relative flex h-11 w-[170px] shrink-0">
             <span className="hold" />
