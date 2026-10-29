@@ -1,20 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
-import { RiAddLine } from 'react-icons/ri';
+import {
+  RiArrowLeftSLine,
+  RiExternalLinkLine,
+  RiFileCopyLine,
+  RiRouteLine,
+} from 'react-icons/ri';
+import type { Coffee } from '@rpcTypes/coffee.ts';
 import useSWR from 'swr';
 import { type Sheet, useAppStore } from '@store/store.ts';
 import { getTokens } from '@cookies/tokens.ts';
 import { client, rpcFetch } from '@fetcher/fetcher.ts';
-import { Browse } from './-browse.tsx';
+import { AddKey, Browse, Search } from './-browse.tsx';
 import { CoffeeDetail } from './-coffeeDetail.tsx';
 import { Editor } from './-coffeeEditor/-editor.tsx';
 import { findExistingShop, readGoogleMapsLink } from './-googleMaps.ts';
-import { area, useDesktop } from './-util.ts';
+import { area, directionsUrl, useDesktop } from './-util.ts';
 
-const HEIGHT: Record<Sheet, string> = {
-  peek: 'h-24',
-  half: 'h-[50dvh]',
-  full: 'h-[92dvh]',
-};
 const ORDER: Sheet[] = ['peek', 'half', 'full'];
 
 // One panel for everything: a left column on desktop, a bottom sheet on mobile.
@@ -24,7 +25,6 @@ export function Panel() {
   const placing = useAppStore((state) => state.placing);
   const sheet = useAppStore((state) => state.sheet);
   const setSheet = useAppStore((state) => state.setSheet);
-  const startAdd = useAppStore((state) => state.startAdd);
   const stopEdit = useAppStore((state) => state.stopEdit);
   const { authenticated } = getTokens();
   const importShop = useAppStore((state) => state.importShop);
@@ -105,46 +105,179 @@ export function Panel() {
     );
   }
 
-  return (
-    <aside
-      className={`fixed inset-x-0 bottom-0 z-[1000] flex flex-col border-t border-base-content/30 font-atkinson shadow-[0_-8px_24px_-12px_rgb(0_0_0/.3)] transition-[height] duration-300 ease-out paper ${HEIGHT[sheet]}`}
-    >
-      {authenticated && selected && !editing && !placing && (
-        <button
-          type="button"
-          className="key key-cobalt absolute -top-16 right-4 size-12 px-0"
-          onClick={startAdd}
-          title="Add a shop"
-          aria-label="Add a shop"
-        >
-          <RiAddLine size={26} />
-        </button>
-      )}
-      <button
-        type="button"
-        className="flex h-5 shrink-0 cursor-grab touch-none items-center justify-center"
-        aria-label="Resize panel"
-        onPointerDown={(e) => {
-          dragStart.current = e.clientY;
-          e.currentTarget.setPointerCapture(e.pointerId);
-        }}
-        onPointerUp={onPointerUp}
-      >
-        <span className="h-1 w-10 bg-base-content/20" />
-      </button>
+  const tillUp = !editing && !placing;
+  const keyboard = useKeyboardInset();
+  // The paper rides on the till; with the till away (editing) it reaches the bottom edge.
+  const bottom = tillUp ? `calc(${TILL}px + env(safe-area-inset-bottom) + ${keyboard.inset}px)` : '0px';
+  const height =
+    sheet === 'peek' ? '64px' : sheet === 'half' ? '45dvh' : `calc(${keyboard.height}px - ${bottom} - 44px)`;
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        {placing ? (
-          placingSlip
-        ) : editing ? (
-          <Editor key={selected?.id ?? 'new'} coffee={selected ?? undefined} />
-        ) : selected ? (
-          <CoffeeDetail key={selected.id} coffee={selected} />
-        ) : (
-          <Browse />
-        )}
-      </div>
-    </aside>
+  return (
+    <>
+      {tillUp && <MobileRail />}
+      <section
+        className="fixed inset-x-2 z-[1000] flex flex-col font-atkinson drop-shadow-[0_-6px_10px_rgb(0_0_0/.18)] transition-[height] duration-[240ms] ease-[cubic-bezier(.2,.8,.2,1)]"
+        style={{ bottom, height }}
+      >
+        <div
+          className={`tear-t flex min-h-0 flex-1 flex-col ${
+            tillUp ? (selected ? 'ticket' : 'receipt') : 'paper'
+          }`}
+        >
+          <button
+            type="button"
+            className="flex h-7 shrink-0 cursor-grab touch-none items-center justify-center"
+            aria-label="Resize panel"
+            onPointerDown={(e) => {
+              dragStart.current = e.clientY;
+              e.currentTarget.setPointerCapture(e.pointerId);
+            }}
+            onPointerUp={onPointerUp}
+          >
+            <span className="h-[9px] w-[26px] bg-[linear-gradient(#141414,#141414)_0_0/100%_2px_no-repeat,linear-gradient(#141414,#141414)_0_50%/100%_2px_no-repeat,linear-gradient(#141414,#141414)_0_100%/100%_2px_no-repeat] opacity-70" />
+          </button>
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            {placing ? (
+              placingSlip
+            ) : editing ? (
+              <Editor key={selected?.id ?? 'new'} coffee={selected ?? undefined} />
+            ) : selected ? (
+              <CoffeeDetail key={selected.id} coffee={selected} />
+            ) : (
+              <Browse mobile />
+            )}
+          </div>
+        </div>
+      </section>
+      {tillUp && (
+        <MobileTill coffee={selected} bottom={keyboard.inset} authenticated={authenticated} />
+      )}
+    </>
+  );
+}
+
+const TILL = 68;
+
+// The keyboard covers the layout viewport on iOS; the visual viewport says how much.
+function useKeyboardInset() {
+  const read = () => {
+    const vv = window.visualViewport;
+    return vv
+      ? { inset: Math.max(0, innerHeight - vv.height - vv.offsetTop), height: vv.height }
+      : { inset: 0, height: innerHeight };
+  };
+  const [state, setState] = useState(read);
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const onChange = () => setState(read());
+    vv.addEventListener('resize', onChange);
+    vv.addEventListener('scroll', onChange);
+    return () => {
+      vv.removeEventListener('resize', onChange);
+      vv.removeEventListener('scroll', onChange);
+    };
+  }, []);
+  return state;
+}
+
+// The till on the bottom edge. Its keys follow the paper on top: search on the receipt,
+// Back, Directions, Copy and Review on a ticket.
+function MobileTill({
+  coffee,
+  bottom,
+  authenticated,
+}: {
+  coffee: Coffee | null;
+  bottom: number;
+  authenticated: boolean;
+}) {
+  const clearSelected = useAppStore((state) => state.removeSelectedCoffee);
+  const { data: review } = useSWR(
+    coffee && coffee.rating > 0 ? ['review', coffee.id] : null,
+    coffee ? rpcFetch(client.api.coffees.review[':id'].$get)({ param: { id: coffee.id } }) : null
+  );
+  const [copied, setCopied] = useState(false);
+  const post = review?.post;
+
+  return (
+    <div
+      className="till fixed inset-x-0 z-[1001] flex items-center gap-2 border-x-0 border-b-0 px-2.5 pt-2.5 pb-[max(10px,env(safe-area-inset-bottom))] before:absolute before:inset-x-0 before:-top-[9px] before:h-[9px] before:bg-[#0A0A0A] before:shadow-[inset_0_-3px_3px_#000]"
+      style={{ bottom }}
+    >
+      {coffee ? (
+        <>
+          <button type="button" className="key min-h-12 w-12 shrink-0 px-0" onClick={clearSelected} aria-label="Back to the list">
+            <RiArrowLeftSLine size={24} />
+          </button>
+          <a
+            className={`key min-h-12 flex-1 ${post ? '' : 'key-signal'}`}
+            target="_blank"
+            href={directionsUrl(coffee)}
+          >
+            <RiRouteLine size={16} />
+            Directions
+          </a>
+          {coffee.address && (
+            <button
+              type="button"
+              className="key min-h-12 w-12 shrink-0 px-0"
+              onClick={() => {
+                navigator.clipboard.writeText(coffee.address);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 1500);
+              }}
+              aria-label="Copy address"
+            >
+              {copied ? '✓' : <RiFileCopyLine size={18} />}
+            </button>
+          )}
+          {post && (
+            <a className="key key-signal min-h-12 flex-1" target="_blank" href={post.url}>
+              Review
+              <RiExternalLinkLine size={16} />
+            </a>
+          )}
+        </>
+      ) : (
+        <>
+          <div className="min-w-0 flex-1">
+            <Search />
+          </div>
+          {authenticated && <AddKey />}
+        </>
+      )}
+    </div>
+  );
+}
+
+// On a phone the rail runs along the top edge, with room for two stubs.
+function MobileRail() {
+  const rail = useAppStore((state) => state.rail);
+  const selected = useAppStore((state) => state.selectedCoffee);
+  const setSelected = useAppStore((state) => state.setSelectedCoffee);
+  if (!selected && rail.length === 0) return null;
+  return (
+    <>
+      <div className="steel fixed inset-x-0 top-0 z-[999] h-[18px] border-x-0 border-t-0" />
+      <ul className="fixed top-3.5 right-2 left-2 z-[1000] flex flex-row-reverse gap-2 overflow-hidden pt-2 font-atkinson">
+        {rail.slice(0, 2).map((c) => (
+          <li key={c.id} className="shrink-0">
+            <button
+              type="button"
+              className="ticket h-11 w-[150px] cursor-pointer px-2.5 pt-3 text-left"
+              onClick={() => setSelected(c)}
+              title={`Open ${c.name}`}
+            >
+              <span className="hold" />
+              <span className="block truncate font-display text-[16px] leading-none font-extrabold uppercase">
+                {c.name}
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 

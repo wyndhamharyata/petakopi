@@ -9,15 +9,17 @@ import { at, distance } from './-util.ts';
 
 // The till always; under it the receipt, or the slip that replaces it while adding.
 // Rolled: the receipt is back in the till, so the map is free while editing.
-export function Browse({ slip, rolled = false }: { slip?: ReactNode; rolled?: boolean } = {}) {
+export function Browse({
+  slip,
+  rolled = false,
+  mobile = false,
+}: { slip?: ReactNode; rolled?: boolean; mobile?: boolean } = {}) {
   const tab = useAppStore((state) => state.tab);
   const setTab = useAppStore((state) => state.setTab);
   const query = useAppStore((state) => state.query);
   const setQuery = useAppStore((state) => state.setQuery);
-  const setSheet = useAppStore((state) => state.setSheet);
   const setBrowseList = useAppStore((state) => state.setBrowseList);
   const setSelected = useAppStore((state) => state.setSelectedCoffee);
-  const startAdd = useAppStore((state) => state.startAdd);
   const userLocation = useAppStore((state) => state.userLocation);
   const { authenticated } = getTokens();
 
@@ -81,67 +83,111 @@ export function Browse({ slip, rolled = false }: { slip?: ReactNode; rolled?: bo
     </button>
   );
 
+  const tabs = !q && (
+    <>
+      {tabKey('latestReviews', 'Latest reviews', '1')}
+      {tabKey('allPlaces', 'All places', '2')}
+    </>
+  );
+
+  const total = (
+    <p className="mx-3 border-b-2 border-dashed border-base-content/40 py-2.5 text-center font-mono text-[13px]">
+      {all ? `${all.length} shops · ${reviewedCount} reviewed` : 'Loading shops…'}
+      {!authenticated && (
+        <>
+          {' · '}
+          <a href="/authorize" className="font-bold text-accent underline">
+            Sign in
+          </a>
+        </>
+      )}
+    </p>
+  );
+
+  const rows = (
+    <div className="min-h-0 flex-1 overflow-y-auto px-3">
+      {q && list.length === 0 && (
+        <p className="p-6 text-center text-[15px]">No shop matches “{query.trim()}”.</p>
+      )}
+      <ul ref={listRef} className="flex flex-col">
+        {list.map((c, i) => (
+          <CoffeeListItem key={c.id} coffee={c} highlighted={i === highlight} />
+        ))}
+      </ul>
+    </div>
+  );
+
+  // Phone: search lives on the till at the bottom edge, so the paper holds only the list.
+  if (mobile) {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col">
+        {total}
+        {tabs && (
+          <div role="tablist" className="flex gap-2 px-3 pt-3 pb-1.5">
+            {tabs}
+          </div>
+        )}
+        {rows}
+      </div>
+    );
+  }
+
   return (
     <div
       className="flex min-h-0 flex-1 flex-col lg:pointer-events-auto lg:flex-none"
       onKeyDown={onKeyDown}
     >
       <div className="till shrink-0 px-3 pt-3">
-        <label className="vfd">
-          <RiSearchLine size={20} className="shrink-0" />
-          <input
-            id="search-bar"
-            type="search"
-            placeholder="Search shops"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            onFocus={() => useAppStore.getState().sheet === 'peek' && setSheet('half')}
-          />
-        </label>
+        <Search />
         <div role="tablist" className="mt-2.5 flex gap-2">
-          {!q && tabKey('latestReviews', 'Latest reviews', '1')}
-          {!q && tabKey('allPlaces', 'All places', '2')}
-          {authenticated && (
-            <button
-              type="button"
-              className="key key-cobalt ml-auto w-10 px-0"
-              onClick={startAdd}
-              title="Add a shop"
-              aria-label="Add a shop"
-            >
-              <RiAddLine size={22} />
-            </button>
-          )}
+          {tabs}
+          {authenticated && <AddKey />}
         </div>
         <div className="-mx-3 mt-3 h-2 bg-[#0A0A0A] shadow-[inset_0_3px_3px_#000]" />
       </div>
       {slip ? (
         <div className="receipt tear-b mx-2 pb-3">{slip}</div>
       ) : rolled ? null : (
-      <div className="receipt tear-b mx-2 flex min-h-0 flex-1 flex-col pb-4 lg:flex-none">
-        <p className="mx-3 border-b-2 border-dashed border-base-content/40 py-2.5 text-center font-mono text-[13px]">
-          {all ? `${all.length} shops · ${reviewedCount} reviewed` : 'Loading shops…'}
-          {!authenticated && (
-            <>
-              {' · '}
-              <a href="/authorize" className="font-bold text-accent underline">
-                Sign in
-              </a>
-            </>
-          )}
-        </p>
-        <div className="min-h-0 flex-1 overflow-y-auto px-3">
-          {q && list.length === 0 && (
-            <p className="p-6 text-center text-[15px]">No shop matches “{query.trim()}”.</p>
-          )}
-          <ul ref={listRef} className="flex flex-col">
-            {list.map((c, i) => (
-              <CoffeeListItem key={c.id} coffee={c} highlighted={i === highlight} />
-            ))}
-          </ul>
+        <div className="receipt tear-b mx-2 flex min-h-0 flex-1 flex-col pb-4 lg:flex-none">
+          {total}
+          {rows}
         </div>
-      </div>
       )}
     </div>
+  );
+}
+
+// The VFD. Focusing it feeds the paper all the way up, so results show above a phone keyboard.
+export function Search() {
+  const query = useAppStore((state) => state.query);
+  const setQuery = useAppStore((state) => state.setQuery);
+  const setSheet = useAppStore((state) => state.setSheet);
+  return (
+    <label className="vfd">
+      <RiSearchLine size={20} className="shrink-0" />
+      <input
+        id="search-bar"
+        type="search"
+        placeholder="Search shops"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        onFocus={() => setSheet('full')}
+      />
+    </label>
+  );
+}
+
+export function AddKey() {
+  const startAdd = useAppStore((state) => state.startAdd);
+  return (
+    <button
+      type="button"
+      className="key key-cobalt ml-auto w-10 shrink-0 px-0"
+      onClick={startAdd}
+      title="Add a shop"
+      aria-label="Add a shop"
+    >
+      <RiAddLine size={22} />
+    </button>
   );
 }

@@ -589,3 +589,13 @@ html, body, #root {
     padding: 0 10px;
     font-size: 13px;
 }
+.tear-t {
+    mask: conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) 50% / 14px 100%;
+}
+@media (max-width: 1023px) {
+    /* The sheet's torn edge would cut an eyelet hanging outside it. */
+    .eyelet {
+        left: 8px;
+        top: 4px;
+    }
+}

@@ -31,7 +31,8 @@ function panelOffset(): PointLike {
   const { selectedCoffee, editing } = useAppStore.getState();
   if (isDesktop()) return selectedCoffee || editing ? [0, 0] : [208, 0];
   const sheet = useAppStore.getState().sheet;
-  const covered = sheet === 'peek' ? 96 : window.innerHeight * (sheet === 'half' ? 0.5 : 0.92);
+  // The till (68px) plus the paper on it.
+  const covered = 68 + (sheet === 'peek' ? 64 : window.innerHeight * (sheet === 'half' ? 0.45 : 0.85));
   return [0, -covered / 2];
 }
 
@@ -338,7 +339,7 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
       {hoveredCoffee && hoveredCoffee.id !== selectedCoffee?.id && (
         <CoffeeMarker coffee={hoveredCoffee} isSelected={false} showCard />
       )}
-      {desktop && (editing && draft ? <Thread at={draft} /> : selectedAt && <Thread at={selectedAt} />)}
+      {editing && draft ? desktop && <Thread at={draft} /> : selectedAt && <Thread at={selectedAt} />}
       {userLocation && (
         <RMarker longitude={userLocation[1]} latitude={userLocation[0]} className="pointer-events-none">
           <span className="you-mark" />

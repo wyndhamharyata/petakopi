@@ -24,6 +24,7 @@ import {
   formatDistance,
   formatHours,
   isTypingTarget,
+  useDesktop,
   shopUrl,
 } from './-util.ts';
 
@@ -46,6 +47,7 @@ export const CoffeeDetail = memo(function CoffeeDetail({
   const startEdit = useAppStore((state) => state.startEdit);
   const userLocation = useAppStore((state) => state.userLocation);
   const { authenticated } = getTokens();
+  const desktop = useDesktop();
 
   const { data: images } = useSWR(
     `imageData:${coffee.id}`,
@@ -118,7 +120,8 @@ export const CoffeeDetail = memo(function CoffeeDetail({
   const reviewed = coffee.status === 'reviewed' || !!post;
 
   return (
-    <div className="ticket flex min-h-0 flex-1 flex-col">
+    // On a phone the sheet is the ticket; its keys move to the till.
+    <div className={`flex min-h-0 flex-1 flex-col ${desktop ? 'ticket' : ''}`}>
       <span className="hold max-lg:hidden" />
       <span className="eyelet" data-eyelet />
       <div className="ticket-fade flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pt-7 pb-12 [&>*]:shrink-0">
@@ -205,7 +208,7 @@ export const CoffeeDetail = memo(function CoffeeDetail({
           </div>
         </dl>
 
-        <div className="mt-4 mb-6 flex gap-2">
+        <div className="mt-4 mb-6 flex gap-2 max-lg:hidden">
           <a
             className={`key flex-1 ${post ? '' : 'key-signal'}`}
             target="_blank"
