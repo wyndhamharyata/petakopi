@@ -716,6 +716,10 @@ textarea.line:focus {
 @keyframes print-y { from { --print-y: 0%; } to { --print-y: 100%; } }
 @keyframes print-x { from { --print-x: 0%; } to { --print-x: 100%; } }
 .print > li {
+    /* At rest the whole row is printed. Phones and Reduce Motion switch the animation off,
+       and without this the registered values would stay at their 0% keyframe and hide it. */
+    --print-y: 100%;
+    --print-x: 100%;
     --band: 25%;
     clip-path: polygon(
         0 0,
