@@ -187,6 +187,24 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
     };
   }, [map, placing]);
 
+  // A tap on the map alone puts the paper down to its lowest height, so the map is free.
+  // A pin or a cluster tap is its own gesture and leaves the sheet where it is.
+  useEffect(() => {
+    if (!map || isDesktop()) return;
+    const onClick = (e: MapMouseEvent) => {
+      const state = useAppStore.getState();
+      if (state.placing || state.editing) return;
+      const hit = map
+        .queryRenderedFeatures(e.point)
+        .some((f) => f.layer.id === 'coffee-pins' || f.layer.id === 'coffee-clusters');
+      if (!hit) state.setSheet('peek');
+    };
+    map.on('click', onClick);
+    return () => {
+      map.off('click', onClick);
+    };
+  }, [map]);
+
   // An imported link can point anywhere; bring the pin into view once, not on every drag.
   const centeredEdit = useRef(false);
   useEffect(() => {
