@@ -16,8 +16,14 @@ export const formatDistance = (m: number) =>
 export const at = (c: Coffee): LatLng => [c.lat, c.lng];
 
 // "Jl. Mojo No.23, Karangasem, Kec. Laweyan, Kota Surakarta" -> "Laweyan".
-export const area = (address: string) =>
-  address.match(/Kec(?:amatan|\.)\s*([^,]+)/i)?.[1].trim() ?? address.split(',')[0].trim();
+// Google's English format has no "Kec.": "CRJ8+9QG, Sriwedari, Laweyan, Surakarta City" -> the part before the city.
+export const area = (address: string) => {
+  const kec = address.match(/Kec(?:amatan|\.)\s*([^,]+)/i)?.[1].trim();
+  if (kec) return kec.replace(/^Ps\.\s*/, 'Pasar ');
+  const parts = address.split(',').map((p) => p.trim());
+  const city = parts.findIndex((p) => /\b(City|Regency)\b|^(Kota|Kabupaten|Kab\.)\s/i.test(p));
+  return parts[city > 0 ? city - 1 : 0];
+};
 
 export const formatHours = (hours: string) => hours.replace(/\s*-\s*/, ' – ');
 

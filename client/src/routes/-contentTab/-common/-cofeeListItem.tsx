@@ -24,50 +24,57 @@ export const CoffeeListItem = memo(function CoffeeListItem({
   const userLocation = useAppStore((state) => state.userLocation);
   const origin = from === undefined ? userLocation : from;
 
-  const meta = [
-    coffee.address && area(coffee.address),
-    origin && formatDistance(distance(origin, at(coffee))),
-  ].filter(Boolean);
-
   return (
     <li>
       <button
         type="button"
         onClick={() => setSelected(coffee)}
-        className={`flex min-h-16 w-full cursor-pointer items-center gap-3 rounded-box px-2 py-2 text-left hover:bg-base-200 ${
-          highlighted ? 'outline-2 -outline-offset-2 outline-primary' : ''
+        className={`grid min-h-[58px] w-full cursor-pointer grid-cols-[40px_minmax(0,1fr)] items-center gap-3 border-b border-dashed border-base-content/30 px-1.5 py-2 text-left hover:bg-base-content/5 ${
+          highlighted ? 'outline-2 -outline-offset-2 outline-base-content' : ''
         }`}
       >
         {coffee.thumbnail_url ? (
-          <img
-            className="size-12 shrink-0 rounded-box object-cover"
-            src={optimize(coffee.thumbnail_url)}
-            alt=""
-            loading="lazy"
-          />
+          <span className="halftone size-10">
+            <img src={optimize(coffee.thumbnail_url)} alt="" loading="lazy" />
+          </span>
         ) : (
-          <span className="grid size-12 shrink-0 place-items-center rounded-box bg-base-200 text-accent">
-            <RiMapPin2Line size={20} />
+          <span className="halftone grid size-10 place-items-center">
+            <RiMapPin2Line size={18} />
           </span>
         )}
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-[15px] font-semibold">{coffee.name}</span>
-          <span className="block truncate text-[13px] text-base-content/60">
+        <span className="min-w-0">
+          <span
+            className={`block truncate text-[15px] font-semibold ${coffee.status === 'closed' ? 'line-through' : ''}`}
+          >
+            {coffee.name}
+          </span>
+          <span className="mt-0.5 flex min-w-0 items-center gap-1.5 font-mono text-[13px]">
             {coffee.status === 'closed' ? (
-              <span className="text-error">Closed</span>
+              <span className="stamp stamp-ink">Closed</span>
             ) : coffee.status === 'reviewed' ? (
-              <span className="text-primary">★ {coffee.rating.toFixed(1)}</span>
-            ) : coffee.rating > 0 ? (
-              <span>★ {coffee.rating.toFixed(1)}</span>
+              <span className="stamp">Reviewed {coffee.rating.toFixed(1)}</span>
             ) : (
-              <span className="text-accent">Not reviewed</span>
+              coffee.rating > 0 && (
+                <span className="inline-flex items-center gap-0.5 font-bold">
+                  <i className="cup" />
+                  {coffee.rating.toFixed(1)}
+                </span>
+              )
             )}
-            {meta.map((m) => ` · ${m}`)}
+            {coffee.address && <span className="truncate">{area(coffee.address)}</span>}
             {!!coffee.commentCount && (
-              <span className="ml-1 inline-flex items-center gap-1 align-middle">
-                · <RiChat3Line size={13} />
+              <span className="inline-flex shrink-0 items-center gap-1">
+                <RiChat3Line size={13} />
                 {coffee.commentCount}
               </span>
+            )}
+            {origin && (
+              <>
+                <i className="leader" />
+                <span className="shrink-0 font-bold">
+                  {formatDistance(distance(origin, at(coffee)))}
+                </span>
+              </>
             )}
           </span>
         </span>

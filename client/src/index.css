@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,200..800;1,200..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,200..800;1,200..800&family=Atkinson+Hyperlegible+Mono:wght@400;500;700&family=Big+Shoulders:opsz,wght@10..72,700..900&family=Big+Shoulders+Stencil:opsz,wght@10..72,800&display=swap');
 @import "tailwindcss";
 @import "maplibre-gl/dist/maplibre-gl.css";
 
@@ -9,6 +9,9 @@
 
 @theme {
     --font-atkinson: "Atkinson Hyperlegible Next", sans-serif;
+    --font-mono: "Atkinson Hyperlegible Mono", ui-monospace, Menlo, monospace;
+    --font-display: "Big Shoulders", "Arial Narrow", sans-serif;
+    --font-stencil: "Big Shoulders Stencil", "Big Shoulders", "Arial Narrow", sans-serif;
 }
 
 @plugin "daisyui/theme" {
@@ -16,29 +19,29 @@
     default: true;
     prefersdark: false;
     color-scheme: "light";
-    --color-base-100: oklch(98% 0 0);
-    --color-base-200: oklch(97% 0 0);
-    --color-base-300: oklch(92% 0 0);
-    --color-base-content: oklch(20% 0 0);
-    --color-primary: oklch(45% 0.15 150);
-    --color-primary-content: oklch(98% 0 0);
-    --color-secondary: oklch(0% 0 0);
-    --color-secondary-content: oklch(100% 0 0);
-    --color-accent: oklch(50% 0.134 242.749);
-    --color-accent-content: oklch(98% 0.014 180.72);
-    --color-neutral: oklch(14% 0 0);
-    --color-neutral-content: oklch(98% 0 0);
-    --color-info: oklch(58% 0.158 241.966);
-    --color-info-content: oklch(95% 0.026 236.824);
-    --color-success: oklch(52% 0.154 150.069);
-    --color-success-content: oklch(95% 0.052 163.051);
-    --color-warning: oklch(82% 0.189 84.429);
-    --color-warning-content: oklch(27% 0.072 132.109);
-    --color-error: oklch(52% 0.223 3.958);
-    --color-error-content: oklch(94% 0.03 12.58);
-    --radius-selector: 2rem;
-    --radius-field: 0.5rem;
-    --radius-box: 0.75rem;
+    --color-base-100: #F6F6F6;
+    --color-base-200: #EBEBEB;
+    --color-base-300: #CFCFCF;
+    --color-base-content: #141414;
+    --color-primary: #B80F2A;
+    --color-primary-content: #FFFFFF;
+    --color-secondary: #262626;
+    --color-secondary-content: #F6F6F6;
+    --color-accent: #1E3FD9;
+    --color-accent-content: #FFFFFF;
+    --color-neutral: #262626;
+    --color-neutral-content: #F6F6F6;
+    --color-info: #1E3FD9;
+    --color-info-content: #FFFFFF;
+    --color-success: #1E7A4C;
+    --color-success-content: #FFFFFF;
+    --color-warning: #FF5A1F;
+    --color-warning-content: #141414;
+    --color-error: #B80F2A;
+    --color-error-content: #FFFFFF;
+    --radius-selector: 0;
+    --radius-field: 0;
+    --radius-box: 0;
     --size-selector: 0.3125rem;
     --size-field: 0.21875rem;
     --border: 1px;
@@ -51,32 +54,29 @@
     default: false;
     prefersdark: true;
     color-scheme: "dark";
-    /* Base colors from sunset theme */
-    --color-base-100: oklch(25.33% 0.015 252.42);
-    --color-base-200: oklch(23.26% 0.014 253.1);
-    --color-base-300: oklch(21.15% 0.012 254.09);
-    --color-base-content: oklch(90% 0 0);
-    --color-primary: oklch(66.27% 0.2 22.22);
-    --color-primary-content: oklch(13.25% 0.04 22.22);
-    --color-secondary: oklch(56.86% 0.2 277.69);
-    --color-secondary-content: oklch(11.37% 0.04 277.69);
-    /* Blue accent */
-    --color-accent: oklch(55% 0.15 245);
-    --color-accent-content: oklch(98% 0.02 245);
-    --color-neutral: oklch(15% 0.02 252);
-    --color-neutral-content: oklch(90% 0.02 252);
-    --color-info: oklch(58% 0.158 241.966);
-    --color-info-content: oklch(95% 0.026 236.824);
-    /* Softer status colors (rich & darker) */
-    --color-success: oklch(55% 0.14 145);
-    --color-success-content: oklch(98% 0.02 145);
-    --color-warning: oklch(55% 0.14 75);
-    --color-warning-content: oklch(98% 0.02 75);
-    --color-error: oklch(52% 0.18 20);
-    --color-error-content: oklch(98% 0.02 20);
-    --radius-selector: 2rem;
-    --radius-field: 0.5rem;
-    --radius-box: 0.75rem;
+    --color-base-100: #D4D4D4;
+    --color-base-200: #C6C6C6;
+    --color-base-300: #A8A8A8;
+    --color-base-content: #141414;
+    --color-primary: #900B20;
+    --color-primary-content: #FFFFFF;
+    --color-secondary: #262626;
+    --color-secondary-content: #D4D4D4;
+    --color-accent: #1E3FD9;
+    --color-accent-content: #FFFFFF;
+    --color-neutral: #262626;
+    --color-neutral-content: #D4D4D4;
+    --color-info: #1E3FD9;
+    --color-info-content: #FFFFFF;
+    --color-success: #1E7A4C;
+    --color-success-content: #FFFFFF;
+    --color-warning: #FF5A1F;
+    --color-warning-content: #141414;
+    --color-error: #900B20;
+    --color-error-content: #FFFFFF;
+    --radius-selector: 0;
+    --radius-field: 0;
+    --radius-box: 0;
     --size-selector: 0.3125rem;
     --size-field: 0.21875rem;
     --border: 1px;
@@ -103,4 +103,217 @@
 html, body, #root {
     height: 100%;
     margin: 0;
+}
+
+/* Nota: every edge is cut square. */
+*, *::before, *::after {
+    border-radius: 0 !important;
+}
+
+:root {
+    --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23f)' opacity='.10'/%3E%3C/svg%3E");
+}
+
+/* Thermal paper: the panel. Static noise tile under the paper colour; nothing animates. */
+@utility paper {
+    background: linear-gradient(90deg, rgb(0 0 0 / .05), transparent 5%, transparent 95%, rgb(0 0 0 / .05)), var(--grain), var(--color-base-100);
+}
+
+/* ---------- Nota hardware ---------- */
+:root {
+    --vfd: #8FF0D2;
+    --vfd-dim: #5FA592;
+    --signal: #FF5A1F;
+    --marker: #E2FF2E;
+    --brush: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='80'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.004 .95' numOctaves='2' seed='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='80' filter='url(%23f)' opacity='.24'/%3E%3C/svg%3E");
+}
+
+/* The till: perforated graphite. */
+.till {
+    background:
+        radial-gradient(circle, rgb(0 0 0 / .7) 0 1.15px, transparent 1.6px) 0 0 / 6px 6px,
+        radial-gradient(circle, rgb(255 255 255 / .09) 0 1.15px, transparent 1.6px) .6px .8px / 6px 6px,
+        linear-gradient(180deg, rgb(255 255 255 / .07), transparent 40%),
+        var(--grain),
+        linear-gradient(180deg, #3A3A3A, #222);
+    border: 1px solid #0D0D0D;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / .14), 0 8px 16px -4px rgb(0 0 0 / .45);
+}
+
+/* The VFD: the search display. */
+.vfd {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 48px;
+    padding: 0 12px;
+    overflow: hidden;
+    background: radial-gradient(120% 160% at 50% 0, #1C2C29 0, #0B1311 70%);
+    border: 2px solid #050807;
+    box-shadow: inset 0 3px 8px rgb(0 0 0 / .85), 0 1px 0 rgb(255 255 255 / .16);
+    color: var(--vfd);
+    font: 500 17px/1 var(--font-mono);
+    letter-spacing: .03em;
+    text-shadow: 0 0 3px rgb(143 240 210 / .8), 0 0 10px rgb(143 240 210 / .35);
+}
+.vfd::before,
+.vfd::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+.vfd::before {
+    background: linear-gradient(162deg, rgb(255 255 255 / .13) 0 26%, transparent 26.5%);
+}
+.vfd::after {
+    background:
+        repeating-linear-gradient(0deg, rgb(0 0 0 / .26) 0 1px, transparent 1px 3px),
+        repeating-linear-gradient(90deg, rgb(0 0 0 / .16) 0 1px, transparent 1px 3px);
+}
+.vfd:focus-within {
+    border-color: var(--vfd);
+}
+.vfd input {
+    all: unset;
+    flex: 1;
+    min-width: 0;
+    font: inherit;
+    color: inherit;
+    caret-color: var(--vfd);
+}
+.vfd input::placeholder {
+    color: var(--vfd-dim);
+    text-shadow: none;
+    opacity: 1;
+}
+.vfd input::-webkit-search-cancel-button {
+    display: none;
+}
+
+/* Keys: aluminium caps. .key-signal is the main action, .key-cobalt is Add. */
+.key {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 0 14px;
+    font: 700 14px/1 var(--font-atkinson);
+    color: #141414;
+    white-space: nowrap;
+    cursor: pointer;
+    background: radial-gradient(130% 80% at 50% 0, rgb(255 255 255 / .55), transparent 62%), var(--brush), linear-gradient(180deg, #EDEDED, #BDBDBD);
+    border: 1px solid #5A5A5A;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / .9), inset 0 -3px 0 rgb(0 0 0 / .14), 0 2px 0 #4A4A4A, 0 3px 5px rgb(0 0 0 / .28);
+    transition: transform .06s, box-shadow .06s;
+}
+.key:hover {
+    background: radial-gradient(130% 80% at 50% 0, rgb(255 255 255 / .7), transparent 62%), var(--brush), linear-gradient(180deg, #F6F6F6, #CBCBCB);
+}
+.key:active,
+.key[aria-selected="true"] {
+    transform: translateY(2px);
+    box-shadow: inset 0 2px 4px rgb(0 0 0 / .3), 0 0 0 #4A4A4A, 0 1px 1px rgb(0 0 0 / .2);
+}
+.key:focus-visible {
+    outline: 2px solid var(--vfd);
+    outline-offset: 3px;
+}
+.key-signal {
+    background: radial-gradient(130% 80% at 50% 0, rgb(255 255 255 / .4), transparent 62%), var(--brush), linear-gradient(180deg, #FF8A55, #F04A0E);
+    border-color: #7A2200;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / .55), inset 0 -3px 0 rgb(0 0 0 / .16), 0 2px 0 #6E1F00, 0 3px 6px rgb(0 0 0 / .3);
+}
+.key-cobalt {
+    color: #fff;
+    background: radial-gradient(130% 80% at 50% 0, rgb(255 255 255 / .3), transparent 62%), var(--brush), linear-gradient(180deg, #4A68F0, #1E3FD9);
+    border-color: #0E1F70;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / .4), inset 0 -3px 0 rgb(0 0 0 / .2), 0 2px 0 #0B1A5E, 0 3px 6px rgb(0 0 0 / .3);
+}
+.key-signal:hover,
+.key-cobalt:hover {
+    filter: brightness(1.08);
+}
+.led {
+    width: 7px;
+    height: 7px;
+    flex: none;
+    background: #404040;
+    box-shadow: inset 0 0 0 1px rgb(0 0 0 / .5);
+}
+[aria-selected="true"] > .led {
+    background: var(--signal);
+    box-shadow: 0 0 6px 1px rgb(255 90 31 / .8);
+}
+
+/* ---------- Nota paper ---------- */
+.receipt {
+    background: linear-gradient(90deg, rgb(0 0 0 / .055), transparent 5%, transparent 95%, rgb(0 0 0 / .055)), var(--grain), #F6F6F6;
+    color: #141414;
+}
+.tear-b {
+    mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / 14px 100%;
+}
+.leader {
+    flex: 1 1 12px;
+    min-width: 12px;
+    height: 2px;
+    margin-top: 6px;
+    background: repeating-linear-gradient(90deg, rgb(77 77 77 / .75) 0 2px, transparent 2px 6px);
+}
+
+/* Printed thumbnails: grey, contrasty, under a line screen. */
+.halftone {
+    position: relative;
+    overflow: hidden;
+    background: #F6F6F6;
+    outline: 1px solid rgb(20 20 20 / .3);
+}
+.halftone img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: grayscale(1) contrast(1.25) brightness(1.04);
+    mix-blend-mode: multiply;
+}
+.halftone::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        repeating-linear-gradient(0deg, rgb(246 246 246 / .55) 0 1px, transparent 1px 2px),
+        repeating-linear-gradient(90deg, rgb(246 246 246 / .55) 0 1px, transparent 1px 2px);
+    mix-blend-mode: lighten;
+}
+
+/* Rubber stamps. The rough edge comes from the #rough filter in index.html. */
+.stamp {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 5px 2px;
+    border: 2px solid currentColor;
+    font: 800 12px/1 var(--font-stencil);
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    transform: rotate(var(--r, -2deg));
+    filter: url(#rough);
+    white-space: nowrap;
+}
+.stamp-ink {
+    color: #141414;
+}
+
+.cup {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    flex: none;
+    background: var(--signal);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M2 2.2h12v2.6H2zM3.3 5.8h9.4l-1.4 8.6H4.7z'/%3E%3C/svg%3E") center / contain no-repeat;
 }

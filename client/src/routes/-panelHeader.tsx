@@ -26,7 +26,7 @@ export function PanelHeader({
         <RiArrowLeftSLine size={24} />
       </button>
       <div className="min-w-0 flex-1">
-        <h2 className="text-xl font-bold leading-7 line-clamp-2">{title}</h2>
+        <h2 className="font-display text-[30px] font-black uppercase leading-[0.95] line-clamp-3 text-balance">{title}</h2>
         {children && (
           <div className="mt-1.5 flex flex-wrap items-center gap-2">
             {children}

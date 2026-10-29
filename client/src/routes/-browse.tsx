@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { client, rpcFetch } from '@fetcher/fetcher.ts';
 import { useAppStore } from '@store/store.ts';
 import { getTokens } from '@cookies/tokens.ts';
-import { RiSearchLine } from 'react-icons/ri';
+import { RiAddLine, RiSearchLine } from 'react-icons/ri';
 import { CoffeeListItem } from './-contentTab/-common/-cofeeListItem.tsx';
 import { at, distance } from './-util.ts';
 
@@ -15,6 +15,7 @@ export function Browse() {
   const setSheet = useAppStore((state) => state.setSheet);
   const setBrowseList = useAppStore((state) => state.setBrowseList);
   const setSelected = useAppStore((state) => state.setSelectedCoffee);
+  const startAdd = useAppStore((state) => state.startAdd);
   const userLocation = useAppStore((state) => state.userLocation);
   const { authenticated } = getTokens();
 
@@ -65,65 +66,75 @@ export function Browse() {
 
   const reviewedCount = all?.filter((c) => c.status === 'reviewed').length ?? 0;
 
+  const tabKey = (id: typeof tab, label: string, hint: string) => (
+    <button
+      role="tab"
+      aria-selected={tab === id}
+      className="key flex-1"
+      onClick={() => setTab(id)}
+      title={`${label} (${hint})`}
+    >
+      <span className="led" />
+      {label}
+    </button>
+  );
+
   return (
-    <div className="flex min-h-0 flex-1 flex-col" onKeyDown={onKeyDown}>
-      <div className="flex flex-col gap-3 p-4 pb-2">
-        <label className="input w-full">
-          <RiSearchLine className="opacity-60" />
+    <div
+      className="flex min-h-0 flex-1 flex-col lg:pointer-events-auto lg:flex-none"
+      onKeyDown={onKeyDown}
+    >
+      <div className="till shrink-0 px-3 pt-3">
+        <label className="vfd">
+          <RiSearchLine size={20} className="shrink-0" />
           <input
             id="search-bar"
             type="search"
-            className="grow"
-            placeholder="Search coffee shops"
+            placeholder="Search shops"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onFocus={() => useAppStore.getState().sheet === 'peek' && setSheet('half')}
           />
-          <kbd className="kbd kbd-sm max-lg:hidden">⌘K</kbd>
         </label>
-        {!q && (
-          <div role="tablist" className="tabs tabs-border">
+        <div role="tablist" className="mt-2.5 flex gap-2">
+          {!q && tabKey('latestReviews', 'Latest reviews', '1')}
+          {!q && tabKey('allPlaces', 'All places', '2')}
+          {authenticated && (
             <button
-              role="tab"
-              className={`tab ${tab === 'latestReviews' ? 'tab-active' : ''}`}
-              onClick={() => setTab('latestReviews')}
-              title="Latest reviews (1)"
+              type="button"
+              className="key key-cobalt ml-auto w-10 px-0"
+              onClick={startAdd}
+              title="Add a shop"
+              aria-label="Add a shop"
             >
-              Latest reviews
+              <RiAddLine size={22} />
             </button>
-            <button
-              role="tab"
-              className={`tab ${tab === 'allPlaces' ? 'tab-active' : ''}`}
-              onClick={() => setTab('allPlaces')}
-              title="All places (2)"
-            >
-              All places
-            </button>
-          </div>
-        )}
+          )}
+        </div>
+        <div className="-mx-3 mt-3 h-2 bg-[#0A0A0A] shadow-[inset_0_3px_3px_#000]" />
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto px-2">
-        {q && list.length === 0 && (
-          <p className="p-6 text-center text-[15px] text-base-content/60">
-            No shop matches “{query.trim()}”.
-          </p>
-        )}
-        <ul ref={listRef} className="flex flex-col">
-          {list.map((c, i) => (
-            <CoffeeListItem key={c.id} coffee={c} highlighted={i === highlight} />
-          ))}
-        </ul>
-      </div>
-      <div className="border-t border-base-300 px-4 py-3 text-center text-[13px] text-base-content/60">
-        {all ? `${all.length} shops · ${reviewedCount} reviewed` : 'Loading shops…'}
-        {!authenticated && (
-          <>
-            {' · '}
-            <a href="/authorize" className="link link-accent">
-              Sign in
-            </a>
-          </>
-        )}
+      <div className="receipt tear-b mx-2 flex min-h-0 flex-1 flex-col pb-4 lg:flex-none">
+        <p className="mx-3 border-b-2 border-dashed border-base-content/40 py-2.5 text-center font-mono text-[13px]">
+          {all ? `${all.length} shops · ${reviewedCount} reviewed` : 'Loading shops…'}
+          {!authenticated && (
+            <>
+              {' · '}
+              <a href="/authorize" className="font-bold text-accent underline">
+                Sign in
+              </a>
+            </>
+          )}
+        </p>
+        <div className="min-h-0 flex-1 overflow-y-auto px-3">
+          {q && list.length === 0 && (
+            <p className="p-6 text-center text-[15px]">No shop matches “{query.trim()}”.</p>
+          )}
+          <ul ref={listRef} className="flex flex-col">
+            {list.map((c, i) => (
+              <CoffeeListItem key={c.id} coffee={c} highlighted={i === highlight} />
+            ))}
+          </ul>
+        </div>
       </div>
     </div>
   );

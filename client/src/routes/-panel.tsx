@@ -30,6 +30,7 @@ export function Panel() {
   const setSelected = useAppStore((state) => state.setSelectedCoffee);
   const { data: shops } = useSWR('coffees', rpcFetch(client.api.coffees.$get)({}));
   const [linkError, setLinkError] = useState('');
+  const browsing = !placing && !editing && !selected;
   // Each Add starts clean; the error belongs to the last link only.
   useEffect(() => {
     if (placing) setLinkError('');
@@ -61,9 +62,12 @@ export function Panel() {
 
   return (
     <aside
-      className={`fixed inset-x-0 bottom-0 z-[1000] flex flex-col rounded-t-[1.25rem] border-t border-base-300 bg-base-100 font-atkinson shadow-[0_-8px_24px_-12px_rgb(0_0_0/.3)] transition-[height] duration-300 ease-out ${HEIGHT[sheet]} lg:absolute lg:inset-x-auto lg:top-4 lg:bottom-4 lg:left-4 lg:h-auto lg:w-[400px] lg:rounded-box lg:border lg:shadow-xl`}
+      className={`fixed inset-x-0 bottom-0 z-[1000] flex flex-col border-t border-base-content/30 font-atkinson shadow-[0_-8px_24px_-12px_rgb(0_0_0/.3)] transition-[height] duration-300 ease-out ${HEIGHT[sheet]} lg:absolute lg:inset-x-auto lg:top-4 lg:bottom-4 lg:left-4 lg:h-auto lg:w-[400px] ${
+        // On desktop the till and receipt are their own objects, and the map shows around them.
+        browsing ? 'max-lg:paper lg:pointer-events-none lg:border-0 lg:shadow-none' : 'paper lg:border lg:shadow-xl'
+      }`}
     >
-      {authenticated && !editing && !placing && (
+      {authenticated && selected && !editing && !placing && (
         <button
           type="button"
           className="btn btn-primary btn-circle btn-lg absolute -top-16 right-4 shadow-lg lg:top-auto lg:bottom-0 lg:-right-20"
@@ -87,7 +91,7 @@ export function Panel() {
         <span className="h-1 w-10 rounded-full bg-base-content/20" />
       </button>
 
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:rounded-box">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {placing ? (
           // One row: the peek sheet is shallow, and the map below it must stay tappable.
           <div className="flex flex-col gap-2 px-4 py-3 lg:py-4">
