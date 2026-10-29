@@ -1,9 +1,9 @@
 import { type RefObject, useEffect } from 'react';
 
 // Brave on iOS lays its address bar over the page just above the keyboard, and visualViewport
-// does not count it. 15px: 28px left a 13px gap in a screenshot of Brave on an iPhone.
+// does not count it. 18px, fitted on an iPhone: 28 left a gap, 15 sat a sliver behind the bar.
 const IOS = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-const KEYBOARD_BAR = IOS && 'brave' in navigator ? 15 : 0;
+const KEYBOARD_BAR = IOS && 'brave' in navigator ? 18 : 0;
 
 // Ported from reader-hero's library view. With the keyboard up the phone layout takes only the
 // visible area, so the till stays above the keyboard and the paper above the till.
