@@ -69,17 +69,22 @@ export function Shortcuts() {
   }, []);
 
   return (
-    <dialog ref={dialog} className="modal font-atkinson">
-      <div className="modal-box max-w-sm rounded-box border border-base-300 p-5">
-        <h3 className="mb-3 text-[15px] font-bold">
+    // A laminated card on the counter; a click outside it closes it.
+    <dialog
+      ref={dialog}
+      className="m-auto max-w-sm bg-transparent p-0 font-atkinson backdrop:bg-black/45"
+      onClick={(e) => e.target === e.currentTarget && e.currentTarget.close()}
+    >
+      <div className="laminate p-5">
+        <h3 className="mb-4 font-display text-[24px] leading-none font-extrabold uppercase">
           Keyboard shortcuts
         </h3>
-        <dl className="grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-2 text-[15px]">
+        <dl className="grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-2.5 text-[15px]">
           {KEYS.map(([key, label]) => (
             <div key={key} className="contents">
               <dt className="flex gap-1">
                 {key.split('  ').map((k) => (
-                  <kbd key={k} className="kbd kbd-sm">
+                  <kbd key={k} className="cap">
                     {k}
                   </kbd>
                 ))}
@@ -89,9 +94,6 @@ export function Shortcuts() {
           ))}
         </dl>
       </div>
-      <form method="dialog" className="modal-backdrop">
-        <button>Close</button>
-      </form>
     </dialog>
   );
 }
