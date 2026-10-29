@@ -1,9 +1,10 @@
-import { useAppStore } from '@store/store.ts';
+import { type LatLng, useAppStore } from '@store/store.ts';
 import type { Coffee } from '@rpcTypes/coffee.ts';
 import { RLayer, RMarker, RSource, useMap } from 'maplibre-react-components';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CoffeeHoverCard, CoffeeMarker } from './-coffeeMarker.tsx';
-import { isDesktop, isTypingTarget } from '../-util.ts';
+import { isDesktop, isTypingTarget, useDesktop } from '../-util.ts';
+import { Thread } from './-thread.tsx';
 import type {
   GeoJSONSource,
   MapLayerMouseEvent,
@@ -25,9 +26,10 @@ const CLUSTER_MAX_ZOOM = 16;
 
 const NEW_SHOP = { id: 'new', name: 'New shop', status: 'known' } as Coffee;
 
-// Keep the shop clear of the panel: right of it on desktop, above the sheet on mobile.
+// Keep the shop clear of the panel: between the receipt and the ticket on desktop, above the sheet on mobile.
 function panelOffset(): PointLike {
-  if (isDesktop()) return [208, 0];
+  const { selectedCoffee, editing } = useAppStore.getState();
+  if (isDesktop()) return selectedCoffee || editing ? [0, 0] : [208, 0];
   const sheet = useAppStore.getState().sheet;
   const covered = sheet === 'peek' ? 96 : window.innerHeight * (sheet === 'half' ? 0.5 : 0.92);
   return [0, -covered / 2];
@@ -94,8 +96,14 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
   const draft = useAppStore((state) => state.draft);
   const setDraft = useAppStore((state) => state.setDraft);
   const userLocation = useAppStore((state) => state.userLocation);
+  const desktop = useDesktop();
 
   const map = useMap('map-layer');
+
+  const selectedAt = useMemo<LatLng | null>(
+    () => (selectedCoffee ? [selectedCoffee.lat, selectedCoffee.lng] : null),
+    [selectedCoffee]
+  );
 
   const byId = useMemo(() => new Map(data?.map((c) => [c.id, c]) ?? []), [data]);
 
@@ -330,6 +338,7 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
       {hoveredCoffee && hoveredCoffee.id !== selectedCoffee?.id && (
         <CoffeeMarker coffee={hoveredCoffee} isSelected={false} showCard />
       )}
+      {desktop && (editing && draft ? <Thread at={draft} /> : selectedAt && <Thread at={selectedAt} />)}
       {userLocation && (
         <RMarker longitude={userLocation[1]} latitude={userLocation[0]} className="pointer-events-none">
           <span className="you-mark" />

@@ -1,5 +1,5 @@
 import useSWR from 'swr';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { client, rpcFetch } from '@fetcher/fetcher.ts';
 import { useAppStore } from '@store/store.ts';
 import { getTokens } from '@cookies/tokens.ts';
@@ -7,7 +7,9 @@ import { RiAddLine, RiSearchLine } from 'react-icons/ri';
 import { CoffeeListItem } from './-contentTab/-common/-cofeeListItem.tsx';
 import { at, distance } from './-util.ts';
 
-export function Browse() {
+// The till always; under it the receipt, or the slip that replaces it while adding.
+// Rolled: the receipt is back in the till, so the map is free while editing.
+export function Browse({ slip, rolled = false }: { slip?: ReactNode; rolled?: boolean } = {}) {
   const tab = useAppStore((state) => state.tab);
   const setTab = useAppStore((state) => state.setTab);
   const query = useAppStore((state) => state.query);
@@ -113,6 +115,9 @@ export function Browse() {
         </div>
         <div className="-mx-3 mt-3 h-2 bg-[#0A0A0A] shadow-[inset_0_3px_3px_#000]" />
       </div>
+      {slip ? (
+        <div className="receipt tear-b mx-2 pb-3">{slip}</div>
+      ) : rolled ? null : (
       <div className="receipt tear-b mx-2 flex min-h-0 flex-1 flex-col pb-4 lg:flex-none">
         <p className="mx-3 border-b-2 border-dashed border-base-content/40 py-2.5 text-center font-mono text-[13px]">
           {all ? `${all.length} shops · ${reviewedCount} reviewed` : 'Loading shops…'}
@@ -136,6 +141,7 @@ export function Browse() {
           </ul>
         </div>
       </div>
+      )}
     </div>
   );
 }

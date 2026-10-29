@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from 'react';
 import type { Coffee } from '@rpcTypes/coffee.ts';
 import type { LatLng } from '@store/store.ts';
 
@@ -43,4 +44,15 @@ export const isTypingTarget = (e: KeyboardEvent) => {
   );
 };
 
-export const isDesktop = () => window.matchMedia('(min-width: 1024px)').matches;
+const DESKTOP = window.matchMedia('(min-width: 1024px)');
+export const isDesktop = () => DESKTOP.matches;
+
+// Desktop and mobile mount different trees, so the shop view's shortcuts never run twice.
+export const useDesktop = () =>
+  useSyncExternalStore(
+    (onChange) => {
+      DESKTOP.addEventListener('change', onChange);
+      return () => DESKTOP.removeEventListener('change', onChange);
+    },
+    isDesktop
+  );

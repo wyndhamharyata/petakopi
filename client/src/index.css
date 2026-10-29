@@ -405,3 +405,187 @@ html, body, #root {
     background: rgb(246 246 246 / .7);
     transform: rotate(45deg);
 }
+
+/* ---------- Nota rail and tickets ---------- */
+:root {
+    --ticket: #CDEBDF;
+    --fiber: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.011 .32' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='320' height='320' filter='url(%23f)' opacity='.10'/%3E%3C/svg%3E");
+    --mottle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.035' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23f)' opacity='.12'/%3E%3C/svg%3E");
+}
+@media (prefers-color-scheme: dark) {
+    :root { --ticket: #A9C7BB; }
+}
+.steel {
+    background:
+        linear-gradient(100deg, transparent 22%, rgb(255 255 255 / .7) 34%, transparent 46%),
+        var(--brush),
+        linear-gradient(180deg, #F2F2F2 0, #CDCDCD 32%, #989898 74%, #B8B8B8 100%);
+    border: 1px solid #555;
+    box-shadow: 0 5px 7px -3px rgb(0 0 0 / .4), inset 0 1px 0 rgb(255 255 255 / .9);
+}
+/* The slider a ticket hangs from. */
+.hold {
+    position: absolute;
+    left: 50%;
+    top: -8px;
+    z-index: 2;
+    width: 30px;
+    height: 12px;
+    transform: translateX(-50%);
+    background: var(--brush), linear-gradient(180deg, #F2F2F2, #A0A0A0);
+    border: 1px solid #555;
+    box-shadow: 0 2px 2px rgb(0 0 0 / .25);
+}
+.ticket {
+    position: relative;
+    color: #141414;
+    background: var(--fiber), var(--grain), var(--ticket);
+    border: 1px solid rgb(20 20 20 / .3);
+    box-shadow: 0 2px 0 rgb(20 20 20 / .12), 0 18px 28px -12px rgb(0 0 0 / .5);
+}
+/* The perforated tear line under the slider. */
+.ticket::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 14px;
+    height: 3px;
+    background: radial-gradient(circle, rgb(20 20 20 / .38) 0 1.1px, transparent 1.5px) 0 0 / 7px 3px;
+    pointer-events: none;
+}
+/* Where the thread is tied on. */
+.eyelet {
+    position: absolute;
+    left: -8px;
+    top: 96px;
+    z-index: 2;
+    width: 14px;
+    height: 14px;
+    background: #D6D6D6;
+    border: 3px solid #A2A2A2;
+    box-shadow: inset 1px 1px 0 rgb(0 0 0 / .4), 0 0 0 1px rgb(20 20 20 / .35);
+}
+.ticket-fade {
+    mask-image: linear-gradient(#000 calc(100% - 54px), transparent);
+}
+.stamp-lg {
+    padding: 5px 8px 4px;
+    border-width: 2.5px;
+    outline: 1.5px solid currentColor;
+    outline-offset: 2px;
+    font-size: 15px;
+    letter-spacing: .09em;
+}
+/* The rating: a stamp card of five cups. */
+.cups {
+    display: inline-flex;
+    gap: 3px;
+}
+.cups > i {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    border: 1.5px solid #141414;
+}
+.cups > i::after {
+    content: "";
+    position: absolute;
+    inset: 2px;
+    background: var(--signal);
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M2 2.2h12v2.6H2zM3.3 5.8h9.4l-1.4 8.6H4.7z'/%3E%3C/svg%3E") center / contain no-repeat;
+    opacity: 0;
+}
+.cups > i.f::after { opacity: 1; }
+.cups > i.h::after { opacity: 1; clip-path: inset(0 50% 0 0); }
+/* Prints: the photo on top of two offset sheets, with black photo corners. */
+.prints {
+    position: relative;
+    height: 178px;
+    margin: 0 6px 22px 2px;
+}
+.prints > .sheet {
+    position: absolute;
+    inset: 0;
+    background: #F6F6F6;
+    border: 1px solid rgb(20 20 20 / .25);
+    box-shadow: 0 2px 4px rgb(0 0 0 / .2);
+}
+.prints > .sheet:nth-child(1) { transform: translate(8px, 8px) rotate(1.6deg); }
+.prints > .sheet:nth-child(2) { transform: translate(4px, 4px) rotate(-1.1deg); }
+.prints > .top {
+    position: absolute;
+    inset: 0;
+    padding: 6px;
+    background: #F6F6F6;
+    border: 1px solid rgb(20 20 20 / .25);
+    box-shadow: 0 2px 4px rgb(0 0 0 / .2);
+}
+.corner {
+    position: absolute;
+    z-index: 1;
+    width: 20px;
+    height: 20px;
+    background: #1E1E1E;
+    pointer-events: none;
+}
+.corner:nth-of-type(1) { left: 2px; top: 2px; clip-path: polygon(0 0, 100% 0, 0 100%); }
+.corner:nth-of-type(2) { right: 2px; top: 2px; clip-path: polygon(0 0, 100% 0, 100% 100%); }
+.corner:nth-of-type(3) { left: 2px; bottom: 2px; clip-path: polygon(0 0, 0 100%, 100% 100%); }
+.corner:nth-of-type(4) { right: 2px; bottom: 2px; clip-path: polygon(100% 0, 100% 100%, 0 100%); }
+.tag {
+    font: 700 13px/1 var(--font-mono);
+    background: #F6F6F6;
+    border: 1.5px solid #141414;
+    padding: 5px 7px;
+}
+/* The review: a newspaper clipping, taped on. */
+.clipping {
+    position: relative;
+    padding: 22px 16px 16px;
+    background: var(--mottle), var(--grain), #DCDCDC;
+    transform: rotate(-.6deg);
+    box-shadow: 0 1px 0 rgb(0 0 0 / .14), 0 7px 10px -6px rgb(0 0 0 / .4);
+}
+.tape {
+    position: absolute;
+    top: -11px;
+    left: 50%;
+    width: 96px;
+    height: 24px;
+    transform: translateX(-50%) rotate(2.5deg);
+    background: linear-gradient(90deg, rgb(255 255 255 / .5), rgb(255 255 255 / .1) 40%, rgb(255 255 255 / .35)), rgb(170 215 240 / .45);
+    box-shadow: 0 1px 1px rgb(0 0 0 / .1);
+}
+.staple {
+    position: absolute;
+    top: -3px;
+    z-index: 3;
+    width: 28px;
+    height: 6px;
+    background: linear-gradient(180deg, #F2F2F2, #8D8D8D);
+    border: 1px solid #4F4F4F;
+}
+/* The open shop's receipt row: a fluorescent highlighter swipe. */
+.row-sel {
+    position: relative;
+}
+.row-sel::before {
+    content: "";
+    position: absolute;
+    left: 52px;
+    right: 0;
+    top: 9px;
+    bottom: 9px;
+    background: var(--marker);
+    mix-blend-mode: multiply;
+    transform: skewX(-8deg) rotate(-.5deg);
+}
+.row-sel > * {
+    position: relative;
+}
+.key-sm {
+    min-height: 32px;
+    padding: 0 10px;
+    font-size: 13px;
+}

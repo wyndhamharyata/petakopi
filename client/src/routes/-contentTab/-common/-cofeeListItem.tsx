@@ -22,6 +22,7 @@ export const CoffeeListItem = memo(function CoffeeListItem({
 }: CoffeeListItemProps) {
   const setSelected = useAppStore((state) => state.setSelectedCoffee);
   const userLocation = useAppStore((state) => state.userLocation);
+  const open = useAppStore((state) => state.selectedCoffee?.id === coffee.id);
   const origin = from === undefined ? userLocation : from;
 
   return (
@@ -31,7 +32,7 @@ export const CoffeeListItem = memo(function CoffeeListItem({
         onClick={() => setSelected(coffee)}
         className={`grid min-h-[58px] w-full cursor-pointer grid-cols-[40px_minmax(0,1fr)] items-center gap-3 border-b border-dashed border-base-content/30 px-1.5 py-2 text-left hover:bg-base-content/5 ${
           highlighted ? 'outline-2 -outline-offset-2 outline-base-content' : ''
-        }`}
+        } ${open ? 'row-sel' : ''}`}
       >
         {coffee.thumbnail_url ? (
           <span className="halftone size-10">

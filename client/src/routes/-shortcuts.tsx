@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useAppStore } from '@store/store.ts';
-import { isTypingTarget } from './-util.ts';
+import { isDesktop, isTypingTarget } from './-util.ts';
 
 // D, C and R live in the shop view and L in the map layer, next to what they act on.
 const KEYS: [string, string][] = [
@@ -8,6 +8,7 @@ const KEYS: [string, string][] = [
   ['⌘K  /', 'Search'],
   ['↑ ↓  Enter', 'Move through the list, open a shop'],
   ['J  K', 'Next / previous shop'],
+  ['[  ]', 'Newest / oldest shop on the rail'],
   ['D', 'Directions'],
   ['C', 'Copy address'],
   ['R', 'Read the full review'],
@@ -19,7 +20,8 @@ const KEYS: [string, string][] = [
 const focusSearch = () => {
   const state = useAppStore.getState();
   if (state.editing || state.placing) return;
-  state.removeSelectedCoffee();
+  // On desktop the receipt stays beside the open ticket.
+  if (!isDesktop()) state.removeSelectedCoffee();
   if (state.sheet === 'peek') state.setSheet('half');
   // Browse mounts on the next render when a shop was open.
   setTimeout(() => document.getElementById('search-bar')?.focus());
@@ -53,6 +55,8 @@ export function Shortcuts() {
         else dialog.current?.showModal();
       } else if ((e.key === '1' || e.key === '2') && !state.selectedCoffee) {
         state.setTab(e.key === '1' ? 'latestReviews' : 'allPlaces');
+      } else if ((e.key === '[' || e.key === ']') && state.rail.length) {
+        state.setSelectedCoffee(state.rail[e.key === '[' ? 0 : state.rail.length - 1]);
       } else if ((e.key === 'j' || e.key === 'k') && state.selectedCoffee) {
         const list = state.browseList;
         const i = list.findIndex((c) => c.id === state.selectedCoffee?.id);

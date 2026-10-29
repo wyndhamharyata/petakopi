@@ -9,7 +9,18 @@ type SelectedCoffeeSlice = {
   selectedCoffee: Coffee | null;
   setSelectedCoffee: (coffee: Coffee) => void;
   removeSelectedCoffee: () => void;
+  // Shops opened before the open one, newest first: the stubs on the rail.
+  rail: Coffee[];
+  takeDown: (id: string) => void;
 };
+
+const RAIL_LENGTH = 3;
+// The open shop goes back on the rail as a stub; the oldest stub falls off the end.
+const hang = (rail: Coffee[], open: Coffee | null, next?: Coffee) =>
+  [open, ...rail]
+    .filter((c): c is Coffee => !!c && c.id !== next?.id)
+    .filter((c, i, all) => all.findIndex((o) => o.id === c.id) === i)
+    .slice(0, RAIL_LENGTH);
 
 export const createSelectedCoffeeSlice: StateCreator<
   SelectedCoffeeSlice & PanelSlice,
@@ -18,17 +29,21 @@ export const createSelectedCoffeeSlice: StateCreator<
   SelectedCoffeeSlice
 > = (set, get) => ({
   selectedCoffee: null,
+  rail: [],
   // A fresh object every time, so picking the selected shop again still flies the map back to it.
   setSelectedCoffee: (coffee: Coffee) =>
     set({
       selectedCoffee: { ...coffee },
+      rail: hang(get().rail, get().selectedCoffee, coffee),
       editing: false,
       placing: false,
       draft: null,
       draftName: '',
       sheet: get().sheet === 'peek' ? 'half' : get().sheet,
     }),
-  removeSelectedCoffee: () => set({ selectedCoffee: null }),
+  removeSelectedCoffee: () =>
+    set({ selectedCoffee: null, rail: hang(get().rail, get().selectedCoffee) }),
+  takeDown: (id) => set({ rail: get().rail.filter((c) => c.id !== id) }),
 });
 
 type PanelSlice = {
