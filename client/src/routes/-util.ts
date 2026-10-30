@@ -16,12 +16,12 @@ export const formatDistance = (m: number) =>
 
 export const at = (c: Coffee): LatLng => [c.lat, c.lng];
 
-// The strip holds five fracture characters, 900px each; pick one by the shop, so no two
-// papers tear the same way and the same shop always tears the same way.
+// The strip holds ten torn edges, 900px each; pick one by the shop, so no two papers
+// tear the same way and the same shop always tears the same way.
 export const tearAt = (seed: string | number) => {
   let h = 7;
   for (const c of String(seed)) h = (h * 31 + c.charCodeAt(0)) | 0;
-  return `-${(Math.abs(h) % 5) * 900}px`;
+  return `-${(Math.abs(h) % 10) * 900}px`;
 };
 
 // "Jl. Mojo No.23, Karangasem, Kec. Laweyan, Kota Surakarta" -> "Laweyan".
