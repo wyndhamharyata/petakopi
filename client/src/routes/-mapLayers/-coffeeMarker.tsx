@@ -2,12 +2,13 @@ import type { Coffee } from '@rpcTypes/coffee.ts';
 import { RMarker } from 'maplibre-react-components';
 import { CoffeeListItem } from '../-contentTab/-common/-cofeeListItem.tsx';
 import { type LatLng, useAppStore } from '@store/store.ts';
+import { tearAt } from '../-util.ts';
 
 // The hover card: a torn receipt tag with one shop, or the first few in a cluster.
 export function CoffeeHoverCard({ coffees, total }: { coffees: Coffee[]; total?: number }) {
   return (
     <div className="absolute bottom-full left-1/2 mb-1 w-72 -translate-x-1/2 font-atkinson drop-shadow-[0_6px_8px_rgb(0_0_0/.22)]">
-      <ul className="receipt tear-b px-2 pt-1 pb-4">
+      <ul className="receipt tear-b px-2 pt-1 pb-4" style={{ '--tear-x': tearAt(coffees[0]?.id ?? '') }}>
         {coffees.map((coffee) => (
           <CoffeeListItem key={coffee.id} coffee={coffee} />
         ))}

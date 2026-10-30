@@ -161,9 +161,9 @@ export function Browse({
         <div className="-mx-3 mt-3 h-2 bg-[#0A0A0A] shadow-[inset_0_3px_3px_#000]" />
       </div>
       {slip ? (
-        <div className="receipt tear-b mx-2 pb-3">{slip}</div>
+        <div className="receipt tear-b mx-2 pb-3" style={{ '--tear-x': '-1800px' }}>{slip}</div>
       ) : rolled && !q ? null : (
-        <div className="receipt tear-b mx-2 flex min-h-0 flex-1 flex-col pb-4 lg:flex-initial">
+        <div className="receipt tear-b mx-2 flex min-h-0 flex-1 flex-col pb-4 lg:flex-initial" style={{ '--tear-x': '-2700px' }}>
           {total}
           {rows}
         </div>

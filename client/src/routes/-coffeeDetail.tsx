@@ -15,6 +15,7 @@ import {
 } from 'react-icons/ri';
 import { CoffeeListItem } from './-contentTab/-common/-cofeeListItem.tsx';
 import { MiniMap } from './-miniMap.tsx';
+import { tearAt } from './-util.ts';
 import { getTokens } from '@cookies/tokens.ts';
 import { type ReactNode, memo, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -345,7 +346,7 @@ export const CoffeeDetail = memo(function CoffeeDetail({
           <div className="relative mx-0.5 mb-4 drop-shadow-[0_4px_5px_rgb(0_0_0/.16)]">
             <span className="staple left-6" />
             <span className="staple right-6" />
-            <div className="receipt tear-b px-3 pt-3 pb-5">
+            <div className="receipt tear-b px-3 pt-3 pb-5" style={{ '--tear-x': tearAt(coffee.id) }}>
               <h3 className="mb-1 font-display text-[20px] font-extrabold uppercase">Nearby</h3>
               <ul>
                 {nearby.map((c) => (
