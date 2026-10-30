@@ -41,7 +41,9 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
   const [open, close] = coffee?.open_hours
     ? coffee.open_hours.split('-')
     : ['', ''];
-  const [hoursUnknown, setHoursUnknown] = useState(!coffee?.open_hours);
+  const [hoursUnknown, setHoursUnknown] = useState(
+    !!coffee && !coffee.open_hours
+  );
   const [latLong, setLatLong] = useState(
     draft ? `${draft[0]}, ${draft[1]}` : ''
   );
@@ -181,11 +183,15 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
     e.preventDefault();
     if (busy) return;
     const form = new FormData(formRef.current!);
+    const openAt = String(form.get('open') ?? '');
+    const closeAt = String(form.get('close') ?? '');
     const parsed = safeParse(ModifyCoffeeSchema, {
       shopName: String(form.get('shopName')).trim(),
       address: String(form.get('address')).trim(),
       latLong,
-      openHours: hoursUnknown ? '' : `${form.get('open')}-${form.get('close')}`,
+      // Empty times mean unknown, even with the box unticked.
+      openHours:
+        hoursUnknown || !openAt || !closeAt ? '' : `${openAt}-${closeAt}`,
       closed: form.get('closed') === 'on',
       rating: form.has('rating') ? Number(form.get('rating')) : undefined,
     });
@@ -518,10 +524,14 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
           />
         </Field>
 
-        {coffee && !ratingOwnedByReview && (
+        {!ratingOwnedByReview && (
           // Without a review, this is my rating; a published review replaces it.
+          // A new shop has no review yet, so it gets the cup card too.
           <Field label="My rating">
-            <CupsInput initial={coffee.rating} onChange={touch} />
+            <CupsInput
+              initial={coffee?.rating ?? 0}
+              onChange={touch}
+            />
           </Field>
         )}
 
