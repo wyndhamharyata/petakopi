@@ -46,9 +46,62 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
     draft ? `${draft[0]}, ${draft[1]}` : ''
   );
   const [dirty, setDirty] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [phase, setPhase] = useState<
+    'idle' | 'saving' | 'printing' | 'done' | 'failed'
+  >('idle');
+  const [progress, setProgress] = useState(0);
+  const [photo, setPhoto] = useState({ n: 1, total: 0 });
+  const [sentCount, setSentCount] = useState(0);
+  const [timedFrom, setTimedFrom] = useState(0);
+  const [retryLeft, setRetryLeft] = useState(0);
+  const [torn, setTorn] = useState(false);
+  const [failedIn, setFailedIn] = useState<'row' | 'data' | 'photo'>('row');
+  const [now, setNow] = useState(() => Date.now());
   const [error, setError] = useState('');
   const formRef = useRef<HTMLFormElement>(null);
+  // The row is written once; photos that landed stay landed across a retry.
+  const savedId = useRef<string | null>(coffee?.id ?? null);
+  const rowReady = useRef(false);
+  const rowChanged = useRef(true);
+  const confirmed = useRef(new Set<string>());
+  const lastBytes = useRef(0);
+  const xhrRef = useRef<XMLHttpRequest | null>(null);
+  const left = useRef(false);
+  const busy = phase === 'saving' || phase === 'printing' || phase === 'done';
+
+  // The bar's seconds: the shop row's wait, then a stalled or unanswered photo.
+  useEffect(() => {
+    if (phase !== 'saving' && phase !== 'printing') return;
+    const timer = setInterval(() => {
+      setNow(Date.now());
+      if (phase === 'printing')
+        setTimedFrom((from) => {
+          if (from) return from;
+          return Date.now() - lastBytes.current > 10000
+            ? lastBytes.current
+            : 0;
+        });
+    }, 500);
+    return () => clearInterval(timer);
+  }, [phase]);
+
+  useEffect(() => () => xhrRef.current?.abort(), []);
+
+  // A tab close mid-upload would leave the shop without its photos.
+  useEffect(() => {
+    if (!busy) return;
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    addEventListener('beforeunload', warn);
+    return () => removeEventListener('beforeunload', warn);
+  }, [busy]);
+
+  const clock = (from: number) => {
+    const s = from ? Math.max(0, Math.floor((now - from) / 1000)) : 0;
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  };
 
   // The map pin moved: follow it, unless this field is what moved it.
   useEffect(() => {
@@ -63,8 +116,20 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
   }, [draft]);
 
   const cancel = () => {
+    if (busy) {
+      if (!confirm('A save is still printing. Leave anyway?')) return;
+      left.current = true;
+      xhrRef.current?.abort();
+      stopEdit();
+      return;
+    }
     if (dirty && !confirm('Discard changes?')) return;
     stopEdit();
+  };
+
+  const touch = () => {
+    setDirty(true);
+    rowChanged.current = true;
   };
 
   useEffect(() => {
@@ -75,8 +140,46 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
     return () => window.removeEventListener('keydown', onKey);
   });
 
+  const uploadPhoto = (
+    id: string,
+    file: File,
+    onBytes: (loaded: number) => void
+  ) =>
+    new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhrRef.current = xhr;
+      xhr.open('PUT', `${import.meta.env.VITE_FETCHER_URL}/api/coffees/images`);
+      xhr.withCredentials = true;
+      xhr.timeout = 60000;
+      xhr.upload.onprogress = (e) => onBytes(e.loaded);
+      xhr.onload = () => {
+        if (xhrRef.current === xhr) xhrRef.current = null;
+        let body: { success?: boolean } | null = null;
+        try {
+          body = JSON.parse(xhr.responseText);
+        } catch {
+          body = null;
+        }
+        if (xhr.status >= 200 && xhr.status < 300 && body?.success) resolve();
+        else reject(new Error('The photo could not be saved.'));
+      };
+      xhr.onerror = () => {
+        if (xhrRef.current === xhr) xhrRef.current = null;
+        reject(new Error('The photo could not be saved.'));
+      };
+      xhr.ontimeout = () => {
+        if (xhrRef.current === xhr) xhrRef.current = null;
+        reject(new Error('The photo upload timed out.'));
+      };
+      const form = new FormData();
+      form.append('id', id);
+      form.append('file', file);
+      xhr.send(form);
+    });
+
   const save = async (e: FormEvent) => {
     e.preventDefault();
+    if (busy) return;
     const form = new FormData(formRef.current!);
     const parsed = safeParse(ModifyCoffeeSchema, {
       shopName: String(form.get('shopName')).trim(),
@@ -88,45 +191,100 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
     });
     if (!parsed.success) return setError(parsed.issues[0].message);
 
-    setSaving(true);
-    setError('');
-    try {
-      const res = coffee
-        ? await client.api.coffees[':id'].update.$post({
-            json: parsed.output,
-            param: { id: coffee.id },
-          })
-        : await client.api.coffees.$post({ json: parsed.output });
-      const body = res.ok ? await res.json() : null;
-      if (!body?.success) throw new Error('The shop could not be saved.');
+    const queue = files
+      .filter((f) => !confirmed.current.has(f.url))
+      .map(({ file, url }) => ({ file, url }));
+    const bytes = queue.reduce((n, f) => n + f.file.size, 0);
+    let doneBytes = 0;
+    let sent = 0;
+    let printing = false;
+    let lastPct = 0;
 
-      // Photo steps after the shop row: a failed photo shouldn't lose the shop's edits.
-      for (const id of removed) {
-        await client.api.coffees.images[':id'].$delete({ param: { id } });
+    setError('');
+    setRetryLeft(0);
+    setTorn(false);
+    setProgress(0);
+    setSentCount(0);
+    setPhoto({ n: 1, total: queue.length });
+
+    try {
+      // The row and its photo deletions/order are one data wait. A retry that
+      // only has photos left skips them, so an added shop is never posted twice.
+      if (rowChanged.current) {
+        setPhase('saving');
+        setTimedFrom(Date.now());
+        const id = savedId.current;
+        const res = id
+          ? await client.api.coffees[':id'].update.$post({
+              json: parsed.output,
+              param: { id },
+            })
+          : coffee
+            ? await client.api.coffees[':id'].update.$post({
+                json: parsed.output,
+                param: { id: coffee.id },
+              })
+            : await client.api.coffees.$post({ json: parsed.output });
+        const body = res.ok ? await res.json() : null;
+        if (!body?.success) throw new Error('The shop could not be saved.');
+        savedId.current = body.id;
+        rowReady.current = true;
+
+        for (const imageId of removed) {
+          await client.api.coffees.images[':id'].$delete({
+            param: { id: imageId },
+          });
+        }
+        // Before uploads, which append after the saved order.
+        if (images.length > 0) {
+          await client.api.coffees.images.order.$post({
+            json: { coffeeId: body.id, ids: images.map((i) => i.id) },
+          });
+        }
+        rowChanged.current = false;
       }
-      // Before uploads, which append after the saved order.
-      if (images.length > 0) {
-        await client.api.coffees.images.order.$post({
-          json: { coffeeId: body.id, ids: images.map((i) => i.id) },
-        });
+
+      // Leaving during the row wait stops the photos from starting.
+      if (left.current) return;
+
+      if (queue.length > 0) {
+        setPhase('printing');
+        setTimedFrom(0);
+        lastBytes.current = Date.now();
+        printing = true;
+        for (const [i, item] of queue.entries()) {
+          if (left.current) return;
+          setPhoto({ n: i + 1, total: queue.length });
+          await uploadPhoto(savedId.current!, item.file, (loaded) => {
+            lastBytes.current = Date.now();
+            lastPct = Math.min(95, ((doneBytes + loaded) / bytes) * 100);
+            setProgress(lastPct);
+            setTimedFrom(doneBytes + loaded >= bytes ? Date.now() : 0);
+          });
+          doneBytes += item.file.size;
+          sent += 1;
+          confirmed.current.add(item.url);
+          setSentCount(sent);
+          lastPct = Math.min(95, (doneBytes / bytes) * 100);
+          setProgress(lastPct);
+        }
       }
-      for (const { file } of files) {
-        const up = await client.api.coffees.images.$put({
-          form: { id: body.id, file },
-        });
-        if (!up.ok)
-          throw new Error(`Saved, but uploading ${file.name} failed.`);
-      }
+
+      setProgress(100);
+      setSentCount(sent);
+      setPhase('done');
+      setTimedFrom(0);
 
       await Promise.all([
         mutate('coffees'),
         mutate('latestReviews'),
-        mutate(`imageData:${body.id}`),
+        mutate(`imageData:${savedId.current}`),
       ]);
-      const { coffee: saved } = await rpcFetch(client.api.coffees[':id'].$get)({
-        param: { id: body.id },
-      })();
-      // The nota lifts and drains to mint, then it is the ticket again, already hanging.
+      const { coffee: saved } = await rpcFetch(
+        client.api.coffees[':id'].$get
+      )({ param: { id: savedId.current! } })();
+      // The printed tape holds for a beat, then the nota drains to mint.
+      await new Promise((r) => setTimeout(r, 300));
       const paper = formRef.current?.closest('.nota');
       if (paper && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
         paper.classList.add('drain');
@@ -135,22 +293,77 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
       stopEdit();
       if (saved) setSelected(saved, true);
     } catch (err) {
+      setPhase('failed');
+      setProgress(lastPct);
+      setTorn(printing);
+      setFailedIn(printing ? 'photo' : rowReady.current ? 'data' : 'row');
+      setTimedFrom(0);
+      setRetryLeft(
+        printing
+          ? files.filter((f) => !confirmed.current.has(f.url)).length
+          : 0
+      );
       setError(err instanceof Error ? err.message : 'Saving failed.');
-    } finally {
-      setSaving(false);
     }
   };
 
   const ratingOwnedByReview = !!coffee?.review;
 
+  const barLabel =
+    phase === 'saving'
+      ? 'SAVING'
+      : phase === 'printing'
+        ? photo.total > 1
+          ? `PHOTO ${photo.n} OF ${photo.total}`
+          : 'PHOTO'
+        : phase === 'done'
+          ? 'PRINTED'
+          : phase === 'failed'
+            ? failedIn === 'row'
+              ? 'SHOP NOT SAVED'
+              : failedIn === 'data'
+                ? 'SHOP SAVED'
+                : `PHOTO ${photo.n} FAILED`
+            : '';
+  const barValue =
+    phase === 'saving'
+      ? clock(timedFrom)
+      : phase === 'printing'
+        ? timedFrom
+          ? clock(timedFrom)
+          : `${Math.round(progress)}%`
+        : phase === 'done'
+          ? sentCount > 0
+            ? `${sentCount} ${sentCount === 1 ? 'PHOTO' : 'PHOTOS'}`
+            : 'SAVED'
+          : phase === 'failed' && failedIn === 'photo'
+            ? `${sentCount} SENT`
+            : '—';
+
   const keys = (
     <div className="flex flex-1 gap-2">
-      <button type="button" className="key min-h-12 flex-1 lg:min-h-10" onClick={cancel} disabled={saving}>
+      <button
+        type="button"
+        className="key min-h-12 flex-1 lg:min-h-10"
+        onClick={cancel}
+        disabled={busy}
+      >
         Cancel
       </button>
       {/* form=: on a phone this key is portalled out of the form, onto the till. */}
-      <button type="submit" form="nota-form" className="key key-signal min-h-12 flex-1 lg:min-h-10" disabled={saving}>
-        {saving ? 'Saving…' : 'Save'}
+      <button
+        type="submit"
+        form="nota-form"
+        className={`key key-signal min-h-12 flex-1 lg:min-h-10 ${busy ? 'down' : ''}`}
+        aria-disabled={busy || undefined}
+      >
+        {phase === 'saving'
+          ? 'Saving…'
+          : phase === 'printing'
+            ? `Printing ${photo.n}/${photo.total}…`
+            : retryLeft > 0
+              ? `Retry ${retryLeft} ${retryLeft === 1 ? 'photo' : 'photos'}`
+              : 'Save'}
       </button>
     </div>
   );
@@ -162,7 +375,8 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
       ref={formRef}
       id="nota-form"
       onSubmit={save}
-      onChange={() => setDirty(true)}
+      onChange={touch}
+      aria-busy={busy || undefined}
       // On a phone the sheet is the slip.
       className={`flex min-h-0 flex-1 flex-col ${desktop ? 'nota' : ''}`}
     >
@@ -185,7 +399,7 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
 
       {/* min-w-0: a fieldset defaults to min-content width, so the film strip widened the form. */}
       <fieldset
-        disabled={saving}
+        disabled={busy}
         className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-y-auto px-4 pb-4 [&>*]:shrink-0"
       >
         <div className="contact">
@@ -198,7 +412,7 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
                 className="size-full cursor-pointer"
                 onClick={() => {
                   setImages([image, ...images.filter((i) => i.id !== image.id)]);
-                  setDirty(true);
+                  touch();
                 }}
               >
                 <img src={image.url} alt={image.alt} className="size-full object-cover" />
@@ -208,7 +422,7 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
                 onClick={() => {
                   setRemoved([...removed, image.id]);
                   setImages(images.filter((i) => i.id !== image.id));
-                  setDirty(true);
+                  touch();
                 }}
               />
             </div>
@@ -221,6 +435,7 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
                 onClick={() => {
                   URL.revokeObjectURL(url);
                   setFiles(files.filter((f) => f.url !== url));
+                  touch();
                 }}
               />
             </div>
@@ -236,11 +451,14 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
               multiple
               className="hidden"
               onChange={(e) => {
-                const picked = [...(e.target.files ?? [])].map((file) => ({
-                  file,
-                  url: URL.createObjectURL(file),
-                }));
+                const all = [...(e.target.files ?? [])];
+                const picked = all
+                  .filter((file) => file.size > 0 && file.type.startsWith('image/'))
+                  .map((file) => ({ file, url: URL.createObjectURL(file) }));
+                if (picked.length < all.length)
+                  setError('Only images can be added.');
                 setFiles([...files, ...picked]);
+                touch();
                 e.target.value = '';
               }}
             />
@@ -303,7 +521,7 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
         {coffee && !ratingOwnedByReview && (
           // Without a review, this is my rating; a published review replaces it.
           <Field label="My rating">
-            <CupsInput initial={coffee.rating} onChange={() => setDirty(true)} />
+            <CupsInput initial={coffee.rating} onChange={touch} />
           </Field>
         )}
 
@@ -316,6 +534,16 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
         </label>
       </fieldset>
 
+      <div className="shrink-0 px-4 py-1">
+        <SaveBar
+          phase={phase}
+          progress={progress}
+          label={barLabel}
+          value={barValue}
+          torn={torn}
+        />
+      </div>
+
       {(desktop || error) && (
         <div className="tear-line flex shrink-0 flex-col gap-2 p-3">
           {error && <p className="err">× {error}</p>}
@@ -325,6 +553,72 @@ export function Editor({ coffee }: { coffee?: EditableCoffee }) {
       {/* On a phone the keys sit on the till, above the keyboard. */}
       {!desktop && tillSlot && createPortal(keys, tillSlot)}
     </form>
+  );
+}
+
+function SaveBar({
+  phase,
+  progress,
+  label,
+  value,
+  torn,
+}: {
+  phase: 'idle' | 'saving' | 'printing' | 'done' | 'failed';
+  progress: number;
+  label: string;
+  value: string;
+  torn: boolean;
+}) {
+  const waiting = phase === 'saving';
+  const live = phase !== 'idle';
+  return (
+    <div className="busy" data-mode={waiting ? 'wait' : 'print'}>
+      {live && (
+        <div className="busy-row">
+          <span aria-live="polite">{label}</span>
+          <i className="leader" />
+          <b>{value}</b>
+        </div>
+      )}
+      <div
+        className="busy-slot"
+        role={live ? 'progressbar' : undefined}
+        aria-label={
+          live
+            ? waiting
+              ? 'Saving shop'
+              : phase === 'done'
+                ? 'Photos printed'
+                : phase === 'failed'
+                  ? 'Save failed'
+                  : 'Uploading photos'
+            : undefined
+        }
+        aria-valuemin={live ? 0 : undefined}
+        aria-valuemax={live ? 100 : undefined}
+        aria-valuenow={
+          phase === 'printing' || phase === 'done' || phase === 'failed'
+            ? Math.round(progress)
+            : undefined
+        }
+      >
+        <div className="busy-roll">
+          <span
+            className="busy-band"
+            style={waiting ? undefined : { width: `${progress}%` }}
+          />
+          {torn && (
+            <span className="busy-torn" style={{ left: `${progress}%` }} />
+          )}
+        </div>
+        {live && (
+          <span
+            className="busy-head"
+            style={waiting ? undefined : { left: `${progress}%` }}
+          />
+        )}
+      </div>
+    </div>
   );
 }
 

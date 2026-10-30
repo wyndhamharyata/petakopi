@@ -164,6 +164,7 @@ body {
     background: radial-gradient(130% 80% at 50% 0, rgb(255 255 255 / .7), transparent 62%), var(--brush), linear-gradient(180deg, #F6F6F6, #CBCBCB);
 }
 .key:active,
+.key.down,
 .key[aria-selected="true"] {
     transform: translateY(2px);
     box-shadow: inset 0 2px 4px rgb(0 0 0 / .3), 0 0 0 #4A4A4A, 0 1px 1px rgb(0 0 0 / .2);
@@ -811,6 +812,115 @@ textarea.line:focus {
     outline-offset: -1px;
 }
 
+/* The save bar: thermal tape in a slot, the print head at the printed edge. */
+.busy {
+    display: grid;
+    gap: 6px;
+    width: 100%;
+}
+.busy-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font: 500 13px/1 var(--font-mono);
+    letter-spacing: .02em;
+    color: #4D4D4D;
+    white-space: nowrap;
+}
+.busy-row .leader {
+    margin-top: 0;
+    transform: translateY(-2px);
+}
+.busy-row b {
+    margin-left: 2px;
+    font-weight: 700;
+    color: #141414;
+}
+.busy-slot {
+    position: relative;
+    height: 14px;
+    margin-top: 2px;
+}
+.busy-roll {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    background: var(--color-base-100);
+    border: 1px solid rgb(20 20 20 / .55);
+    box-shadow: inset 0 2px 3px rgb(0 0 0 / .28), inset 0 -1px 0 rgb(255 255 255 / .8);
+}
+/* The tape's 5% notches. */
+.busy-roll::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(90deg, rgb(20 20 20 / .22) 0 1px, transparent 1px 5%);
+}
+.busy-band {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    background: radial-gradient(circle, rgb(20 20 20 / .82) 0 .9px, transparent 1.15px) 0 0 / 3px 3px, var(--color-base-100);
+}
+.busy-head {
+    position: absolute;
+    top: -3px;
+    width: 8px;
+    height: 20px;
+    margin-left: -4px;
+    z-index: 2;
+    background: linear-gradient(180deg, #F2F2F2, #ADADAD 38%, #5A5A5A 42%, #2C2C2C);
+    border: 1px solid #1A1A1A;
+    box-shadow: 0 1px 2px rgb(0 0 0 / .45);
+}
+.busy-head::after {
+    content: "";
+    position: absolute;
+    left: 1px;
+    right: 1px;
+    bottom: -1px;
+    height: 2px;
+    background: #141414;
+}
+.busy-torn {
+    position: absolute;
+    top: -2px;
+    bottom: -2px;
+    width: 0;
+    z-index: 3;
+    border-left: 2px dashed #B80F2A;
+}
+/* The shop row's wait: the head crosses and drags a fading smear, then returns. */
+.busy[data-mode="wait"] .busy-band {
+    width: 30%;
+    mask: linear-gradient(90deg, transparent, #000 90%);
+    -webkit-mask: linear-gradient(90deg, transparent, #000 90%);
+    animation: sweep-band 1.35s steps(15, end) infinite;
+}
+.busy[data-mode="wait"] .busy-head {
+    animation: sweep-head 1.35s steps(15, end) infinite;
+}
+@keyframes sweep-band {
+    from { left: 0; }
+    to { left: 70%; }
+}
+@keyframes sweep-head {
+    from { left: 30%; }
+    to { left: 100%; }
+}
+/* Phones and Reduce Motion: no sweep; the head parks mid-tape. */
+@media (max-width: 1023px), (prefers-reduced-motion: reduce) {
+    .busy[data-mode="wait"] .busy-band {
+        display: none;
+    }
+    .busy[data-mode="wait"] .busy-head {
+        left: 50%;
+        animation: none;
+    }
+}
 /* The tear line: 2px dashes, the one dash for every line you could tear along. */
 .tear-line {
     background: repeating-linear-gradient(90deg, rgb(20 20 20 / .35) 0 4px, transparent 4px 8px) top / 100% 2px no-repeat;

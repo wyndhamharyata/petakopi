@@ -142,6 +142,21 @@ footer.end{margin:120px 0 0;padding:28px 0 64px;border-top:4px solid var(--ink)}
 .n-key svg{width:16px;height:16px;flex:none}
 .n-key .led{width:7px;height:7px;flex:none;background:#414141;box-shadow:inset 0 0 0 1px rgba(0,0,0,.5)}
 .n-key[aria-selected=true] .led,.n-key[aria-pressed=true] .led{background:var(--led);box-shadow:0 0 6px 1px rgba(255,178,26,.75)}
+
+/* ---------- the save bar: a strip of thermal paper in a slot ---------- */
+.n-busy{display:grid;gap:6px;width:100%}
+.n-busy-row{display:flex;align-items:baseline;gap:8px;font:500 13px/1 var(--mono);letter-spacing:.02em;color:var(--ink-2);white-space:nowrap}
+.n-busy-row .say{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.n-busy-row .n-lead{margin-top:0;transform:translateY(-2px)}
+.n-busy-row b{margin-left:2px;font-weight:700;color:var(--ink)}
+.n-slotbar{position:relative;height:14px}
+.n-roll{position:absolute;inset:0;overflow:hidden;background:var(--thermal);border:1px solid rgba(20,20,20,.55);box-shadow:inset 0 2px 3px rgba(0,0,0,.28),inset 0 -1px 0 rgba(255,255,255,.8)}
+.n-roll::after{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(90deg,rgba(20,20,20,.22) 0 1px,transparent 1px 5%)}
+.n-band{position:absolute;left:0;top:0;bottom:0;width:0;background:radial-gradient(circle,rgba(20,20,20,.82) 0 .9px,transparent 1.15px) 0 0/3px 3px,var(--thermal)}
+.n-busy[data-mode=wait] .n-band{-webkit-mask:linear-gradient(90deg,transparent,#000 90%);mask:linear-gradient(90deg,transparent,#000 90%)}
+.n-head{position:absolute;top:-3px;width:8px;height:20px;margin-left:-4px;z-index:2;background:linear-gradient(180deg,#F2F2F2,#ADADAD 38%,#5A5A5A 42%,#2C2C2C);border:1px solid #1A1A1A;box-shadow:0 1px 2px rgba(0,0,0,.45)}
+.n-head::after{content:"";position:absolute;left:1px;right:1px;bottom:-1px;height:2px;background:var(--ink)}
+.n-torn{position:absolute;top:-2px;bottom:-2px;width:0;z-index:3;border-left:2px dashed var(--chop)}
 .cap{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:24px;padding:0 6px;font:700 12px/1 var(--mono);color:var(--ink);background:var(--brush),linear-gradient(180deg,#F0F0F0,#C6C6C6);border:1px solid #5E5E5E;box-shadow:inset 0 -2px 0 rgba(0,0,0,.14),0 1.5px 0 #4C4C4C}
 
 /* ---------- paper ---------- */
@@ -663,6 +678,52 @@ body{background:var(--terrazzo),var(--grain),var(--counter)}
   </div></div>
 </div></div></div></div>
 
+<h3 id="saving">Saving and uploading: two waits, one bar</h3>
+<p>A save is two different waits. The shop row is one request whose length the browser cannot see. The photos are streams whose bytes it can count. Both are reported on the same object: a strip of thermal tape in a slot cut into the nota footer, with the print head sitting at the end of what has printed. The unknowable wait gets a head that sweeps; the countable one gets tape that advances under it.</p>
+
+<div style="max-width:420px;margin:18px 0 22px">
+  <div class="card nota">
+    <h4>Save and upload</h4>
+    <div class="n-busy" id="save-demo" data-mode="print">
+      <div class="n-busy-row"><span class="say" id="save-demo-say" aria-live="polite">PHOTO 2 OF 3</span><i class="n-lead"></i><b id="save-demo-num">45%</b></div>
+      <div class="n-slotbar" id="save-demo-bar" role="progressbar" aria-label="Uploading photos" aria-valuemin="0" aria-valuemax="100" aria-valuenow="45">
+        <div class="n-roll"><span class="n-band" id="save-demo-band"></span><span class="n-torn" id="save-demo-torn" hidden></span></div>
+        <span class="n-head" id="save-demo-head"></span>
+      </div>
+    </div>
+    <div class="n-keys" style="margin-top:14px">
+      <button class="n-key grow" type="button" disabled>Cancel</button>
+      <button class="n-key ink grow down" type="button" aria-disabled="true" id="save-demo-key">Printing 2/3…</button>
+    </div>
+    <div class="row" style="margin-top:12px"><button class="n-key sm" type="button" id="save-demo-run">Replay</button></div>
+  </div>
+</div>
+
+<ol class="notes">
+  <li><strong>One slot, both waits, no jump.</strong> The row is a printed receipt line (label, dot leader, value) over a 14px slot in the nota footer: directly above Save on desktop, directly above the till on a phone. Its height is always reserved, and the slot is empty tape when idle, so starting a save never moves the form.</li>
+  <li><strong>Saving the shop row is a carriage return.</strong> The client cannot know how long the server takes, so no percentage is invented. The head crosses the tape in fifteen steps at 90ms, dragging a 30% smear of halftone that fades behind it; at the right edge it snaps back and crosses again, the way a print head returns for the next line. The label reads <code>SAVING</code>, the right side counts elapsed seconds, and the tape’s 5% notches stay empty.</li>
+  <li><strong>Photos advance the tape.</strong> Each file reports <code>upload.onprogress</code>, weighted by its size. The head parks at the edge of what has printed and the halftone advances one 5% notch at a time. The left label names the photo (<code>PHOTO 2 OF 3</code>, or just <code>PHOTO</code> when there is one) and the right shows the percentage. Bytes fill the tape only to 95%; the last notch prints when the server answers, so a slow server after the bytes are sent holds at 95% with the seconds counting instead of sitting at a false 100%. If a browser cannot report progress, the tape steps once per finished file, which is the estimate, and the label carries the count instead.</li>
+  <li><strong>Stalls, closes and double taps.</strong> If no bytes move for 10s the right side switches from the percentage to elapsed seconds; nothing else changes until the request errors or times out (60s), which tears the tape. Closing the tab or the nota while printing asks first (<code>beforeunload</code>, and the existing discard confirm). Save is <code>aria-disabled</code> while printing and ignores taps, so a double submit cannot post twice. Empty or unsupported files are refused when picked, on the contact sheet, never at Save.</li>
+  <li><strong>The end has a beat.</strong> The head parks at the right, the tape is fully printed and reads <code>PRINTED</code> for 300ms, then the existing drain runs: the nota lifts and turns mint. Without the pause the drain starts before the eye has read the result.</li>
+  <li><strong>Failure tears the tape.</strong> The shop row is saved before the photos, so a failed upload must not lose it. The head stops, the tape gets a 2px red dashed tear at the jam point, the label reads <code>PHOTO 2 FAILED</code> and the right side <code>1 SENT</code>, and the existing error label appears under the tear line. Save returns as <code>Retry 2 photos</code> and sends only the photos not yet confirmed (the failed one and those queued after it), against the saved shop id; on edit, the row is re-sent only if a field changed since. The shop stays saved: closing now keeps the shop without those photos. The bar work includes fixing today’s retry: it re-posts the shop row and re-uploads every file, which duplicates a newly added shop.</li>
+  <li><strong>No photos means no advancing tape.</strong> The head sweeps once, parks at the right, the tape prints, then the drain.</li>
+  <li><strong>Phones and Reduce Motion do not sweep.</strong> The head parks in the middle of the tape and only the seconds move; the smear is hidden. The measured advance still moves, because it reports data rather than decoration, in 5% steps with no transition. The Save key on the till stays pressed and reads the phase.</li>
+  <li><strong>Announced once per change.</strong> The track is <code>role="progressbar"</code> with <code>aria-valuenow</code> only while determinate, and no value while indeterminate; its <code>aria-label</code> follows the phase (<code>Saving shop</code>, <code>Uploading photos</code>). Only the left label is <code>aria-live="polite"</code>, so it speaks on phase and photo, never on a percent or a second. The form carries <code>aria-busy="true"</code>; Cancel is disabled, and Save stays pressed at full contrast with <code>aria-disabled</code> so the phase stays readable.</li>
+</ol>
+
+<div class="tbl"><table>
+  <tr><th>Moment</th><th>Tape</th><th>Left</th><th>Right</th><th>Save key</th></tr>
+  <tr><td>Saving the shop row</td><td>Head sweeps with a fading smear; notches empty</td><td class="num">SAVING</td><td class="num">0:03</td><td class="num">Saving…</td></tr>
+  <tr><td>Uploading photo 2 of 3</td><td>9 notches printed, head parked at the edge</td><td class="num">PHOTO 2 OF 3</td><td class="num">45%</td><td class="num">Printing 2/3…</td></tr>
+  <tr><td>Confirmed</td><td>20 notches, head at the right</td><td class="num">PRINTED</td><td class="num">3 PHOTOS</td><td class="num">Save</td></tr>
+  <tr><td>The shop row fails</td><td>Empty, head parked where it stopped</td><td class="num">SHOP NOT SAVED</td><td>—</td><td class="num">Save</td></tr>
+  <tr><td>Photo 2 fails</td><td>6 notches, red tear at the jam</td><td class="num">PHOTO 2 FAILED</td><td class="num">1 SENT</td><td class="num">Retry 2 photos</td></tr>
+  <tr><td>Bytes sent, server busy</td><td>19 notches, head parked</td><td class="num">PHOTO 3 OF 3</td><td class="num">0:04</td><td class="num">Printing 3/3…</td></tr>
+  <tr><td>No new photos</td><td>Sweep, then fully printed</td><td class="num">SAVING → PRINTED</td><td class="num">0:02</td><td class="num">Saving… → Save</td></tr>
+</table></div>
+
+<p><strong>Cost and reach.</strong> The visual is one slot, one halftone band, one carriage: about thirty lines of CSS, no images. The real work is the upload helper: <code>fetch</code> only reports completion, so the photo step moves to <code>XMLHttpRequest</code> for <code>upload.onprogress</code>. The save keeps a <code>phase</code> (<code>idle</code>, <code>saving</code>, <code>printing</code>), the saved shop id, and the queue of photos still to send, so Retry resumes instead of starting over. About half a day, mostly the retry path.</p>
+
 <!-- ================================================================== -->
 <h2 id="mobile">6. Mobile: peek, half and full</h2>
 <p>390×844. The till sits on the bottom edge and never moves. The paper above it is the sheet: its torn top edge is the handle, and drag or tap feeds it between three heights. The rail appears at the top of the screen once you have opened a shop.</p>
@@ -992,6 +1053,8 @@ body{background:var(--terrazzo),var(--grain),var(--counter)}
   <tr><td>Thread</td><td>The map moves, a ticket opens</td><td>Redrawn every frame from <code>map.project()</code>. Sag is 16% of length, capped at 90px</td><td>Same: it carries meaning</td></tr>
   <tr><td>Stamp</td><td>A status appears, Closed is switched on, a cup is stamped</td><td>Scale 1.3 → 0.96 → 1 with an ink-in, 160ms</td><td>Instant</td></tr>
   <tr><td>Feed</td><td>The mobile sheet snaps</td><td>240ms, cubic-bezier(.2,.8,.2,1). The paper moves, the till doesn’t</td><td>Instant</td></tr>
+  <tr><td>Save, shop row</td><td>The row is sent</td><td>The head crosses the tape in 15 steps, 90ms each, dragging a 30% halftone smear; it snaps back and repeats. No percentage</td><td>Static head, seconds count</td></tr>
+  <tr><td>Save, photos</td><td>Each photo uploads</td><td>The halftone advances in 5% steps from the bytes sent, the head parked at its edge, with no easing</td><td>Same, without a transition</td></tr>
   <tr><td>Save</td><td>A save succeeds</td><td>The nota lifts 6px and the pink drains to mint, 500ms</td><td>Colour swap</td></tr>
   <tr><td>Key</td><td>Any press</td><td>Down 2px, 60ms</td><td>Same</td></tr>
 </table></div>
@@ -1025,7 +1088,7 @@ body{background:var(--terrazzo),var(--grain),var(--counter)}
   <tr><td><code>checkbox checkbox-xs</code></td><td>-editor</td><td><code>.box</code>: native checkbox, <code>appearance: none</code></td></tr>
   <tr><td><code>kbd kbd-sm</code></td><td>-browse, -shortcuts</td><td><code>.cap</code> mini key. The ⌘K hint leaves the search field</td></tr>
   <tr><td><code>modal</code>, <code>modal-box</code>, <code>modal-backdrop</code></td><td>-shortcuts</td><td>Native <code>&lt;dialog&gt;</code> styled as the laminated card, with <code>::backdrop</code></td></tr>
-  <tr><td><code>loading loading-spinner</code></td><td>-editor (Save)</td><td>The Save key stays pressed and reads “Saving…”, with <code>aria-busy</code></td></tr>
+  <tr><td><code>loading loading-spinner</code></td><td>-editor (Save)</td><td>The save bar: a strip of thermal tape in a slot, with the print head at the printed edge. It sweeps for the shop row and advances for the photos. The Save key stays pressed and reads the phase, with <code>aria-busy</code></td></tr>
   <tr><td><code>link link-accent</code></td><td>-browse, -coffeeDetail</td><td>A plain biro link</td></tr>
   <tr><td>Theme tokens: <code>base-100/200/300</code>, <code>base-content</code>, <code>primary</code>, <code>accent</code>, <code>error</code>, <code>warning</code> (about 80 uses)</td><td>12 files, plus the map colours read by <code>themeColor()</code></td><td>Tailwind v4 <code>@theme</code> tokens: <code>--color-thermal</code>, <code>-ticket</code>, <code>-nota</code>, <code>-news</code>, <code>-ground</code>, <code>-ink</code>, <code>-ink-2</code>, <code>-chop</code>, <code>-biro</code>, <code>-kopi</code>, <code>-marker</code>, <code>-steel</code>. <code>themeColor()</code> keeps working on the new names.</td></tr>
 </table></div>
@@ -1073,7 +1136,7 @@ body{background:var(--terrazzo),var(--grain),var(--counter)}
   <tr><td class="num">3</td><td><strong>Till and receipt</strong></td><td>Browse as the till plus receipt: VFD search, list keys with LEDs, receipt rows with halftone thumbs and leaders, paper as long as its content, the <code>area()</code> fix. Key, Vfd and Stamp are written here.</td><td class="num">2 d</td></tr>
   <tr><td class="num">4</td><td><strong>Rail, ticket and thread</strong> (desktop)</td><td>The shop view as a hanging ticket, the rail with stubs, <code>[</code> <code>]</code>, take-down, the thread overlay, the clipping, the stapled Nearby, Cups.</td><td class="num">2.5–3 d</td></tr>
   <tr><td class="num">5</td><td><strong>Mobile till</strong></td><td>The till on the bottom edge with context keys, the paper sheet at three heights, the rail on top, keyboard handling with <code>visualViewport</code>.</td><td class="num">2 d</td></tr>
-  <tr><td class="num">6</td><td><strong>Nota</strong></td><td>Edit and add on pink paper: ruled fields, the contact sheet, CupsInput, StampToggle, the blue tack, the plotter hairlines for add, the save animation.</td><td class="num">2 d</td></tr>
+  <tr><td class="num">6</td><td><strong>Nota</strong></td><td>Edit and add on pink paper: ruled fields, the contact sheet, CupsInput, StampToggle, the blue tack, the plotter hairlines for add, the save animation and the two-phase save bar.</td><td class="num">2 d</td></tr>
   <tr><td class="num">7</td><td><strong>daisyUI out, night counter</strong></td><td>The shortcuts card, the last daisyUI classes, the plugin removed; night papers and the dark map style; an accessibility and performance pass on a mid-range Android phone.</td><td class="num">1.5–2 d</td></tr>
   <tr><td></td><td><strong>Total</strong></td><td></td><td class="num">12–14 d</td></tr>
 </table></div>
@@ -1089,6 +1152,7 @@ body{background:var(--terrazzo),var(--grain),var(--counter)}
   <li><strong>Map style coupling.</strong> Recolouring Stadia’s alidade layers by id at runtime breaks if the upstream style changes. Forking it to <code>resource.mwyndham.dev/sono/</code> as its own JSON avoids that.</li>
   <li><strong>Two kinds of next.</strong> J/K walk the list and <code>[</code> <code>]</code> walk the rail. That is clear on the shortcuts card, but it is one more idea to learn.</li>
   <li><strong>One outlier.</strong> Deca Dessert and Coffee is in Banjarnegara, about 120 km west (110.70°E). Any “fit all shops” view or distance sort will stretch for it. It is a data fix, flagged here, not designed around.</li>
+  <li><strong>Upload progress needs XHR.</strong> <code>fetch</code> only reports completion, so the photo step moves to <code>XMLHttpRequest</code> for <code>upload.onprogress</code>. The retry path also needs the saved shop id and the unsent files kept, otherwise a second Save after a failed photo re-creates an added shop and re-uploads the photos that already landed.</li>
 </ol>
 
 <!-- ================================================================== -->
@@ -1102,6 +1166,7 @@ body{background:var(--terrazzo),var(--grain),var(--counter)}
   <li><strong>Fonts.</strong> Big Shoulders, its stencil cut for stamps, and Atkinson Hyperlegible Mono next to the Atkinson Next you already use. Yes?</li>
   <li><strong>The thread.</strong> Always on while a ticket is open (recommended), or only while the shop is off-centre?</li>
   <li><strong>The <code>area()</code> fix.</strong> Ship it in step 3, or on its own today? It is a few lines and independent of the redesign.</li>
+  <li><strong>The save bar.</strong> A strip of thermal tape in a slot in the nota footer: the print head sweeps while the shop row is saved, then parks at the edge while the tape prints the photos. No spinner, and no percentage while the shop row is saved. Yes?</li>
 </ol>
 
 <footer class="end">
@@ -1295,6 +1360,70 @@ document.querySelectorAll('[data-replay]').forEach((b) => b.addEventListener('cl
   const t = document.getElementById(b.dataset.replay), a = b.dataset.anim;
   t.classList.remove(a); void t.offsetWidth; t.classList.add(a);
 }));
+
+// The save bar: the shop row sweeps the print head, then the photos advance the tape.
+(() => {
+  const box = document.getElementById('save-demo');
+  if (!box) return;
+  const say = document.getElementById('save-demo-say'), num = document.getElementById('save-demo-num'),
+        band = document.getElementById('save-demo-band'), head = document.getElementById('save-demo-head'),
+        torn = document.getElementById('save-demo-torn'), key = document.getElementById('save-demo-key'),
+        run = document.getElementById('save-demo-run'), bar = document.getElementById('save-demo-bar');
+  const still = matchMedia('(max-width: 1023px), (prefers-reduced-motion: reduce)');
+  let timers = [], sweep = 0, pctNow = 45;
+  const stop = () => { timers.forEach((id) => { clearTimeout(id); clearInterval(id); }); clearInterval(sweep); timers = []; sweep = 0; };
+  const paint = (pct) => { band.style.left = '0'; band.style.width = pct + '%'; head.style.left = pct + '%'; };
+  const measure = (pct, label, keyText) => {
+    pctNow = pct;
+    box.dataset.mode = 'print';
+    bar.setAttribute('aria-label', 'Uploading photos');
+    bar.setAttribute('aria-valuenow', String(pct));
+    torn.hidden = true;
+    if (say.textContent !== label) say.textContent = label;
+    num.textContent = pct + '%'; key.textContent = keyText;
+    paint(pct);
+  };
+  function waiting() {
+    box.dataset.mode = 'wait';
+    bar.setAttribute('aria-label', 'Saving shop');
+    bar.removeAttribute('aria-valuenow');
+    torn.hidden = true;
+    say.textContent = 'SAVING'; num.textContent = '0:00'; key.textContent = 'Saving…';
+    const t0 = Date.now();
+    timers.push(setInterval(() => { const s = Math.floor((Date.now() - t0) / 1000); num.textContent = '0:' + String(s).padStart(2, '0'); }, 250));
+    band.style.width = '0'; head.style.left = '50%';
+    if (still.matches) return;
+    let step = 0;
+    sweep = setInterval(() => {
+      step = (step + 1) % 16;
+      const left = step * 5;
+      band.style.left = left + '%'; band.style.width = '30%';
+      head.style.left = Math.min(97, left + 30) + '%';
+    }, 90);
+  }
+  run.addEventListener('click', () => {
+    stop();
+    waiting();
+    timers.push(setTimeout(() => {
+      stop();
+      measure(0, 'PHOTO 1 OF 3', 'Printing 1/3…');
+      const t = setInterval(() => {
+        const now = Math.min(95, pctNow + 5);
+        const photo = now < 34 ? 1 : now < 68 ? 2 : 3;
+        measure(now, `PHOTO ${photo} OF 3`, `Printing ${photo}/3…`);
+        if (now >= 95) {
+          clearInterval(t);
+          timers.push(setTimeout(() => {
+            measure(100, 'PRINTED', 'Save');
+            num.textContent = '3 PHOTOS';
+          }, 300));
+        }
+      }, 90);
+      timers.push(t);
+    }, 1500));
+  });
+  measure(45, 'PHOTO 2 OF 3', 'Printing 2/3…');
+})();
 </script>
 </body>
 </html>
