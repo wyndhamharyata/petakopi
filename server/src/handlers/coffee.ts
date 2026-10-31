@@ -36,7 +36,11 @@ async function reviewIndex(minAge = 600_000): Promise<Review[] | null> {
   );
   if (cached && Date.now() - cached.fetchedAt < minAge) return cached.reviews;
 
-  const resp = await fetch('https://mwyndham.dev/api/coffee-reviews.json').catch(() => null);
+  // A nonce: the edge caches this endpoint, and after a deploy a cached copy still lists the
+  // old reviews, so a refresh would re-cache stale data for another ten minutes.
+  const resp = await fetch(
+    `https://mwyndham.dev/api/coffee-reviews.json?v=${Date.now()}`
+  ).catch(() => null);
   if (!resp?.ok) return cached?.reviews ?? null;
 
   const reviews = (await resp.json()) as Review[];
