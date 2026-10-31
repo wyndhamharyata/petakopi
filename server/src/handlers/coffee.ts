@@ -29,6 +29,10 @@ const thumbnail = (eb: ExpressionBuilder<Database, 'coffees'>) =>
 
 // mwyndham.dev's published reviews decide which shops are reviewed, and their rating.
 // `minAge` lets a refresh skip the fetch when the copy is only seconds old.
+// Every read of the blog bypasses its edge cache: after a deploy the cached copy still shows the
+// reviews from before it. The comments feed keeps its five minutes; a stale count is harmless.
+const fresh = (url: string) => `${url}${url.includes('?') ? '&' : '?'}v=${Date.now()}`;
+
 async function reviewIndex(minAge = 600_000): Promise<Review[] | null> {
   const cached = await Resource.PetaKopiKV.get<{ fetchedAt: number; reviews: Review[] }>(
     'REVIEW_INDEX',
@@ -36,11 +40,7 @@ async function reviewIndex(minAge = 600_000): Promise<Review[] | null> {
   );
   if (cached && Date.now() - cached.fetchedAt < minAge) return cached.reviews;
 
-  // A nonce: the edge caches this endpoint, and after a deploy a cached copy still lists the
-  // old reviews, so a refresh would re-cache stale data for another ten minutes.
-  const resp = await fetch(
-    `https://mwyndham.dev/api/coffee-reviews.json?v=${Date.now()}`
-  ).catch(() => null);
+  const resp = await fetch(fresh('https://mwyndham.dev/api/coffee-reviews.json')).catch(() => null);
   if (!resp?.ok) return cached?.reviews ?? null;
 
   const reviews = (await resp.json()) as Review[];
@@ -140,8 +140,8 @@ export async function search(queryParam: string | undefined) {
 export async function review(id: string) {
   // marknotes prerenders the first two for each article whose frontmatter sets `coffeeId`.
   const [meta, embed, comments] = await Promise.all([
-    fetch(`https://mwyndham.dev/api/coffee-reviews/${encodeURIComponent(id)}.json`),
-    fetch(`https://mwyndham.dev/embed/coffee/${encodeURIComponent(id)}`),
+    fetch(fresh(`https://mwyndham.dev/api/coffee-reviews/${encodeURIComponent(id)}.json`)),
+    fetch(fresh(`https://mwyndham.dev/embed/coffee/${encodeURIComponent(id)}`)),
     fetch('https://mwyndham.dev/api/coffee-reviews/comments.json').catch(() => null),
   ]);
   if (!meta.ok || !embed.ok) return { post: null, comments: null };
