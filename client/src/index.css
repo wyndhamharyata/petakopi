@@ -5,7 +5,8 @@
 @theme {
     --font-atkinson: "Atkinson Hyperlegible Next", sans-serif;
     --font-mono: "Atkinson Hyperlegible Mono", ui-monospace, Menlo, monospace;
-    --font-display: "Big Shoulders", "Arial Narrow", sans-serif;
+    /* A didone, as a 1940s paper set its headlines; Big Shoulders Stencil stays for the labels. */
+    --font-display: "Bodoni Moda", Georgia, serif;
     --font-stencil: "Big Shoulders Stencil", "Big Shoulders", "Arial Narrow", sans-serif;
     /* Thermal paper, its rules, ink; chop red means reviewed, biro blue is what you can write or tap. */
     --color-base-100: #F6F6F6;
