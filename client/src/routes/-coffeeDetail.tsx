@@ -144,7 +144,7 @@ export const CoffeeDetail = memo(function CoffeeDetail({
       {/* Starts below the perforation, so scrolled content never runs over it or the slider. */}
       <div className="ticket-fade mt-5 flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pt-2 pb-12 [&>*]:shrink-0">
         <header className="flex items-start gap-2.5">
-          <h2 className="flex-1 font-display text-[30px] leading-[0.94] font-black uppercase text-balance lg:text-[34px]">
+          <h2 className="flex-1 font-display text-[26px] leading-[0.94] font-black uppercase text-balance lg:text-[29px]">
             {coffee.name}
           </h2>
           {/* On a phone Back on the till closes it. */}
@@ -302,7 +302,7 @@ export const CoffeeDetail = memo(function CoffeeDetail({
         {post && !!review.comments?.count && (
           // Collapsed by default so the review keeps the space.
           <details className="group mb-5 [interpolate-size:allow-keywords] [&::details-content]:h-0 [&::details-content]:overflow-hidden [&::details-content]:opacity-0 [&::details-content]:transition-all [&::details-content]:duration-300 [&::details-content]:[transition-behavior:allow-discrete] open:[&::details-content]:h-auto open:[&::details-content]:opacity-100">
-            <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2.5 border-y-[1.5px] border-base-content font-display text-[20px] font-extrabold uppercase [&::-webkit-details-marker]:hidden">
+            <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2.5 border-y-[1.5px] border-base-content font-display text-[17px] font-extrabold uppercase [&::-webkit-details-marker]:hidden">
               Comments
               <span className="ml-auto font-mono text-[14px] font-bold">{review.comments.count}</span>
               <RiArrowDownSLine size={18} className="shrink-0 transition-transform duration-300 group-open:rotate-180" />
@@ -347,7 +347,7 @@ export const CoffeeDetail = memo(function CoffeeDetail({
             <span className="staple left-6" />
             <span className="staple right-6" />
             <div className="receipt tear-b px-3 pt-3 pb-5" style={{ '--tear-x': tearAt(coffee.id) }}>
-              <h3 className="mb-1 font-display text-[20px] font-extrabold uppercase">Nearby</h3>
+              <h3 className="mb-1 font-display text-[17px] font-extrabold uppercase">Nearby</h3>
               <ul>
                 {nearby.map((c) => (
                   <CoffeeListItem key={c.id} coffee={c} from={at(coffee)} />

@@ -343,7 +343,7 @@ function MobileRail() {
               onClick={() => setSelected(c)}
               title={`Open ${c.name}`}
             >
-              <span className="block truncate font-display text-[16px] leading-none font-extrabold uppercase">
+              <span className="block truncate font-display text-[14px] leading-none font-extrabold uppercase">
                 {c.name}
               </span>
             </button>
@@ -392,7 +392,7 @@ function Rail({ ticket }: { ticket: boolean }) {
               title={`Open ${c.name}`}
             >
               <span className="hold" />
-              <span className="line-clamp-2 pr-5 font-display text-[19px] leading-none font-extrabold uppercase">
+              <span className="line-clamp-2 pr-5 font-display text-[16px] leading-none font-extrabold uppercase">
                 {c.name}
               </span>
               <span className="mt-2 flex items-center gap-1.5 font-mono text-[13px]">

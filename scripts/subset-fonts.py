@@ -15,6 +15,7 @@ this script; if it is not run, the committed output is used as is.
 """
 
 import pathlib
+import os
 import subprocess
 import sys
 import urllib.request
@@ -47,12 +48,12 @@ FONTS = [
         "axes": {"wght": (400, 700)},
     },
     {
-        "family": "Bodoni Moda",
+        "family": "Hepta Slab",
         "style": "normal",
-        "out": "bodoni-moda",
-        "src": f"{GITHUB}/ofl/bodonimoda/BodoniModa%5Bopsz,wght%5D.ttf",
-        # Shop names and panel heads are set 16-34px at 800 or 900.
-        "axes": {"wght": (800, 900), "opsz": (16, 34)},
+        "out": "hepta-slab",
+        "src": f"{GITHUB}/ofl/heptaslab/HeptaSlab%5Bwght%5D.ttf",
+        # Shop names and panel heads are set 14-29px at 800.
+        "axes": {"wght": (700, 800)},
     },
     {
         "family": "Big Shoulders Stencil",
@@ -69,7 +70,10 @@ KEEP_FEATURES = "kern,liga,ccmp,locl,calt"
 
 
 def run(args):
-    result = subprocess.run(args, capture_output=True, text=True)
+    # Pinned so a rerun with unchanged fonts produces byte-identical files; only a real
+    # change to the type touches the binaries.
+    env = {**os.environ, "SOURCE_DATE_EPOCH": "0"}
+    result = subprocess.run(args, capture_output=True, text=True, env=env)
     if result.returncode:
         print(" ".join(args[:4]))
         print(result.stderr[-1500:])

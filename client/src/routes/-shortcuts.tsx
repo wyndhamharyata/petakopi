@@ -83,7 +83,7 @@ export function Shortcuts() {
       onClick={(e) => e.target === e.currentTarget && e.currentTarget.close()}
     >
       <div className="laminate p-5">
-        <h3 className="mb-4 font-display text-[24px] leading-none font-extrabold uppercase">
+        <h3 className="mb-4 font-display text-[21px] leading-none font-extrabold uppercase">
           Keyboard shortcuts
         </h3>
         <dl className="grid grid-cols-[auto_1fr] items-center gap-x-4 gap-y-2.5 text-[15px]">
