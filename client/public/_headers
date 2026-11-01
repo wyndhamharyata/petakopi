@@ -1,3 +1,0 @@
-# Self-hosted subsets: named for their family, so a regenerate keeps the same URL.
-/fonts/*
-  Cache-Control: public, max-age=2592000
