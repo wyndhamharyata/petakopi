@@ -1,3 +1,5 @@
+/* Subset and self-hosted: see scripts/subset-fonts.py. */
+@import "./fonts.css";
 @import "tailwindcss";
 @import "maplibre-gl/dist/maplibre-gl.css";
 

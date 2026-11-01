@@ -11,3 +11,5 @@ sst-env.d.ts
 routeTree.gen.ts
 .wrangler
 assets/sono
+# Font sources for scripts/subset-fonts.py; the built woff2 are committed.
+scripts/.font-cache/
