@@ -64,7 +64,8 @@ body {
 }
 
 :root {
-    --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23f)' opacity='.10'/%3E%3C/svg%3E");
+    /* Noise textures, baked from feTurbulence SVGs: WebKit redrew a tiled SVG on every paint. */
+    --grain: url("./assets/tex/grain.webp");
 }
 
 /* Thermal paper: the panel. Static noise tile under the paper colour; nothing animates. */
@@ -78,7 +79,7 @@ body {
     --vfd-dim: #5FA592;
     --signal: #FF5A1F;
     --marker: #E2FF2E;
-    --brush: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='80'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.004 .95' numOctaves='2' seed='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='80' filter='url(%23f)' opacity='.24'/%3E%3C/svg%3E");
+    --brush: url("./assets/tex/brush.webp");
 }
 
 /* The till: perforated graphite. */
@@ -253,9 +254,9 @@ body {
     content: "";
     position: absolute;
     inset: 0;
-    background:
-        repeating-linear-gradient(0deg, rgb(246 246 246 / .55) 0 1px, transparent 1px 2px),
-        repeating-linear-gradient(90deg, rgb(246 246 246 / .55) 0 1px, transparent 1px 2px);
+    /* The line screen as one image the size of the thumbnail: two 1px repeating gradients, or a
+       2px tile, made WebKit paint every stripe of every row while the list scrolled. */
+    background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAAB4CAYAAAA5ZDbSAAABOElEQVR42u3WsQ2AMAxFwQRReSmWYowsRc0+rqkQGQFH9yrkFuXrembe7euavg/3+vetaen84MXb5+ccEef7nZnDvf7dCzbRqlynaIqWiRZFu1O0TLQo2p2iTbQo2p2iZaJF0e4ULRNN0RRK0TLRomh3ipaJFkW7e8EmWhTtTtEy0aJod4qWiaZoCqVomWhRtDtFy0SLoilaJloU7U7RMtGiaHeKlh9M0RRK0TLRomh3ipaJFkVTtEy0KNqdomWiRdHuFG2iRdHuFC0TLYp2p2iZaFE0RctEi6LdKVomWhTtTtEmWhTtTtEy0aJod4qWiRZFU7RMtCjanaJlokXR7hRtokXR7hQtEy2KdqdomWiKpk2KlokWRbtTtEy0KNrdCzbRomh3ipaJFkW7U7RMNEVTKEXLROs3PcAn4IIv6rJ3AAAAAElFTkSuQmCC") 0 0 / 40px 40px;
 }
 
 /* Rubber stamps. The rough edge comes from the #rough filter in index.html. */
@@ -378,8 +379,8 @@ body {
 :root {
     --news: #DCDCDC;
     --ticket: #CDEBDF;
-    --fiber: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.011 .32' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='320' height='320' filter='url(%23f)' opacity='.10'/%3E%3C/svg%3E");
-    --mottle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.035' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23f)' opacity='.12'/%3E%3C/svg%3E");
+    --fiber: url("./assets/tex/fiber.webp");
+    --mottle: url("./assets/tex/mottle.webp");
 }
 @media (prefers-color-scheme: dark) {
     :root { --ticket: #A9C7BB; --news: #BDBDBD; }
@@ -978,5 +979,9 @@ textarea.line:focus {
     }
     .key {
         transition: none;
+    }
+    /* The rough-edge filter re-runs on every frame the sheet resizes; plain edges while it moves. */
+    [data-moving] .stamp {
+        filter: none;
     }
 }
