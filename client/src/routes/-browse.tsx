@@ -1,5 +1,5 @@
 import useSWR from 'swr';
-import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { client, rpcFetch } from '@fetcher/fetcher.ts';
 import { useAppStore } from '@store/store.ts';
 import { getTokens } from '@cookies/tokens.ts';
@@ -7,6 +7,9 @@ import { RiAddLine, RiSearchLine } from 'react-icons/ri';
 import { CoffeeListItem } from './-contentTab/-common/-cofeeListItem.tsx';
 import { at, distance } from './-util.ts';
 import { toggleShortcuts } from './-shortcuts.tsx';
+
+// Rows rendered past each edge of the viewport on a phone, and the step the window moves in.
+const WINDOW = 10;
 
 // The till always; under it the receipt, or the slip that replaces it while adding.
 // Rolled: the receipt is back in the till, so the map is free while editing.
@@ -70,6 +73,17 @@ export function Browse({
     }
   };
 
+  // Phones render only the rows near the viewport, in steps of WINDOW so a scroll re-renders
+  // once per WINDOW rows. Rows are one fixed height, measured from the first one.
+  const [first, setFirst] = useState(0);
+  const [rowHeight, setRowHeight] = useState(61);
+  useLayoutEffect(() => {
+    const row = listRef.current?.firstElementChild as HTMLElement | null;
+    if (mobile && row?.offsetHeight) setRowHeight(row.offsetHeight);
+  }, [mobile, list]);
+  const from = mobile ? Math.max(0, first - WINDOW) : 0;
+  const to = mobile ? Math.min(list.length, first + WINDOW * 3) : list.length;
+
   const reviewedCount = all?.filter((c) => c.status === 'reviewed').length ?? 0;
 
   const tabKey = (id: typeof tab, label: string, hint: string) => (
@@ -78,7 +92,7 @@ export function Browse({
       // Searching lists every shop, so neither list is on; the keys stay where they are.
       aria-selected={!q && tab === id}
       disabled={!!q}
-      className="key flex-1"
+      className={`key flex-1 ${mobile ? 'key-sm' : ''}`}
       onClick={() => {
         setTab(id);
         onListKey?.();
@@ -90,7 +104,13 @@ export function Browse({
     </button>
   );
 
-  const tabs = (
+  // A phone has no count line, so the counts ride on the keys.
+  const tabs = mobile ? (
+    <>
+      {tabKey('latestReviews', all ? `Latest · ${reviewedCount}` : 'Latest', '1')}
+      {tabKey('allPlaces', all ? `All · ${all.length}` : 'All', '2')}
+    </>
+  ) : (
     <>
       {tabKey('latestReviews', 'Latest reviews', '1')}
       {tabKey('allPlaces', 'All places', '2')}
@@ -112,27 +132,45 @@ export function Browse({
   );
 
   const rows = (
-    <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3">
+    <div
+      className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3"
+      onScroll={(e) => {
+        if (mobile) setFirst(Math.floor(e.currentTarget.scrollTop / rowHeight / WINDOW) * WINDOW);
+      }}
+    >
       {q && list.length === 0 && (
         <p className="p-6 text-center text-[15px]">No shop matches “{query.trim()}”.</p>
       )}
       {/* Keyed by what is listed, so a new list prints in. */}
-      <ul ref={listRef} key={`${tab}|${q}`} className="print flex flex-col">
-        {list.map((c, i) => (
-          <CoffeeListItem key={c.id} coffee={c} highlighted={i === highlight} />
+      <ul
+        ref={listRef}
+        key={`${tab}|${q}`}
+        className="print flex flex-col"
+        style={{ paddingTop: from * rowHeight, paddingBottom: (list.length - to) * rowHeight }}
+      >
+        {list.slice(from, to).map((c, i) => (
+          <CoffeeListItem key={c.id} coffee={c} highlighted={from + i === highlight} />
         ))}
       </ul>
+      {/* Phones: only the owner signs in, so the link waits at the end of the list. */}
+      {mobile && !authenticated && (
+        <a href="/authorize" className="block py-4 text-center font-mono text-[12px] underline opacity-60">
+          Sign in
+        </a>
+      )}
     </div>
   );
 
-  // Phone: search lives on the till at the bottom edge, so the paper holds only the list.
+  // Phone: search lives on the till at the top of the sheet, so the paper holds only the list.
+  // While searching the results stand in for both lists.
   if (mobile) {
     return (
       <div className="flex min-h-0 flex-1 flex-col">
-        {total}
-        <div role="tablist" className="flex gap-2 px-3 pt-3 pb-1.5">
-          {tabs}
-        </div>
+        {!q && (
+          <div role="tablist" className="flex gap-2 px-3 pt-2.5 pb-1.5">
+            {tabs}
+          </div>
+        )}
         {rows}
       </div>
     );

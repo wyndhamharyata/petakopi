@@ -21,9 +21,13 @@ interface MarkerProps {
   isDark: boolean;
 }
 
-// Shops this close together (px) merge into one bubble, up to street zoom.
+// Shops this close together (px) merge into one bubble, up to street zoom; a phone splits them sooner.
+// shortcut: read once at load, so resizing across 1024px keeps the first value until a reload.
 const CLUSTER_RADIUS = 40;
-const CLUSTER_MAX_ZOOM = 16;
+const CLUSTER_MAX_ZOOM = isDesktop() ? 16 : 14;
+
+// A tap on a hover card also reaches the map under it; the card's own button handles it.
+const onCard = (e: MapMouseEvent) => !!(e.originalEvent.target as Element).closest?.('.maplibregl-marker');
 
 const NEW_SHOP = { id: 'new', name: 'New shop', status: 'known' } as Coffee;
 
@@ -32,8 +36,8 @@ function panelOffset(): PointLike {
   const { selectedCoffee, editing } = useAppStore.getState();
   if (isDesktop()) return selectedCoffee || editing ? [0, 0] : [208, 0];
   const sheet = useAppStore.getState().sheet;
-  // The till and its slot (about 78px) plus the paper on it.
-  const covered = 78 + (sheet === 'peek' ? 74 : window.innerHeight * (sheet === 'half' ? 0.45 : 0.85));
+  // The till on the bottom edge (about 78px, only while editing) plus the paper above it.
+  const covered = (editing ? 78 : 0) + (sheet === 'peek' ? 74 : window.innerHeight * (sheet === 'half' ? 0.45 : 0.85));
   return [0, -covered / 2];
 }
 
@@ -193,17 +197,22 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
     if (!map || isDesktop()) return;
     const onClick = (e: MapMouseEvent) => {
       const state = useAppStore.getState();
-      if (state.placing || state.editing) return;
+      if (state.placing || state.editing || onCard(e)) return;
       const hit = map
         .queryRenderedFeatures(e.point)
         .some((f) => f.layer.id === 'coffee-pins' || f.layer.id === 'coffee-clusters');
-      if (!hit) state.setSheet('peek');
+      if (hit) return;
+      state.setSheet('peek');
+      // A phone has no pointer to leave a stamp, so the card stays until a tap elsewhere.
+      setHovered(undefined);
+      hoveredCluster.current = null;
+      setClusterCard(null);
     };
     map.on('click', onClick);
     return () => {
       map.off('click', onClick);
     };
-  }, [map]);
+  }, [map, setHovered]);
 
   // An imported link can point anywhere; bring the pin into view once, not on every drag.
   const centeredEdit = useRef(false);
@@ -220,7 +229,7 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
   const onClusterClick = useCallback(
     async (e: MapLayerMouseEvent) => {
       const feature = e.features?.[0];
-      if (!map || !feature || feature.geometry.type !== 'Point') return;
+      if (!map || !feature || feature.geometry.type !== 'Point' || onCard(e)) return;
       hoveredCluster.current = null;
       setClusterCard(null);
       const source = map.getSource<GeoJSONSource>('coffees');
@@ -250,6 +259,7 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
       if (!map || !feature || feature.geometry.type !== 'Point') return;
       const clusterId = String(feature.properties.cluster_id);
       hoveredCluster.current = clusterId;
+      setHovered(undefined);
       const leaves = await map
         .getSource<GeoJSONSource>('coffees')
         ?.getClusterLeaves(feature.properties.cluster_id, 3, 0);
@@ -264,18 +274,26 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
         total: feature.properties.point_count,
       });
     },
-    [map, byId]
+    [map, byId, setHovered]
   );
 
   const onClusterLeave = useCallback(() => {
+    if (map) map.getCanvas().style.cursor = '';
+    if (!isDesktop()) return;
     hoveredCluster.current = null;
     setClusterCard(null);
-    if (map) map.getCanvas().style.cursor = '';
   }, [map]);
+
+  // Opening a shop puts the cards away, so they do not come back when it closes.
+  useEffect(() => {
+    setHovered(undefined);
+    hoveredCluster.current = null;
+    setClusterCard(null);
+  }, [selectedCoffee, setHovered]);
 
   const onPinClick = useCallback(
     (e: MapLayerMouseEvent) => {
-      if (useAppStore.getState().placing || useAppStore.getState().editing) return;
+      if (useAppStore.getState().placing || useAppStore.getState().editing || onCard(e)) return;
       const coffee = byId.get(e.features?.[0]?.properties.id);
       if (coffee) setSelected(coffee);
     },
@@ -339,10 +357,12 @@ export function CoffeeMarkers({ data, hovered, setHovered, isDark }: MarkerProps
         onMouseMove={(e: MapLayerMouseEvent) => {
           setCursor('pointer')();
           setHovered(e.features?.[0]?.properties.id);
+          hoveredCluster.current = null;
+          setClusterCard(null);
         }}
         onMouseLeave={() => {
           setCursor('')();
-          setHovered(undefined);
+          if (isDesktop()) setHovered(undefined);
         }}
       />
       {/* Only the selected and hovered shops are HTML markers, drawn above every pin. */}

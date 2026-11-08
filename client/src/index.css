@@ -472,7 +472,8 @@ body {
 .prints {
     position: relative;
     height: 178px;
-    margin: 20px 6px 22px 2px;
+    /* No left margin: the photo shares the column edge with the title and the keys. */
+    margin: 20px 6px 22px 0;
 }
 .prints > .sheet {
     position: absolute;

@@ -6,6 +6,7 @@ import { minidenticon } from 'minidenticons';
 import {
   RiAddLine,
   RiArrowDownSLine,
+  RiArrowLeftSLine,
   RiCloseLine,
   RiExternalLinkLine,
   RiFileCopyLine,
@@ -133,6 +134,26 @@ export const CoffeeDetail = memo(function CoffeeDetail({
 
   const reviewed = coffee.status === 'reviewed' || !!post;
 
+  const ownerKeys = authenticated && (
+    <div className="tear-line flex gap-2 p-3">
+      <button type="button" className="key flex-1" onClick={startEdit}>
+        Edit
+      </button>
+      <a
+        className="key flex-1"
+        target="_blank"
+        href={
+          post
+            ? `https://mwyndham.dev/admin/articles/${post.slug}/edit`
+            : `https://mwyndham.dev/admin/articles/new?coffeeId=${coffee.id}`
+        }
+      >
+        {post ? 'Edit review' : 'Write review'}
+        <RiExternalLinkLine size={16} />
+      </a>
+    </div>
+  );
+
   return (
     // On a phone the sheet is the ticket; its keys move to the till.
     <div
@@ -144,10 +165,14 @@ export const CoffeeDetail = memo(function CoffeeDetail({
       {/* Starts below the perforation, so scrolled content never runs over it or the slider. */}
       <div className="ticket-fade mt-5 flex min-h-0 flex-1 flex-col overflow-y-auto px-4 pt-2 pb-12 [&>*]:shrink-0">
         <header className="flex items-start gap-2.5">
+          {!desktop && (
+            <button type="button" className="key min-h-11 w-11 shrink-0 px-0" onClick={closeTicket} aria-label="Back to the list">
+              <RiArrowLeftSLine size={24} />
+            </button>
+          )}
           <h2 className="flex-1 font-display text-[26px] leading-[0.94] font-black uppercase text-balance lg:text-[29px]">
             {coffee.name}
           </h2>
-          {/* On a phone Back on the till closes it. */}
           {desktop && (
             <button
               type="button"
@@ -180,6 +205,13 @@ export const CoffeeDetail = memo(function CoffeeDetail({
               </>
             )}
           </div>
+        )}
+
+        {!desktop && (
+          <a className={`key mt-4 min-h-12 w-full ${post ? '' : 'key-signal'}`} target="_blank" href={directionsUrl(coffee)}>
+            <RiRouteLine size={16} />
+            Directions
+          </a>
         )}
 
         <div className="prints mt-5">
@@ -356,27 +388,12 @@ export const CoffeeDetail = memo(function CoffeeDetail({
             </div>
           </div>
         )}
+
+        {!desktop && ownerKeys}
       </div>
 
-      {authenticated && (
-        <div className="tear-line flex gap-2 p-3">
-          <button type="button" className="key flex-1" onClick={startEdit}>
-            Edit
-          </button>
-          <a
-            className="key flex-1"
-            target="_blank"
-            href={
-              post
-                ? `https://mwyndham.dev/admin/articles/${post.slug}/edit`
-                : `https://mwyndham.dev/admin/articles/new?coffeeId=${coffee.id}`
-            }
-          >
-            {post ? 'Edit review' : 'Write review'}
-            <RiExternalLinkLine size={16} />
-          </a>
-        </div>
-      )}
+      {/* A phone carries them at the end of the scroll: pinned, they rode the sheet's slides. */}
+      {desktop && ownerKeys}
     </div>
   );
 });
