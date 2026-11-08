@@ -6,7 +6,7 @@ export default $config({
       removal: input?.stage === 'production' ? 'retain' : 'remove',
       protect: ['production'].includes(input?.stage),
       home: 'cloudflare',
-      providers: { cloudflare: '6.3.1' },
+      providers: { cloudflare: '6.15.0' },
     };
   },
   async run() {
